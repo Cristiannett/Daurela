@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1a1a1a">
+<title>Daurela</title>
+<style>
+:root{--bg:#f5f4f0;--bg2:#ffffff;--bg3:#ececea;--txt:#1a1a18;--txt2:#6b6b67;--txt3:#a5a5a0;--border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);--accent:#1a1a18;--accent-txt:#ffffff;--danger:#c0392b;--taco-bg:#e8f5e9;--taco-txt:#1b5e20;--taco-border:#a5d6a7;--pieza-bg:#e3f2fd;--pieza-txt:#0d47a1;--pieza-border:#90caf9;--rad:12px;--rad-sm:8px;--shadow:0 1px 3px rgba(0,0,0,0.08)}
+@media(prefers-color-scheme:dark){:root{--bg:#111110;--bg2:#1e1e1c;--bg3:#2a2a28;--txt:#f0ede6;--txt2:#a0a09a;--txt3:#66665f;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);--accent:#f0ede6;--accent-txt:#1a1a18;--taco-bg:#1b3a1e;--taco-txt:#a5d6a7;--taco-border:#2d6a32;--pieza-bg:#0d2644;--pieza-txt:#90caf9;--pieza-border:#1a4a7a}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;overscroll-behavior:none}
+#app{height:100dvh;overflow:hidden}
+.screen{display:none;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px}
+.screen.active{display:block}
+.topbar{display:flex;align-items:center;gap:8px;padding-top:calc(env(safe-area-inset-top,0px) + 14px);padding-bottom:12px;padding-left:16px;padding-right:16px;background:var(--bg);border-bottom:0.5px solid var(--border);position:sticky;top:0;z-index:50}
+.topbar h1{flex:1;font-size:18px;font-weight:600;letter-spacing:-0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-icon{background:none;border:none;cursor:pointer;color:var(--txt2);padding:6px;display:flex;align-items:center;border-radius:50%;transition:background 0.15s;flex-shrink:0}
+.btn-icon:active{background:var(--bg3)}
+.btn-icon svg{width:22px;height:22px;stroke-width:1.8}
+.search-wrap{padding:10px 16px;border-bottom:0.5px solid var(--border);background:var(--bg)}
+.search-wrap input{width:100%;padding:9px 14px;border:0.5px solid var(--border2);border-radius:var(--rad);font-size:15px;background:var(--bg2);color:var(--txt);outline:none}
+.search-wrap input::placeholder{color:var(--txt3)}
+.list-item{display:flex;align-items:center;padding:13px 16px;border-bottom:0.5px solid var(--border);gap:12px;cursor:pointer;transition:background 0.12s;background:var(--bg)}
+.list-item:active{background:var(--bg3)}
+.list-item.dragging{opacity:0.35}
+.li-icon{width:42px;height:42px;border-radius:var(--rad-sm);background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;border:0.5px solid var(--border)}
+.li-icon img{width:100%;height:100%;object-fit:cover;border-radius:var(--rad-sm)}
+.li-info{flex:1;min-width:0}
+.li-name{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.li-sub{font-size:13px;color:var(--txt2);margin-top:2px}
+.drag-handle{color:var(--txt3);padding:6px 2px;display:flex;align-items:center;touch-action:none;cursor:grab}
+.drag-handle svg{width:18px;height:18px;stroke-width:1.8}
+.chevron{color:var(--txt3);flex-shrink:0}
+.btn-del-direct{background:none;border:none;cursor:pointer;color:var(--txt3);padding:6px;display:flex;align-items:center;flex-shrink:0;border-radius:var(--rad-sm);transition:background 0.12s}
+.btn-del-direct:active{background:rgba(192,57,43,0.1);color:var(--danger)}
+.chevron svg{width:16px;height:16px;stroke-width:2}
+.empty-state{padding:60px 24px;text-align:center;color:var(--txt2)}
+.empty-state svg{width:48px;height:48px;stroke-width:1.2;margin:0 auto 14px;display:block;color:var(--txt3)}
+.empty-state p{font-size:15px;line-height:1.7}
+.empty-state strong{color:var(--txt);font-weight:600}
+.breadcrumb{font-size:12px;color:var(--txt3);padding:8px 16px 0}
+.sec-hdr{padding:8px 16px 6px;font-size:12px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--txt3);background:var(--bg3);border-bottom:0.5px solid var(--border)}
+.search-sec{padding:8px 16px 4px;font-size:11px;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:var(--txt3)}
+.med-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px}
+.med-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rad);padding:14px 12px;text-align:center;box-shadow:var(--shadow)}
+.med-lbl{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt2);margin-bottom:6px;font-weight:500}
+.med-num{font-size:26px;font-weight:600;letter-spacing:-0.5px;color:var(--txt);line-height:1}
+.med-unit{font-size:13px;color:var(--txt2);font-weight:400}
+.obs-box{margin:0 16px 12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rad);padding:13px 15px;font-size:14px;color:var(--txt2);line-height:1.65;box-shadow:var(--shadow)}
+.det-tag{margin:12px 16px 4px;display:inline-block}
+.tag-taco{display:inline-flex;align-items:center;font-size:12px;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--taco-bg);color:var(--taco-txt);border:0.5px solid var(--taco-border);flex-shrink:0}
+.tag-entera{display:inline-flex;align-items:center;font-size:12px;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--pieza-bg);color:var(--pieza-txt);border:0.5px solid var(--pieza-border);flex-shrink:0}
+.form-wrap{padding:16px}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:13px;font-weight:500;color:var(--txt2);margin-bottom:6px}
+.fg input,.fg textarea,.fg select{width:100%;border:0.5px solid var(--border2);border-radius:var(--rad-sm);padding:11px 13px;font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;-webkit-appearance:none;transition:border-color 0.15s}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--accent)}
+.fg textarea{min-height:80px;resize:vertical}
+.fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.btn-primary{width:100%;padding:14px;background:var(--accent);color:var(--accent-txt);border:none;border-radius:var(--rad);font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;transition:opacity 0.15s}
+.btn-primary:active{opacity:0.8}
+.btn-secondary{width:100%;padding:13px;background:none;color:var(--txt2);border:0.5px solid var(--border2);border-radius:var(--rad);font-size:15px;cursor:pointer;margin-top:8px;transition:background 0.15s}
+.btn-secondary:active{background:var(--bg3)}
+.btn-danger{width:100%;padding:13px;background:none;color:var(--danger);border:0.5px solid rgba(192,57,43,0.3);border-radius:var(--rad);font-size:15px;cursor:pointer;margin-top:8px}
+.btn-danger:active{background:rgba(192,57,43,0.08)}
+.btn-sm{background:none;border:0.5px solid var(--border2);border-radius:var(--rad-sm);padding:8px 14px;font-size:13px;color:var(--txt2);cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin-top:6px}
+.btn-sm:active{background:var(--bg3)}
+.divider{height:16px}
+.foto-prev{width:100%;height:140px;object-fit:cover;border-radius:var(--rad-sm);display:block;margin-bottom:8px;border:0.5px solid var(--border)}
+.foto-ph{width:100%;height:76px;border:1.5px dashed var(--border2);border-radius:var(--rad-sm);display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:14px;cursor:pointer;gap:8px;background:var(--bg3);margin-top:4px}
+.foto-ph svg{width:22px;height:22px;stroke-width:1.5}
+.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:var(--accent-txt);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.25);z-index:100;transition:transform 0.15s}
+.fab:active{transform:scale(0.94)}
+.fab svg{width:26px;height:26px;stroke-width:2}
+.toast{position:fixed;bottom:calc(88px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--txt);color:var(--bg);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.calc-linea{display:grid;grid-template-columns:1fr 80px 80px 36px;gap:8px;align-items:center;margin-bottom:10px}
+.calc-linea input{padding:10px 10px;border:0.5px solid var(--border2);border-radius:var(--rad-sm);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;width:100%;-webkit-appearance:none}
+.calc-linea input:focus{border-color:var(--accent)}
+.calc-linea .btn-del-direct{padding:8px;border-radius:var(--rad-sm)}
+.calc-result{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:12px}
+.calc-result-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:0.5px solid var(--border)}
+.calc-result-row:last-child{border-bottom:none}
+.calc-result-row .lbl{font-size:13px;color:var(--txt2)}
+.calc-result-row .val{font-size:15px;font-weight:500}
+.calc-total{background:var(--accent);color:var(--accent-txt);border-radius:var(--rad);padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.calc-total .lbl{font-size:14px;opacity:0.8}
+.calc-total .val{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+.calc-piezas{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:12px}
+.calc-linea-hdr{display:grid;grid-template-columns:1fr 80px 80px 36px;gap:8px;margin-bottom:6px}
+.calc-linea-hdr span{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--txt3)}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="toast" class="toast"></div>
+
+<!-- CLIENTES -->
+<div id="s-cli" class="screen active">
+  <div class="topbar">
+    <h1>Daurela</h1>
+    <button class="btn-icon" onclick="go('s-calc')" aria-label="Calculadora de pedidos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="2" width="16" height="20" rx="2"/><rect x="7" y="5" width="10" height="4" rx="1"/><circle cx="8" cy="13" r="1" fill="currentColor"/><circle cx="12" cy="13" r="1" fill="currentColor"/><circle cx="16" cy="13" r="1" fill="currentColor"/><circle cx="8" cy="17" r="1" fill="currentColor"/><circle cx="12" cy="17" r="1" fill="currentColor"/><circle cx="16" cy="17" r="1" fill="currentColor"/></svg>
+    </button>
+    <button class="btn-icon" onclick="toggleOrden()" id="btn-orden" aria-label="Ordenar clientes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M7 12h10M11 18h4"/></svg>
+    </button>
+    <button class="btn-icon" onclick="go('s-search')" aria-label="Buscar todo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    </button>
+    <button class="btn-icon" onclick="go('s-backup')" aria-label="Copia de seguridad">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </button>
+  </div>
+  <div class="search-wrap"><input id="q-cli" type="search" placeholder="Buscar cliente..." oninput="renderCli()"></div>
+  <div id="lst-cli"></div>
+  <button class="fab" onclick="openFormCli(null)" aria-label="Nuevo cliente">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</div>
+
+<!-- BUSQUEDA GLOBAL -->
+<div id="s-search" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Buscar</h1>
+  </div>
+  <div class="search-wrap"><input id="q-global" type="search" placeholder="Clientes, telas, medidas..." oninput="renderSearch()"></div>
+  <div id="lst-search"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p>Escribe para buscar<br>en toda la base de datos</p></div></div>
+</div>
+
+<!-- TELAS -->
+<div id="s-telas" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 id="ttl-telas"></h1>
+    <button class="btn-icon" onclick="openFormCli(curCli)" aria-label="Editar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+  </div>
+  <div id="lst-telas"></div>
+  <button class="fab" onclick="openFormTela(null)" aria-label="Nueva tela">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</div>
+
+<!-- MEDIDAS -->
+<div id="s-meds" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-telas')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 id="ttl-meds"></h1>
+    <button class="btn-icon" onclick="openFormTela(curTela)" aria-label="Editar tela">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+  </div>
+  <div id="bc-meds" class="breadcrumb"></div>
+  <div id="lst-meds"></div>
+  <button class="fab" onclick="openFormMed(null)" aria-label="Nueva medida">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</div>
+
+<!-- DETALLE -->
+<div id="s-det" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-meds')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 id="ttl-det"></h1>
+    <button class="btn-icon" onclick="duplicarMed()" aria-label="Duplicar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+    </button>
+    <button class="btn-icon" onclick="openFormMed(curMed)" aria-label="Editar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+  </div>
+  <div id="det-body"></div>
+</div>
+
+<!-- FORM CLIENTE -->
+<div id="s-fcli" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="cancelForm('cli')" aria-label="Cancelar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h1 id="ttl-fcli">Nuevo cliente</h1>
+  </div>
+  <div class="form-wrap">
+    <div class="fg"><label>Nombre *</label><input id="fi-cli-nom" type="text" placeholder="Hotel Meliá Valencia" autocomplete="off" oninput="markDirty()"></div>
+    <div class="fg"><label>Notas</label><textarea id="fi-cli-not" placeholder="Observaciones generales..." oninput="markDirty()"></textarea></div>
+    <button class="btn-primary" onclick="saveCli()">Guardar cliente</button>
+    <button id="btn-del-cli" class="btn-danger" onclick="delCli()" style="display:none">Eliminar cliente</button>
+  </div>
+</div>
+
+<!-- FORM TELA -->
+<div id="s-ftela" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="cancelForm('tela')" aria-label="Cancelar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h1 id="ttl-ftela">Nueva tela</h1>
+  </div>
+  <div class="form-wrap">
+    <div class="fg"><label>Nombre / referencia *</label><input id="fi-tela-nom" type="text" placeholder="Algodon Percal 200h" autocomplete="off" oninput="markDirty()"></div>
+    <div class="fg">
+      <label>Foto de la tela</label>
+      <div id="fp-wrap" style="display:none">
+        <img id="fp-img" class="foto-prev" src="" alt="">
+        <button class="btn-sm" onclick="quitarFoto()" style="margin-bottom:8px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>Quitar foto
+        </button>
+      </div>
+      <div class="foto-ph" onclick="document.getElementById('fp-input').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Añadir foto
+      </div>
+      <input id="fp-input" type="file" accept="image/*" capture="environment" style="display:none" onchange="loadFoto(event)">
+    </div>
+    <div class="fg"><label>Notas</label><textarea id="fi-tela-not" placeholder="Composicion, proveedor..." oninput="markDirty()"></textarea></div>
+    <button class="btn-primary" onclick="saveTela()">Guardar tela</button>
+    <button id="btn-del-tela" class="btn-danger" onclick="delTela()" style="display:none">Eliminar tela</button>
+  </div>
+</div>
+
+<!-- FORM MEDIDA -->
+<div id="s-fmed" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="cancelForm('med')" aria-label="Cancelar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h1 id="ttl-fmed">Nueva medida</h1>
+  </div>
+  <div class="form-wrap">
+    <div class="fg"><label>Nombre / tamano *</label><input id="fi-med-nom" type="text" placeholder="Cama 90, Almohada 50x70..." autocomplete="off" oninput="markDirty()"></div>
+    <div class="fg"><label>Tipo de tela recibida</label>
+      <select id="fi-med-tipo" onchange="markDirty()">
+        <option value="taco">Taco (ya cortado, ~85 cm)</option>
+        <option value="entera">Pieza entera (~240 cm) la corto yo</option>
+      </select>
+    </div>
+    <div class="sec-hdr" style="margin:0 -16px 14px">Taco</div>
+    <div class="fg"><label>Ancho del taco (cm)</label><input id="fi-ta" type="number" inputmode="decimal" placeholder="0" step="0.5" oninput="markDirty()"></div>
+    <div class="sec-hdr" style="margin:0 -16px 14px">Corte (maquina)</div>
+    <div class="fg"><label>Largo de corte (cm)</label><input id="fi-cl" type="number" inputmode="decimal" placeholder="0" step="0.5" oninput="markDirty()"></div>
+    <div class="fg"><label>Observaciones</label><textarea id="fi-med-obs" placeholder="Margenes, costuras, notas..." oninput="markDirty()"></textarea></div>
+    <button class="btn-primary" onclick="saveMed()">Guardar medida</button>
+    <button id="btn-dup-med" class="btn-secondary" onclick="duplicarDesdeForm()" style="display:none">
+      Duplicar esta medida
+    </button>
+    <button id="btn-del-med" class="btn-danger" onclick="delMed()" style="display:none">Eliminar medida</button>
+    <div class="divider"></div>
+  </div>
+</div>
+
+<!-- BACKUP -->
+<div id="s-backup" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Copia de seguridad</h1>
+  </div>
+  <div class="form-wrap">
+    <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span style="font-size:15px;font-weight:500">Exportar datos</span>
+      </div>
+      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Descarga un <strong>.json</strong> con todos los datos. Guardalo en Google Drive para tenerlo a salvo.</p>
+      <button class="btn-primary" onclick="exportar()" style="margin-top:0">Descargar copia (.json)</button>
+      <button class="btn-secondary" onclick="exportarCSV()">
+        Exportar a Excel (.csv)
+      </button>
+    </div>
+    <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rad);padding:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span style="font-size:15px;font-weight:500">Restaurar datos</span>
+      </div>
+      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Selecciona un <strong>.json</strong> exportado antes. <span style="color:var(--danger);font-weight:500">Reemplaza los datos actuales.</span></p>
+      <button class="btn-secondary" onclick="document.getElementById('import-input').click()" style="margin-top:0">Seleccionar archivo</button>
+      <input id="import-input" type="file" accept=".json,application/json" style="display:none" onchange="importar(event)">
+      <div id="import-msg" style="margin-top:10px;font-size:13px;display:none"></div>
+    </div>
+    <p style="font-size:12px;color:var(--txt3);text-align:center;margin-top:20px;line-height:1.6">Datos guardados en este dispositivo.<br>Haz copia de vez en cuando por si acaso.</p>
+  </div>
+</div>
+
+
+<!-- CALCULADORA DE PEDIDOS -->
+<div id="s-calc" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Calculadora de pedido</h1>
+  </div>
+  <div class="form-wrap">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <div class="fg" style="margin-bottom:0">
+        <label>Margen por corte (cm)</label>
+        <input id="calc-margen" type="number" inputmode="decimal" placeholder="9" value="9" step="0.5" oninput="calcular()">
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label>Largo de la pieza (m)</label>
+        <input id="calc-pieza" type="number" inputmode="decimal" placeholder="50" value="50" step="0.5" oninput="calcular()">
+      </div>
+    </div>
+
+    <div class="sec-hdr" style="margin:0 -16px 14px">Lineas del pedido</div>
+
+    <div class="calc-linea-hdr">
+      <span>Medida</span><span style="text-align:center">Talla (cm)</span><span style="text-align:center">Uds.</span><span></span>
+    </div>
+    <div id="calc-lineas"></div>
+
+    <button class="btn-secondary" onclick="addLinea()" style="margin-bottom:20px">
+      + Añadir talla
+    </button>
+
+    <div id="calc-output" style="display:none">
+      <div class="sec-hdr" style="margin:0 -16px 14px">Resultado</div>
+      <div id="calc-desglose"></div>
+      <div class="calc-total">
+        <span class="lbl">Total metros necesarios</span>
+        <span class="val"><span id="calc-total-val">0</span> m</span>
+      </div>
+      <div class="calc-piezas">
+        <div style="font-size:13px;color:var(--txt2);margin-bottom:8px">Con piezas de <strong id="calc-pieza-lbl">240</strong> cm</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span style="font-size:14px;color:var(--txt2)">Numero de piezas a cortar</span>
+          <span style="font-size:28px;font-weight:700;letter-spacing:-0.5px" id="calc-piezas-val">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px">
+          <span style="font-size:13px;color:var(--txt3)">Metros sobrantes</span>
+          <span style="font-size:14px;color:var(--txt2)" id="calc-sobra-val">—</span>
+        </div>
+      </div>
+      <button class="btn-secondary" onclick="limpiarCalc()">Limpiar todo</button>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+const KEY='textil_v3';
+let db={clientes:[]};
+let curCli=null,curTela=null,curMed=null;
+let editingCli=null,editingTela=null,editingMed=null;
+let newFoto=null,prevScreenCli=null,formDirty=false;
+let touchDragId=null,touchStartY=0,touchClone=null;
+
+function load(){try{const d=localStorage.getItem(KEY);if(d)db=JSON.parse(d);}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){alert('No se pudo guardar.');}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function markDirty(){formDirty=true;}
+
+let toastT=null;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);el.classList.add('active');el.scrollTop=0;
+}
+
+function cancelForm(type){
+  if(formDirty&&!confirm('Tienes cambios sin guardar. Salir de todas formas?'))return;
+  formDirty=false;
+  if(type==='cli')go(prevScreenCli||'s-cli');
+  else if(type==='tela'){go(editingTela?'s-meds':'s-telas');}
+  else go('s-meds');
+}
+
+// ── BUSQUEDA GLOBAL ─────────────────────────────────────
+function renderSearch(){
+  const q=(document.getElementById('q-global').value||'').toLowerCase().trim();
+  const el=document.getElementById('lst-search');
+  if(!q){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p>Escribe para buscar<br>en toda la base de datos</p></div>';return;}
+  let html='',total=0;
+  let secCli=false,secTela=false,secMed=false;
+  db.clientes.forEach(c=>{
+    if(c.nombre.toLowerCase().includes(q)){
+      if(!secCli){html+='<div class="search-sec">Clientes</div>';secCli=true;}
+      html+=`<div class="list-item" onclick="openCli('${c.id}');go('s-telas')">
+        <div class="li-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        <div class="li-info"><div class="li-name">${esc(c.nombre)}</div><div class="li-sub">Cliente</div></div>
+        <div class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>`;total++;
+    }
+    c.telas.forEach(t=>{
+      if(t.nombre.toLowerCase().includes(q)||(t.notas||'').toLowerCase().includes(q)){
+        if(!secTela){html+='<div class="search-sec">Telas</div>';secTela=true;}
+        html+=`<div class="list-item" onclick="openCli('${c.id}');openTela('${t.id}')">
+          <div class="li-icon">${t.foto?`<img src="${t.foto}" alt="">`:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'}</div>
+          <div class="li-info"><div class="li-name">${esc(t.nombre)}</div><div class="li-sub">${esc(c.nombre)}</div></div>
+          <div class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>`;total++;
+      }
+      t.medidas.forEach(m=>{
+        if(m.nombre.toLowerCase().includes(q)||(m.obs||'').toLowerCase().includes(q)){
+          if(!secMed){html+='<div class="search-sec">Medidas</div>';secMed=true;}
+          html+=`<div class="list-item" onclick="openCli('${c.id}');openTela('${t.id}');openMed('${m.id}')">
+            <div class="li-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><path d="M21 6H3M21 12H3M21 18H3"/><path d="M8 3v3M12 3v6M16 3v3"/></svg></div>
+            <div class="li-info"><div class="li-name">${esc(m.nombre)}</div><div class="li-sub">${esc(c.nombre)} › ${esc(t.nombre)}</div></div>
+            <span class="tag-${m.tipo}">${m.tipo==='entera'?'Pieza':'Taco'}</span>
+          </div>`;total++;
+        }
+      });
+    });
+  });
+  if(!total){el.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p>Sin resultados para<br><strong>"${esc(q)}"</strong></p></div>`;return;}
+  el.innerHTML=html;
+}
+
+// ── CLIENTES ────────────────────────────────────────────
+function renderCli(){
+  const q=(document.getElementById('q-cli').value||'').toLowerCase();
+  let list=db.clientes.filter(c=>c.nombre.toLowerCase().includes(q));
+  if(ordenAZ)list=[...list].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  const el=document.getElementById('lst-cli');
+  if(!list.length){el.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><p>${q?'Sin resultados para "<strong>'+esc(q)+'</strong>"':'Sin clientes.<br>Pulsa <strong>+</strong> para añadir el primero'}</p></div>`;return;}
+  el.innerHTML=list.map(c=>`
+    <div class="list-item" onclick="openCli('${c.id}');go('s-telas')">
+      <div class="li-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <div class="li-info"><div class="li-name">${esc(c.nombre)}</div><div class="li-sub">${c.telas.length} tela${c.telas.length!==1?'s':''}</div></div>
+      <div class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>`).join('');
+}
+
+function openCli(id){curCli=db.clientes.find(c=>c.id===id);document.getElementById('ttl-telas').textContent=curCli.nombre;renderTelas();}
+
+function openFormCli(c){
+  editingCli=c;prevScreenCli=c?'s-telas':'s-cli';
+  document.getElementById('ttl-fcli').textContent=c?'Editar cliente':'Nuevo cliente';
+  document.getElementById('fi-cli-nom').value=c?c.nombre:'';
+  document.getElementById('fi-cli-not').value=c?c.notas||'':'';
+  document.getElementById('btn-del-cli').style.display=c?'block':'none';
+  formDirty=false;go('s-fcli');
+}
+
+function saveCli(){
+  const n=document.getElementById('fi-cli-nom').value.trim();
+  if(!n){alert('El nombre es obligatorio');return;}
+  if(editingCli){editingCli.nombre=n;editingCli.notas=document.getElementById('fi-cli-not').value.trim();persist();renderCli();document.getElementById('ttl-telas').textContent=editingCli.nombre;toast('Cliente actualizado');go('s-telas');}
+  else{db.clientes.push({id:uid(),nombre:n,notas:document.getElementById('fi-cli-not').value.trim(),telas:[]});persist();renderCli();toast('Cliente añadido');go('s-cli');}
+}
+
+function delCli(){
+  if(!confirm('Eliminar este cliente y todas sus telas?'))return;
+  db.clientes=db.clientes.filter(c=>c!==editingCli);persist();renderCli();toast('Cliente eliminado');go('s-cli');
+}
+
+// ── TELAS ───────────────────────────────────────────────
+function renderTelas(){
+  const el=document.getElementById('lst-telas');
+  if(!curCli.telas.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><p>Sin telas.<br>Pulsa <strong>+</strong> para añadir una</p></div>';return;}
+  el.innerHTML=curCli.telas.map(t=>`
+    <div class="list-item" onclick="openTela('${t.id}')">
+      <div class="li-icon">${t.foto?`<img src="${t.foto}" alt="">`:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'}</div>
+      <div class="li-info"><div class="li-name">${esc(t.nombre)}</div><div class="li-sub">${t.medidas.length} medida${t.medidas.length!==1?'s':''}</div></div>
+      <span class="tag-${t.medidas.some(m=>m.tipo==='entera')?'entera':'taco'}" style="font-size:11px;padding:3px 8px">${t.medidas.some(m=>m.tipo==='entera')?'Pieza':'Taco'}</span>
+      <div class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>`).join('');
+}
+
+function openTela(id){
+  curTela=curCli.telas.find(t=>t.id===id);
+  document.getElementById('ttl-meds').textContent=curTela.nombre;
+  document.getElementById('bc-meds').textContent=curCli.nombre+' > '+curTela.nombre;
+  renderMeds();go('s-meds');
+}
+
+function openFormTela(t){
+  editingTela=t;newFoto=null;
+  document.getElementById('ttl-ftela').textContent=t?'Editar tela':'Nueva tela';
+  document.getElementById('fi-tela-nom').value=t?t.nombre:'';
+  document.getElementById('fi-tela-not').value=t?t.notas||'':'';
+  const fpw=document.getElementById('fp-wrap');
+  if(t&&t.foto){document.getElementById('fp-img').src=t.foto;fpw.style.display='block';}
+  else{fpw.style.display='none';}
+  document.getElementById('btn-del-tela').style.display=t?'block':'none';
+  formDirty=false;go('s-ftela');
+}
+
+function loadFoto(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{newFoto=ev.target.result;document.getElementById('fp-img').src=newFoto;document.getElementById('fp-wrap').style.display='block';markDirty();};
+  r.readAsDataURL(f);
+}
+function quitarFoto(){newFoto='remove';document.getElementById('fp-wrap').style.display='none';markDirty();}
+
+function saveTela(){
+  const n=document.getElementById('fi-tela-nom').value.trim();
+  if(!n){alert('El nombre es obligatorio');return;}
+  if(editingTela){
+    editingTela.nombre=n;editingTela.notas=document.getElementById('fi-tela-not').value.trim();
+    if(newFoto==='remove')editingTela.foto=null;else if(newFoto)editingTela.foto=newFoto;
+    persist();renderTelas();
+    document.getElementById('ttl-meds').textContent=editingTela.nombre;
+    document.getElementById('bc-meds').textContent=curCli.nombre+' > '+editingTela.nombre;
+    toast('Tela actualizada');go('s-meds');
+  }else{
+    const t={id:uid(),nombre:n,notas:document.getElementById('fi-tela-not').value.trim(),foto:newFoto&&newFoto!=='remove'?newFoto:null,medidas:[]};
+    curCli.telas.push(t);persist();renderTelas();toast('Tela añadida');go('s-telas');
+  }
+}
+
+function delTela(){
+  if(!confirm('Eliminar esta tela y sus medidas?'))return;
+  curCli.telas=curCli.telas.filter(t=>t!==editingTela);persist();renderTelas();toast('Tela eliminada');go('s-telas');
+}
+
+// ── MEDIDAS ─────────────────────────────────────────────
+function renderMeds(){
+  const el=document.getElementById('lst-meds');
+  if(!curTela.medidas.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 12h20M2 12l4-4m-4 4l4 4M22 12l-4-4m4 4l-4 4"/><rect x="6" y="5" width="12" height="14" rx="1" stroke-dasharray="3 2"/></svg><p>Sin medidas.<br>Pulsa <strong>+</strong> para añadir una</p></div>';return;}
+  el.innerHTML=curTela.medidas.map(m=>`
+    <div class="list-item" id="mi-${m.id}" draggable="true"
+      ondragstart="dStart(event,'${m.id}')" ondragover="dOver(event)" ondrop="dDrop(event,'${m.id}')" ondragend="dEnd()">
+      <div class="drag-handle"
+        ontouchstart="tStart(event,'${m.id}')" ontouchmove="tMove(event)" ontouchend="tEnd(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+      </div>
+      <div class="li-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><path d="M21 6H3M21 12H3M21 18H3"/><path d="M8 3v3M12 3v6M16 3v3"/></svg></div>
+      <div class="li-info" onclick="openMed('${m.id}')"><div class="li-name">${esc(m.nombre)}</div><div class="li-sub">Taco ${m.ta} cm &middot; Corte ${m.cl} cm</div></div>
+      <span class="tag-${m.tipo}" onclick="openMed('${m.id}')" style="cursor:pointer">${m.tipo==='entera'?'Pieza':'Taco'}</span>
+      <button class="btn-del-direct" onclick="event.stopPropagation();delMedDirecto('${m.id}')" aria-label="Eliminar medida">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function openMed(id){
+  curMed=curTela.medidas.find(m=>m.id===id);
+  document.getElementById('ttl-det').textContent=curMed.nombre;
+  renderDet();go('s-det');
+}
+
+function renderDet(){
+  const m=curMed;
+  document.getElementById('det-body').innerHTML=`
+    <div class="det-tag"><span class="tag-${m.tipo}">${m.tipo==='entera'?'Pieza entera (~240 cm)':'Taco (~85 cm)'}</span></div>
+    <div class="sec-hdr">Taco</div>
+    <div class="med-grid" style="grid-template-columns:1fr">
+      <div class="med-box"><div class="med-lbl">Ancho</div><div class="med-num">${m.ta}<span class="med-unit"> cm</span></div></div>
+    </div>
+    <div class="sec-hdr">Corte (maquina)</div>
+    <div class="med-grid" style="grid-template-columns:1fr">
+      <div class="med-box"><div class="med-lbl">Largo</div><div class="med-num" style="font-size:32px">${m.cl}<span class="med-unit"> cm</span></div></div>
+    </div>
+    ${m.obs?`<div class="sec-hdr">Observaciones</div><div class="obs-box">${esc(m.obs)}</div>`:''}
+  `;
+}
+
+function openFormMed(m){
+  editingMed=m;
+  document.getElementById('ttl-fmed').textContent=m?'Editar medida':'Nueva medida';
+  document.getElementById('fi-med-nom').value=m?m.nombre:'';
+  document.getElementById('fi-med-tipo').value=m?m.tipo:'taco';
+  document.getElementById('fi-ta').value=m?m.ta:'';
+  document.getElementById('fi-cl').value=m?m.cl:'';
+  document.getElementById('fi-med-obs').value=m?m.obs||'':'';
+  document.getElementById('btn-del-med').style.display=m?'block':'none';
+  document.getElementById('btn-dup-med').style.display=m?'block':'none';
+  formDirty=false;go('s-fmed');
+}
+
+function saveMed(){
+  const n=document.getElementById('fi-med-nom').value.trim();
+  if(!n){alert('El nombre es obligatorio');return;}
+  const d={nombre:n,tipo:document.getElementById('fi-med-tipo').value,ta:parseFloat(document.getElementById('fi-ta').value)||0,cl:parseFloat(document.getElementById('fi-cl').value)||0,obs:document.getElementById('fi-med-obs').value.trim()};
+  if(editingMed){Object.assign(editingMed,d);toast('Medida actualizada');}
+  else{d.id=uid();curTela.medidas.push(d);toast('Medida añadida');}
+  persist();renderMeds();go('s-meds');
+}
+
+function delMed(){
+  if(!confirm('Eliminar esta medida?'))return;
+  const delId=editingMed?editingMed.id:null;curTela.medidas=curTela.medidas.filter(m=>m.id!==delId);
+  persist();renderMeds();toast('Medida eliminada');go('s-meds');
+}
+
+
+function delMedDirecto(id){
+  if(!confirm('Eliminar esta medida?'))return;
+  curTela.medidas=curTela.medidas.filter(m=>m.id!==id);
+  persist();renderMeds();toast('Medida eliminada');
+}
+function duplicarMed(){
+  if(!curMed)return;
+  const c=Object.assign({},curMed,{id:uid(),nombre:curMed.nombre+' (copia)'});
+  curTela.medidas.push(c);persist();renderMeds();toast('Medida duplicada');go('s-meds');
+}
+
+function duplicarDesdeForm(){
+  if(!editingMed)return;
+  const c=Object.assign({},editingMed,{id:uid(),nombre:editingMed.nombre+' (copia)'});
+  curTela.medidas.push(c);persist();renderMeds();toast('Medida duplicada');go('s-meds');
+}
+
+// ── DRAG & DROP (desktop) ────────────────────────────────
+let dragSrcId=null;
+function dStart(e,id){dragSrcId=id;e.dataTransfer.effectAllowed='move';setTimeout(()=>{const el=document.getElementById('mi-'+id);if(el)el.classList.add('dragging');},0);}
+function dOver(e){e.preventDefault();}
+function dDrop(e,targetId){e.preventDefault();if(dragSrcId&&dragSrcId!==targetId)reorder(dragSrcId,targetId);dEnd();}
+function dEnd(){document.querySelectorAll('.list-item.dragging').forEach(el=>el.classList.remove('dragging'));dragSrcId=null;}
+
+// ── TOUCH DRAG (movil) ───────────────────────────────────
+function tStart(e,id){
+  touchDragId=id;touchStartY=e.touches[0].clientY;
+  const src=document.getElementById('mi-'+id);
+  touchClone=src.cloneNode(true);
+  const r=src.getBoundingClientRect();
+  touchClone.style.cssText=`position:fixed;left:0;right:0;top:${r.top}px;opacity:0.85;z-index:999;background:var(--bg2);pointer-events:none;border-bottom:0.5px solid var(--border)`;
+  document.body.appendChild(touchClone);src.classList.add('dragging');e.preventDefault();
+}
+function tMove(e){
+  if(!touchDragId||!touchClone)return;
+  const dy=e.touches[0].clientY-touchStartY;
+  touchClone.style.top=(parseFloat(touchClone.style.top)+dy)+'px';
+  touchStartY=e.touches[0].clientY;e.preventDefault();
+}
+function tEnd(e){
+  if(!touchDragId||!touchClone)return;
+  const mid=parseFloat(touchClone.style.top)+touchClone.getBoundingClientRect().height/2;
+  document.body.removeChild(touchClone);touchClone=null;
+  document.querySelectorAll('.list-item.dragging').forEach(el=>el.classList.remove('dragging'));
+  let targetId=null;
+  document.querySelectorAll('#lst-meds .list-item').forEach(item=>{
+    const r=item.getBoundingClientRect();
+    if(mid>=r.top&&mid<=r.bottom){const id=item.id.replace('mi-','');if(id!==touchDragId)targetId=id;}
+  });
+  if(targetId)reorder(touchDragId,targetId);
+  touchDragId=null;
+}
+
+function reorder(srcId,targetId){
+  const arr=curTela.medidas;
+  const si=arr.findIndex(m=>m.id===srcId),ti=arr.findIndex(m=>m.id===targetId);
+  if(si<0||ti<0)return;
+  const[item]=arr.splice(si,1);arr.splice(ti,0,item);
+  persist();renderMeds();
+}
+
+// ── BACKUP ───────────────────────────────────────────────
+function exportar(){
+  const fecha=new Date().toISOString().slice(0,10);
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='medidas-textil-'+fecha+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('Copia descargada');
+}
+
+function exportarCSV(){
+  const rows=[['Cliente','Tela','Notas tela','Medida','Tipo','Ancho taco (cm)','Largo corte (cm)','Observaciones']];
+  db.clientes.forEach(c=>{
+    c.telas.forEach(t=>{
+      if(!t.medidas.length){rows.push([c.nombre,t.nombre,t.notas||'','','','','','']);}
+      else{t.medidas.forEach(m=>{rows.push([c.nombre,t.nombre,t.notas||'',m.nombre,m.tipo==='entera'?'Pieza entera':'Taco',m.ta,m.cl,m.obs||'']);});}
+    });
+  });
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='medidas-textil-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('Excel exportado');
+}
+
+function importar(e){
+  const file=e.target.files[0];if(!file)return;
+  const msg=document.getElementById('import-msg');
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.clientes||!Array.isArray(data.clientes))throw new Error();
+      if(!confirm('Esto reemplazara todos los datos actuales. Continuar?')){e.target.value='';return;}
+      db=data;persist();renderCli();
+      msg.style.display='block';msg.style.color='green';msg.textContent='Restaurado correctamente ('+db.clientes.length+' clientes)';
+      setTimeout(()=>msg.style.display='none',4000);toast('Datos restaurados');
+    }catch(err){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Error: el archivo no es valido.';}
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+
+// ── CALCULADORA ──────────────────────────────────────────
+let calcLineas = [];
+
+function initCalc(){
+  calcLineas = [{id:uid(),nombre:'',talla:'',uds:''}];
+  renderLineas();
+  calcular();
+}
+
+function addLinea(){
+  calcLineas.push({id:uid(),nombre:'',talla:'',uds:''});
+  renderLineas();
+  calcular();
+}
+
+function removeLinea(id){
+  if(calcLineas.length===1){calcLineas[0]={id:calcLineas[0].id,nombre:'',talla:'',uds:''};renderLineas();calcular();return;}
+  calcLineas=calcLineas.filter(l=>l.id!==id);
+  renderLineas();calcular();
+}
+
+function renderLineas(){
+  document.getElementById('calc-lineas').innerHTML=calcLineas.map(l=>`
+    <div class="calc-linea" id="cl-${l.id}">
+      <input type="text" placeholder="Nombre (opcional)" value="${esc(l.nombre)}"
+        oninput="calcLineaField('${l.id}','nombre',this.value)">
+      <input type="number" inputmode="decimal" placeholder="cm" value="${l.talla}"
+        oninput="calcLineaField('${l.id}','talla',this.value)" step="0.5">
+      <input type="number" inputmode="numeric" placeholder="uds" value="${l.uds}"
+        oninput="calcLineaField('${l.id}','uds',this.value)">
+      <button class="btn-del-direct" onclick="removeLinea('${l.id}')" aria-label="Eliminar linea">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function calcLineaField(id,field,val){
+  const l=calcLineas.find(l=>l.id===id);
+  if(l)l[field]=val;
+  calcular();
+}
+
+function calcular(){
+  const margen=parseFloat(document.getElementById('calc-margen').value)||0;
+  const piezaM=parseFloat(document.getElementById('calc-pieza').value)||0;
+  const piezaCm=piezaM*100; // convertir metros a cm para operar
+  let totalCm=0;
+  let desglose='';
+  let hayDatos=false;
+
+  calcLineas.forEach(l=>{
+    const talla=parseFloat(l.talla)||0;
+    const uds=parseInt(l.uds)||0;
+    if(talla>0&&uds>0){
+      hayDatos=true;
+      const corte=talla+margen;
+      const subtotalCm=corte*uds;
+      totalCm+=subtotalCm;
+      const nombre=l.nombre||talla+' cm';
+      const subtotalM=(subtotalCm/100).toFixed(2);
+      desglose+=`<div class="calc-result-row">
+        <span class="lbl">${esc(nombre)} — ${uds} uds x (${talla}+${margen}) cm</span>
+        <span class="val">${subtotalM} m</span>
+      </div>`;
+    }
+  });
+
+  const output=document.getElementById('calc-output');
+  if(!hayDatos){output.style.display='none';return;}
+  output.style.display='block';
+
+  document.getElementById('calc-desglose').innerHTML=`<div class="calc-result">${desglose}</div>`;
+  const totalM=(totalCm/100).toFixed(2);
+  document.getElementById('calc-total-val').textContent=totalM;
+  document.getElementById('calc-pieza-lbl').textContent=piezaM;
+
+  if(piezaCm>0){
+    const tacos=Math.ceil(totalCm/piezaCm);
+    const sobraCm=(tacos*piezaCm)-totalCm;
+    const sobraM=(sobraCm/100).toFixed(2);
+    document.getElementById('calc-piezas-val').textContent=tacos;
+    document.getElementById('calc-sobra-val').textContent=sobraM+' m';
+  } else {
+    document.getElementById('calc-piezas-val').textContent='—';
+    document.getElementById('calc-sobra-val').textContent='—';
+  }
+}
+
+function limpiarCalc(){
+  calcLineas=[{id:uid(),nombre:'',talla:'',uds:''}];
+  document.getElementById('calc-margen').value='9';
+  document.getElementById('calc-pieza').value='50';
+  renderLineas();
+  document.getElementById('calc-output').style.display='none';
+}
+
+
+// ── ORDEN CLIENTES ───────────────────────────────────────
+let ordenAZ = false;
+
+function toggleOrden(){
+  ordenAZ = !ordenAZ;
+  const btn = document.getElementById('btn-orden');
+  btn.title = ordenAZ ? 'Orden: A-Z (pulsa para volver al original)' : 'Ordenar A-Z';
+  btn.style.color = ordenAZ ? 'var(--accent)' : '';
+  renderCli();
+  toast(ordenAZ ? 'Ordenado A-Z' : 'Orden original');
+}
+
+// ── INIT ─────────────────────────────────────────────────
+load();
+renderCli();
+initCalc();
+</script>
+</body>
+</html>
