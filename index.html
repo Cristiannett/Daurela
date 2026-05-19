@@ -316,17 +316,43 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
     <h1>Copia de seguridad</h1>
   </div>
   <div class="form-wrap">
-    <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:16px">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <span style="font-size:15px;font-weight:500">Exportar datos</span>
+        <span style="font-size:15px;font-weight:600">Exportar datos</span>
       </div>
-      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Descarga un <strong>.json</strong> con todos los datos. Guardalo en Google Drive para tenerlo a salvo.</p>
+      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Descarga un <strong>.json</strong> con todos los datos o subelo automaticamente a GitHub.</p>
       <button class="btn-primary" onclick="exportar()" style="margin-top:0">Descargar copia (.json)</button>
-      <button class="btn-secondary" onclick="exportarCSV()">
-        Exportar a Excel (.csv)
-      </button>
+      <button class="btn-secondary" onclick="exportarCSV()">Exportar a Excel (.csv)</button>
     </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.8"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+        <span style="font-size:15px;font-weight:600">Copia automatica en GitHub</span>
+      </div>
+      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:12px">Sube la copia directamente a tu repositorio con un toque. El token se guarda solo en tu movil.</p>
+      <div class="fg" style="margin-bottom:10px">
+        <label>Token de GitHub</label>
+        <div style="display:flex;gap:8px">
+          <input id="gh-token" type="password" placeholder="ghp_..." style="flex:1;border:1px solid var(--border2);border-radius:var(--rad-sm);padding:11px 13px;font-size:15px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none" oninput="guardarToken()">
+          <button class="btn-sm" onclick="toggleToken()" style="margin-top:0;flex-shrink:0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>Usuario GitHub</label>
+        <input id="gh-user" type="text" placeholder="Cristiannett" style="width:100%;border:1px solid var(--border2);border-radius:var(--rad-sm);padding:11px 13px;font-size:15px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none" oninput="guardarToken()">
+      </div>
+      <div class="fg" style="margin-bottom:14px">
+        <label>Repositorio</label>
+        <input id="gh-repo" type="text" placeholder="Daurela" style="width:100%;border:1px solid var(--border2);border-radius:var(--rad-sm);padding:11px 13px;font-size:15px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none" oninput="guardarToken()">
+      </div>
+      <button class="btn-primary" onclick="exportarGitHub()" style="margin-top:0">Subir copia a GitHub</button>
+      <div id="gh-msg" style="margin-top:10px;font-size:13px;display:none;border-radius:var(--rad-sm);padding:10px 12px"></div>
+    </div>
+
     <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rad);padding:16px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -859,10 +885,88 @@ function toggleOrden(){
   toast(ordenAZ ? 'Ordenado A-Z' : 'Orden original');
 }
 
+
+// ── GITHUB BACKUP ────────────────────────────────────────
+function guardarToken(){
+  localStorage.setItem('gh_token', document.getElementById('gh-token').value);
+  localStorage.setItem('gh_user', document.getElementById('gh-user').value);
+  localStorage.setItem('gh_repo', document.getElementById('gh-repo').value);
+}
+
+function cargarToken(){
+  const t=localStorage.getItem('gh_token');
+  const u=localStorage.getItem('gh_user');
+  const r=localStorage.getItem('gh_repo');
+  if(t)document.getElementById('gh-token').value=t;
+  if(u)document.getElementById('gh-user').value=u;
+  if(r)document.getElementById('gh-repo').value=r;
+}
+
+function toggleToken(){
+  const input=document.getElementById('gh-token');
+  input.type=input.type==='password'?'text':'password';
+}
+
+async function exportarGitHub(){
+  const token=document.getElementById('gh-token').value.trim();
+  const user=document.getElementById('gh-user').value.trim();
+  const repo=document.getElementById('gh-repo').value.trim();
+  const msg=document.getElementById('gh-msg');
+
+  if(!token||!user||!repo){
+    msg.style.display='block';
+    msg.style.background='var(--danger-bg)';
+    msg.style.color='var(--danger)';
+    msg.textContent='Rellena el token, usuario y repositorio.';
+    return;
+  }
+
+  msg.style.display='block';
+  msg.style.background='var(--bg3)';
+  msg.style.color='var(--txt2)';
+  msg.textContent='Subiendo...';
+
+  const fecha=new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
+  const filename='backups/daurela-backup-'+fecha+'.json';
+  const content=btoa(unescape(encodeURIComponent(JSON.stringify(db,null,2))));
+
+  try{
+    const res=await fetch('https://api.github.com/repos/'+user+'/'+repo+'/contents/'+filename,{
+      method:'PUT',
+      headers:{
+        'Authorization':'token '+token,
+        'Content-Type':'application/json',
+        'Accept':'application/vnd.github.v3+json'
+      },
+      body:JSON.stringify({
+        message:'Backup Daurela '+fecha,
+        content:content
+      })
+    });
+
+    if(res.ok){
+      msg.style.background='rgba(52,199,89,0.1)';
+      msg.style.color='#34c759';
+      msg.textContent='Copia subida correctamente a GitHub.';
+      toast('Copia guardada en GitHub');
+    } else {
+      const err=await res.json();
+      msg.style.background='var(--danger-bg)';
+      msg.style.color='var(--danger)';
+      msg.textContent='Error: '+(err.message||'No se pudo subir el archivo.');
+    }
+  }catch(e){
+    msg.style.background='var(--danger-bg)';
+    msg.style.color='var(--danger)';
+    msg.textContent='Error de conexion. Comprueba que tienes internet.';
+  }
+}
+
 // ── INIT ─────────────────────────────────────────────────
 load();
 renderCli();
 initCalc();
+cargarToken();
 </script>
 </body>
 </html>
