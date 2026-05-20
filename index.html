@@ -120,6 +120,29 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);color:var(--txt);border:1px solid var(--border2);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* FICHAJE */
+.mes-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:12px 16px}
+.mes-dia-hdr{text-align:center;font-size:11px;font-weight:700;color:var(--txt3);padding:4px 0;text-transform:uppercase;letter-spacing:0.4px}
+.mes-dia{text-align:center;padding:6px 2px;border-radius:var(--rad-xs);cursor:pointer;min-height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:background 0.12s;position:relative}
+.mes-dia:active{background:var(--bg3)}
+.mes-dia.vacio{cursor:default}
+.mes-dia.hoy{background:var(--bg3);border:1px solid var(--border3)}
+.mes-dia.con-horas .dia-num{font-weight:700;color:var(--txt)}
+.mes-dia .dia-num{font-size:14px;color:var(--txt2);line-height:1}
+.mes-dia .dia-dot{width:5px;height:5px;border-radius:50%;background:var(--taco-txt)}
+.mes-dia .dia-dot.extra{background:#ff9f0a}
+.fichaje-resumen{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 16px 14px}
+.fich-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px 12px;text-align:center}
+.fich-lbl{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3);margin-bottom:6px;font-weight:600}
+.fich-num{font-size:22px;font-weight:700;letter-spacing:-0.5px;color:var(--txt)}
+.fich-unit{font-size:11px;color:var(--txt2)}
+.mes-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 4px}
+.mes-nav h2{font-size:17px;font-weight:700;letter-spacing:-0.3px}
+.fich-form{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin:0 16px 16px}
+.fich-form-title{font-size:15px;font-weight:600;margin-bottom:14px;color:var(--txt)}
+.horas-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+
+
 /* CALCULADORA */
 .calc-linea{display:grid;grid-template-columns:1fr 80px 80px 36px;gap:8px;align-items:center;margin-bottom:10px}
 .calc-linea input{padding:11px 10px;border:1px solid var(--border2);border-radius:var(--rad-sm);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;width:100%;-webkit-appearance:none}
@@ -150,6 +173,9 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
     <h1><span class="app-name">Daurela</span></h1>
     <button class="btn-icon" onclick="go('s-calc')" aria-label="Calculadora de pedidos">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="2" width="16" height="20" rx="2"/><rect x="7" y="5" width="10" height="4" rx="1"/><circle cx="8" cy="13" r="1" fill="currentColor"/><circle cx="12" cy="13" r="1" fill="currentColor"/><circle cx="16" cy="13" r="1" fill="currentColor"/><circle cx="8" cy="17" r="1" fill="currentColor"/><circle cx="12" cy="17" r="1" fill="currentColor"/><circle cx="16" cy="17" r="1" fill="currentColor"/></svg>
+    </button>
+    <button class="btn-icon" onclick="go('s-fichaje')" aria-label="Fichaje">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     </button>
     <button class="btn-icon" onclick="toggleOrden()" id="btn-orden" aria-label="Ordenar clientes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M7 12h10M11 18h4"/></svg>
@@ -423,6 +449,93 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 
   </div>
 </div>
+
+<!-- FICHAJE -->
+<div id="s-fichaje" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Fichaje</h1>
+    <button class="btn-icon" onclick="go('s-fich-config')" aria-label="Configuracion">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+  </div>
+
+  <div class="mes-nav">
+    <button class="btn-icon" onclick="cambiarMes(-1)" aria-label="Mes anterior">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 id="fich-mes-titulo"></h2>
+    <button class="btn-icon" onclick="cambiarMes(1)" aria-label="Mes siguiente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <div class="mes-grid" id="fich-calendario"></div>
+
+  <div class="fichaje-resumen">
+    <div class="fich-box">
+      <div class="fich-lbl">Normales</div>
+      <div class="fich-num" id="fich-total-norm">0</div>
+      <div class="fich-unit">horas</div>
+    </div>
+    <div class="fich-box">
+      <div class="fich-lbl">Extras</div>
+      <div class="fich-num" id="fich-total-extra" style="color:#ff9f0a">0</div>
+      <div class="fich-unit">horas</div>
+    </div>
+    <div class="fich-box">
+      <div class="fich-lbl">Total</div>
+      <div class="fich-num" id="fich-total-todo">0</div>
+      <div class="fich-unit">horas</div>
+    </div>
+  </div>
+
+  <div id="fich-form-wrap" style="display:none">
+    <div class="fich-form">
+      <div class="fich-form-title" id="fich-form-titulo">Apuntar horas</div>
+      <div class="horas-row">
+        <div class="fg" style="margin-bottom:0">
+          <label>Horas normales</label>
+          <input id="fich-norm" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label>Horas extra</label>
+          <input id="fich-extra" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:12px">
+        <label>Notas (opcional)</label>
+        <input id="fich-nota" type="text" placeholder="Ej: tarde en almacen...">
+      </div>
+      <button class="btn-primary" onclick="guardarFichaje()" style="margin-top:0">Guardar</button>
+      <button id="btn-del-fich" class="btn-danger" onclick="eliminarFichaje()" style="display:none">Eliminar este dia</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG FICHAJE -->
+<div id="s-fich-config" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-fichaje')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Configuracion fichaje</h1>
+  </div>
+  <div class="form-wrap">
+    <div class="fg">
+      <label>Horas de jornada normal</label>
+      <input id="fich-jornada" type="number" inputmode="decimal" placeholder="6" value="6" step="0.5" oninput="guardarConfigFichaje()">
+    </div>
+    <p style="font-size:13px;color:var(--txt3);line-height:1.6;margin-top:-8px">Las horas que pases de este numero se contaran automaticamente como extras.</p>
+    <div class="divider"></div>
+    <div class="sec-hdr" style="margin:0 -16px 14px">Exportar fichaje</div>
+    <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Exporta el resumen del mes actual en formato texto para copiarlo o enviarlo.</p>
+    <button class="btn-secondary" onclick="exportarFichajeMes()" style="margin-top:0">Exportar resumen del mes</button>
+    <div id="fich-export-txt" style="display:none;margin-top:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px;font-size:13px;color:var(--txt2);line-height:1.8;white-space:pre-wrap;font-family:monospace"></div>
+  </div>
+</div>
 </div>
 
 <script>
@@ -446,9 +559,11 @@ function toast(msg){
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);
 }
 
-function go(id){
+function go(id, addHistory){
+  if(addHistory===undefined) addHistory=true;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const el=document.getElementById(id);el.classList.add('active');el.scrollTop=0;
+  if(addHistory) history.pushState({screen:id}, '', '');
 }
 
 function cancelForm(type){
@@ -734,9 +849,10 @@ function reorder(srcId,targetId){
 // ── BACKUP ───────────────────────────────────────────────
 function exportar(){
   const fecha=new Date().toISOString().slice(0,10);
-  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const backup={clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada()};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='medidas-textil-'+fecha+'.json';
+  const a=document.createElement('a');a.href=url;a.download='daurela-backup-'+fecha+'.json';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   toast('Copia descargada');
 }
@@ -766,7 +882,10 @@ function importar(e){
       const data=JSON.parse(ev.target.result);
       if(!data.clientes||!Array.isArray(data.clientes))throw new Error();
       if(!confirm('Esto reemplazara todos los datos actuales. Continuar?')){e.target.value='';return;}
-      db=data;persist();renderCli();
+      db={clientes:data.clientes};persist();
+      if(data.fichajes)saveFichajes(data.fichajes);
+      if(data.jornada){localStorage.setItem('fich_jornada',data.jornada);cargarConfigFichaje();}
+      renderCli();renderFichaje();
       msg.style.display='block';msg.style.color='green';msg.textContent='Restaurado correctamente ('+db.clientes.length+' clientes)';
       setTimeout(()=>msg.style.display='none',4000);toast('Datos restaurados');
     }catch(err){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Error: el archivo no es valido.';}
@@ -928,7 +1047,8 @@ async function exportarGitHub(){
 
   const fecha=new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
   const filename='backups/daurela-backup-'+fecha+'.json';
-  const content=btoa(unescape(encodeURIComponent(JSON.stringify(db,null,2))));
+  const backup={clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada()};
+  const content=btoa(unescape(encodeURIComponent(JSON.stringify(backup,null,2))));
 
   try{
     const res=await fetch('https://api.github.com/repos/'+user+'/'+repo+'/contents/'+filename,{
@@ -962,11 +1082,189 @@ async function exportarGitHub(){
   }
 }
 
+
+
+// ── FICHAJE ───────────────────────────────────────────────
+let fichMes = new Date().getMonth();
+let fichAnio = new Date().getFullYear();
+let fichDiaSeleccionado = null;
+
+function getFichajeKey(){ return 'fichaje_v1'; }
+function loadFichajes(){ try{ const d=localStorage.getItem(getFichajeKey()); return d?JSON.parse(d):{}; }catch(e){return {};} }
+function saveFichajes(data){ localStorage.setItem(getFichajeKey(), JSON.stringify(data)); }
+function getJornada(){ return parseFloat(localStorage.getItem('fich_jornada'))||6; }
+function guardarConfigFichaje(){
+  const v=parseFloat(document.getElementById('fich-jornada').value)||6;
+  localStorage.setItem('fich_jornada',v);
+  renderFichaje();
+}
+function cargarConfigFichaje(){
+  const v=getJornada();
+  document.getElementById('fich-jornada').value=v;
+}
+
+function cambiarMes(dir){
+  fichMes+=dir;
+  if(fichMes>11){fichMes=0;fichAnio++;}
+  if(fichMes<0){fichMes=11;fichAnio--;}
+  fichDiaSeleccionado=null;
+  document.getElementById('fich-form-wrap').style.display='none';
+  renderFichaje();
+}
+
+function renderFichaje(){
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('fich-mes-titulo').textContent=meses[fichMes]+' '+fichAnio;
+
+  const fichajes=loadFichajes();
+  const hoy=new Date();
+  const primerDia=new Date(fichAnio,fichMes,1).getDay();
+  const diasMes=new Date(fichAnio,fichMes+1,0).getDate();
+  const offset=primerDia===0?6:primerDia-1; // lunes=0
+
+  const dias=['L','M','X','J','V','S','D'];
+  let html=dias.map(d=>`<div class="mes-dia-hdr">${d}</div>`).join('');
+
+  for(let i=0;i<offset;i++) html+=`<div class="mes-dia vacio"></div>`;
+
+  let totalNorm=0,totalExtra=0;
+
+  for(let d=1;d<=diasMes;d++){
+    const key=fichAnio+'-'+String(fichMes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const reg=fichajes[key];
+    const esHoy=hoy.getDate()===d&&hoy.getMonth()===fichMes&&hoy.getFullYear()===fichAnio;
+    const seleccionado=fichDiaSeleccionado===key;
+    let clases='mes-dia'+(esHoy?' hoy':'')+(reg?' con-horas':'')+(seleccionado?' hoy':'');
+    let dot='';
+    if(reg){
+      totalNorm+=reg.norm||0;
+      totalExtra+=reg.extra||0;
+      dot=`<div class="dia-dot${(reg.extra>0)?' extra':''}"></div>`;
+    }
+    html+=`<div class="${clases}" onclick="seleccionarDia('${key}',${d})">
+      <span class="dia-num">${d}</span>${dot}
+    </div>`;
+  }
+
+  document.getElementById('fich-calendario').innerHTML=html;
+  document.getElementById('fich-total-norm').textContent=totalNorm%1===0?totalNorm:totalNorm.toFixed(1);
+  document.getElementById('fich-total-extra').textContent=totalExtra%1===0?totalExtra:totalExtra.toFixed(1);
+  const tot=totalNorm+totalExtra;
+  document.getElementById('fich-total-todo').textContent=tot%1===0?tot:tot.toFixed(1);
+}
+
+function seleccionarDia(key, dia){
+  fichDiaSeleccionado=key;
+  const fichajes=loadFichajes();
+  const reg=fichajes[key]||{norm:'',extra:'',nota:''};
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('fich-form-titulo').textContent='Dia '+dia+' de '+meses[fichMes];
+  document.getElementById('fich-norm').value=reg.norm||'';
+  document.getElementById('fich-extra').value=reg.extra||'';
+  document.getElementById('fich-nota').value=reg.nota||'';
+  document.getElementById('btn-del-fich').style.display=fichajes[key]?'block':'none';
+  document.getElementById('fich-form-wrap').style.display='block';
+  document.getElementById('fich-form-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
+  renderFichaje();
+}
+
+function guardarFichaje(){
+  if(!fichDiaSeleccionado)return;
+  const jornada=getJornada();
+  let norm=parseFloat(document.getElementById('fich-norm').value)||0;
+  let extra=parseFloat(document.getElementById('fich-extra').value)||0;
+  const nota=document.getElementById('fich-nota').value.trim();
+
+  // Auto-calcular extras si solo ponen horas normales y superan la jornada
+  if(norm>jornada&&extra===0){
+    extra=parseFloat((norm-jornada).toFixed(2));
+    norm=jornada;
+  }
+
+  const fichajes=loadFichajes();
+  fichajes[fichDiaSeleccionado]={norm,extra,nota};
+  saveFichajes(fichajes);
+  document.getElementById('fich-form-wrap').style.display='none';
+  fichDiaSeleccionado=null;
+  renderFichaje();
+  toast('Horas guardadas');
+}
+
+function eliminarFichaje(){
+  if(!fichDiaSeleccionado||!confirm('Eliminar el registro de este dia?'))return;
+  const fichajes=loadFichajes();
+  delete fichajes[fichDiaSeleccionado];
+  saveFichajes(fichajes);
+  document.getElementById('fich-form-wrap').style.display='none';
+  fichDiaSeleccionado=null;
+  renderFichaje();
+  toast('Registro eliminado');
+}
+
+function exportarFichajeMes(){
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const fichajes=loadFichajes();
+  const diasMes=new Date(fichAnio,fichMes+1,0).getDate();
+  let txt=meses[fichMes]+' '+fichAnio+'\n';
+  txt+='━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  let totalNorm=0,totalExtra=0;
+  for(let d=1;d<=diasMes;d++){
+    const key=fichAnio+'-'+String(fichMes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const reg=fichajes[key];
+    if(reg){
+      txt+=`Dia ${String(d).padStart(2,' ')}: ${reg.norm}h normales`;
+      if(reg.extra>0) txt+=` + ${reg.extra}h extras`;
+      if(reg.nota) txt+=` (${reg.nota})`;
+      txt+='\n';
+      totalNorm+=reg.norm||0;
+      totalExtra+=reg.extra||0;
+    }
+  }
+  txt+='━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  txt+=`Total normales: ${totalNorm}h\n`;
+  txt+=`Total extras:   ${totalExtra}h\n`;
+  txt+=`TOTAL:          ${totalNorm+totalExtra}h`;
+  const el=document.getElementById('fich-export-txt');
+  el.style.display='block';
+  el.textContent=txt;
+  // Copiar al portapapeles
+  navigator.clipboard.writeText(txt).then(()=>toast('Copiado al portapapeles')).catch(()=>toast('Resumen generado'));
+}
+
+// ── NAVEGACION BOTON ATRAS ANDROID ───────────────────────
+window.addEventListener('popstate', function(e){
+  // Si hay una pantalla activa que no sea la principal, volver atrás
+  const active = document.querySelector('.screen.active');
+  if(!active) return;
+  const id = active.id;
+
+  if(id === 's-cli' || id === 's-search'){
+    // Estamos en la raíz, dejar que el sistema minimice
+    history.pushState({screen:'s-cli'}, '', '');
+    return;
+  }
+  // Navegar a la pantalla anterior lógica
+  if(id === 's-telas') go('s-cli');
+  else if(id === 's-meds') go('s-telas');
+  else if(id === 's-det') go('s-meds');
+  else if(id === 's-fcli') cancelForm('cli');
+  else if(id === 's-ftela') cancelForm('tela');
+  else if(id === 's-fmed') cancelForm('med');
+  else if(id === 's-backup') go('s-cli');
+  else if(id === 's-fichaje') go('s-cli');
+  else if(id === 's-fich-config') go('s-fichaje');
+  else if(id === 's-calc') go('s-cli');
+  else go('s-cli');
+});
+
 // ── INIT ─────────────────────────────────────────────────
 load();
 renderCli();
 initCalc();
 cargarToken();
+history.replaceState({screen:'s-cli'}, '', '');
+renderFichaje();
+cargarConfigFichaje();
 </script>
 </body>
 </html>
