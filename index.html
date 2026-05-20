@@ -475,11 +475,11 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
       <div class="fg" style="margin-bottom:0">
         <label>Margen por corte (cm)</label>
-        <input id="calc-margen" type="number" inputmode="decimal" placeholder="9" value="9" step="0.5" oninput="calcular()">
+        <input id="calc-margen" type="number" inputmode="decimal" placeholder="0" value="0" step="0.5" oninput="calcular()">
       </div>
       <div class="fg" style="margin-bottom:0">
         <label>Largo de la pieza (m)</label>
-        <input id="calc-pieza" type="number" inputmode="decimal" placeholder="50" value="50" step="0.5" oninput="calcular()">
+        <input id="calc-pieza" type="number" inputmode="decimal" placeholder="0" value="0" step="0.5" oninput="calcular()">
       </div>
     </div>
 
@@ -1076,8 +1076,8 @@ function calcular(){
 
 function limpiarCalc(){
   calcLineas=[{id:uid(),nombre:'',talla:'',uds:''}];
-  document.getElementById('calc-margen').value='9';
-  document.getElementById('calc-pieza').value='50';
+  document.getElementById('calc-margen').value='0';
+  document.getElementById('calc-pieza').value='0';
   renderLineas();
   document.getElementById('calc-output').style.display='none';
 }
@@ -1139,20 +1139,40 @@ async function exportarGitHub(){
   const fecha=new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
   const filename='backups/daurela-backup-'+fecha+'.json';
   const backup={clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
-  const content=btoa(unescape(encodeURIComponent(JSON.stringify(backup,null,2))));
+
+  // Codificar en base64 de forma segura para Unicode
+  const jsonStr=JSON.stringify(backup,null,2);
+  const bytes=new TextEncoder().encode(jsonStr);
+  let binary='';
+  bytes.forEach(b=>binary+=String.fromCharCode(b));
+  const content=btoa(binary);
 
   try{
+    // Primero comprobar si ya existe el archivo (para hacer update en vez de create)
+    let sha=null;
+    try{
+      const check=await fetch('https://api.github.com/repos/'+user+'/'+repo+'/contents/'+filename,{
+        headers:{
+          'Authorization':'Bearer '+token,
+          'Accept':'application/vnd.github+json',
+          'X-GitHub-Api-Version':'2022-11-28'
+        }
+      });
+      if(check.ok){const d=await check.json();sha=d.sha;}
+    }catch(e){}
+
+    const body={message:'Backup Daurela '+fecha,content:content};
+    if(sha) body.sha=sha;
+
     const res=await fetch('https://api.github.com/repos/'+user+'/'+repo+'/contents/'+filename,{
       method:'PUT',
       headers:{
-        'Authorization':'token '+token,
-        'Content-Type':'application/json',
-        'Accept':'application/vnd.github.v3+json'
+        'Authorization':'Bearer '+token,
+        'Accept':'application/vnd.github+json',
+        'X-GitHub-Api-Version':'2022-11-28',
+        'Content-Type':'application/json'
       },
-      body:JSON.stringify({
-        message:'Backup Daurela '+fecha,
-        content:content
-      })
+      body:JSON.stringify(body)
     });
 
     if(res.ok){
@@ -1160,7 +1180,7 @@ async function exportarGitHub(){
       msg.style.color='#34c759';
       msg.textContent='Copia subida correctamente a GitHub.';
       toast('Copia guardada en GitHub');
-    } else {
+    }else{
       const err=await res.json();
       msg.style.background='var(--danger-bg)';
       msg.style.color='var(--danger)';
@@ -1169,7 +1189,8 @@ async function exportarGitHub(){
   }catch(e){
     msg.style.background='var(--danger-bg)';
     msg.style.color='var(--danger)';
-    msg.textContent='Error de conexion. Comprueba que tienes internet.';
+    msg.textContent='Error de red. Intentalo de nuevo.';
+    console.error(e);
   }
 }
 
