@@ -120,6 +120,18 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);color:var(--txt);border:1px solid var(--border2);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* SPLASH */
+#splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity 0.5s ease,transform 0.5s ease}
+#splash.hide{opacity:0;transform:scale(1.05);pointer-events:none}
+.splash-logo{font-size:42px;font-weight:800;letter-spacing:-2px;background:linear-gradient(135deg,#fff 0%,#666 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease}
+.splash-logo.show{opacity:1;transform:translateY(0)}
+.splash-sub{font-size:13px;color:var(--txt3);margin-top:8px;letter-spacing:1px;text-transform:uppercase;opacity:0;transition:opacity 0.6s ease 0.3s}
+.splash-sub.show{opacity:1}
+.splash-dot{width:6px;height:6px;border-radius:50%;background:var(--txt3);margin-top:32px;opacity:0;transition:opacity 0.4s ease 0.6s}
+.splash-dot.show{opacity:1;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:0.3}50%{opacity:1}}
+
+
 /* HOME */
 .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:24px 20px}
 .home-btn{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -193,6 +205,11 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 </style>
 </head>
 <body>
+<div id="splash">
+  <div class="splash-logo" id="splash-logo">Daurela</div>
+  <div class="splash-sub" id="splash-sub">Tu taller en el bolsillo</div>
+  <div class="splash-dot" id="splash-dot"></div>
+</div>
 <div id="app">
 
 <div id="toast" class="toast"></div>
@@ -204,6 +221,18 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
     <button class="btn-icon" onclick="go('s-backup')" aria-label="Backup">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     </button>
+  </div>
+  <div id="weather-widget" style="margin:0 20px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="fetchWeather()">
+    <div id="weather-icon" style="font-size:36px;line-height:1">⛅</div>
+    <div style="flex:1">
+      <div id="weather-temp" style="font-size:26px;font-weight:700;letter-spacing:-1px">--°</div>
+      <div id="weather-desc" style="font-size:13px;color:var(--txt2);margin-top:2px">Valencia · Cargando...</div>
+    </div>
+    <div style="text-align:right">
+      <div id="weather-hum" style="font-size:13px;color:var(--txt2)">Hum: --%</div>
+      <div id="weather-wind" style="font-size:13px;color:var(--txt2);margin-top:2px">Viento: -- km/h</div>
+      <div id="weather-time" style="font-size:11px;color:var(--txt3);margin-top:4px"></div>
+    </div>
   </div>
   <div class="home-grid">
     <div class="home-btn" onclick="go('s-clientes-list')">
@@ -1197,6 +1226,86 @@ async function exportarGitHub(){
 
 
 
+
+// ── TIEMPO ───────────────────────────────────────────────
+async function fetchWeather(){
+  const iconEl=document.getElementById('weather-icon');
+  const tempEl=document.getElementById('weather-temp');
+  const descEl=document.getElementById('weather-desc');
+  const humEl=document.getElementById('weather-hum');
+  const windEl=document.getElementById('weather-wind');
+  const timeEl=document.getElementById('weather-time');
+
+  descEl.textContent='Valencia · Actualizando...';
+
+  try{
+    // Open-Meteo API - gratuita, sin API key, coordenadas de Valencia
+    const url='https://api.open-meteo.com/v1/forecast?latitude=39.47&longitude=-0.376&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Europe/Madrid';
+    const res=await fetch(url);
+    const data=await res.json();
+    const cur=data.current;
+
+    const temp=Math.round(cur.temperature_2m);
+    const hum=cur.relative_humidity_2m;
+    const wind=Math.round(cur.wind_speed_10m);
+    const code=cur.weather_code;
+
+    tempEl.textContent=temp+'°';
+    humEl.textContent='Hum: '+hum+'%';
+    windEl.textContent='Viento: '+wind+' km/h';
+
+    const {icon,desc}=weatherCode(code);
+    iconEl.textContent=icon;
+    const ahora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    descEl.textContent='Valencia · '+desc;
+    timeEl.textContent='Actualizado a las '+ahora;
+
+    localStorage.setItem('weather_cache',JSON.stringify({temp,hum,wind,icon,desc,time:ahora}));
+  }catch(e){
+    descEl.textContent='Valencia · Sin conexion';
+    const cache=localStorage.getItem('weather_cache');
+    if(cache){
+      const d=JSON.parse(cache);
+      tempEl.textContent=d.temp+'°';
+      humEl.textContent='Hum: '+d.hum+'%';
+      windEl.textContent='Viento: '+d.wind+' km/h';
+      document.getElementById('weather-icon').textContent=d.icon;
+      descEl.textContent='Valencia · '+d.desc;
+      timeEl.textContent='Ultimo dato: '+d.time;
+    }
+  }
+}
+
+function weatherCode(code){
+  if(code===0) return {icon:'☀️',desc:'Despejado'};
+  if(code<=2) return {icon:'🌤️',desc:'Poco nublado'};
+  if(code===3) return {icon:'☁️',desc:'Nublado'};
+  if(code<=49) return {icon:'🌫️',desc:'Niebla'};
+  if(code<=59) return {icon:'🌦️',desc:'Llovizna'};
+  if(code<=69) return {icon:'🌧️',desc:'Lluvia'};
+  if(code<=79) return {icon:'🌨️',desc:'Nieve'};
+  if(code<=82) return {icon:'🌧️',desc:'Chubascos'};
+  if(code<=84) return {icon:'🌨️',desc:'Nieve intensa'};
+  if(code<=99) return {icon:'⛈️',desc:'Tormenta'};
+  return {icon:'🌡️',desc:'Desconocido'};
+}
+
+function initWeather(){
+  // Cargar cache primero para mostrar algo inmediato
+  const cache=localStorage.getItem('weather_cache');
+  if(cache){
+    const d=JSON.parse(cache);
+    document.getElementById('weather-temp').textContent=d.temp+'°';
+    document.getElementById('weather-hum').textContent='Hum: '+d.hum+'%';
+    document.getElementById('weather-wind').textContent='Viento: '+d.wind+' km/h';
+    document.getElementById('weather-icon').textContent=d.icon;
+    document.getElementById('weather-desc').textContent='Valencia · '+d.desc;
+    document.getElementById('weather-time').textContent='Ultimo dato: '+d.time;
+  }
+  // Luego actualizar
+  fetchWeather();
+}
+
 // ── NOTAS ────────────────────────────────────────────────
 let filtroNotas = 'todas';
 let editandoNota = null;
@@ -1345,6 +1454,26 @@ function limpiarCompletadas(){
   saveNotas(pendientes);
   renderNotas();
   toast('Completadas eliminadas');
+}
+
+
+// ── SPLASH ───────────────────────────────────────────────
+function mostrarSplash(){
+  const splash=document.getElementById('splash');
+  const logo=document.getElementById('splash-logo');
+  const sub=document.getElementById('splash-sub');
+  const dot=document.getElementById('splash-dot');
+
+  // Animar elementos con pequeños delays
+  setTimeout(()=>logo.classList.add('show'), 100);
+  setTimeout(()=>sub.classList.add('show'), 300);
+  setTimeout(()=>dot.classList.add('show'), 600);
+
+  // Ocultar splash y mostrar app
+  setTimeout(()=>{
+    splash.classList.add('hide');
+    setTimeout(()=>splash.remove(), 500);
+  }, 1800);
 }
 
 // ── FICHAJE ───────────────────────────────────────────────
@@ -1527,9 +1656,11 @@ renderCli();
 initCalc();
 cargarToken();
 history.replaceState({screen:'s-cli'}, '', '');
+mostrarSplash();
 renderFichaje();
 cargarConfigFichaje();
 renderNotas();
+initWeather();
 </script>
 </body>
 </html>
