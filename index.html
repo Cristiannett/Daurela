@@ -120,6 +120,36 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);color:var(--txt);border:1px solid var(--border2);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* HOME */
+.home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:24px 20px}
+.home-btn{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.home-btn:active .home-icon{transform:scale(0.92);opacity:0.85}
+.home-icon{width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.35);transition:transform 0.15s,opacity 0.15s}
+.home-icon svg{width:32px;height:32px;stroke-width:1.8}
+.home-btn span{font-size:12px;font-weight:500;color:var(--txt2);text-align:center}
+
+
+/* NOTAS */
+.nota-item{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:flex-start;gap:12px}
+.nota-item.completada .nota-txt{text-decoration:line-through;color:var(--txt3)}
+.nota-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border3);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-top:1px}
+.nota-check.done{background:var(--taco-txt);border-color:var(--taco-txt)}
+.nota-check.done svg{display:block}
+.nota-check svg{display:none;width:13px;height:13px;stroke:var(--bg);stroke-width:3}
+.nota-body{flex:1;min-width:0}
+.nota-txt{font-size:15px;color:var(--txt);line-height:1.5;word-break:break-word}
+.nota-meta{font-size:12px;color:var(--txt3);margin-top:3px}
+.nota-actions{display:flex;gap:4px;flex-shrink:0}
+.nota-fecha-hdr{padding:8px 16px 5px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--txt3);background:var(--bg2);border-bottom:1px solid var(--border)}
+.nota-input-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;z-index:10}
+.nota-input-bar input{flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none}
+.nota-input-bar input:focus{border-color:var(--border3)}
+.nota-input-bar button{background:var(--accent);color:var(--accent-txt);border:none;border-radius:var(--rad);padding:0 18px;font-size:15px;font-weight:600;cursor:pointer;flex-shrink:0}
+.filtro-bar{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid var(--border);overflow-x:auto}
+.filtro-btn{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid var(--border2);background:none;color:var(--txt2);cursor:pointer;white-space:nowrap;font-family:inherit}
+.filtro-btn.activo{background:var(--accent);color:var(--accent-txt);border-color:var(--accent)}
+
+
 /* FICHAJE */
 .mes-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:12px 16px}
 .mes-dia-hdr{text-align:center;font-size:11px;font-weight:700;color:var(--txt3);padding:4px 0;text-transform:uppercase;letter-spacing:0.4px}
@@ -169,22 +199,61 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 
 <!-- CLIENTES -->
 <div id="s-cli" class="screen active">
-  <div class="topbar">
+  <div class="topbar" style="border-bottom:none">
     <h1><span class="app-name">Daurela</span></h1>
-    <button class="btn-icon" onclick="go('s-calc')" aria-label="Calculadora de pedidos">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="2" width="16" height="20" rx="2"/><rect x="7" y="5" width="10" height="4" rx="1"/><circle cx="8" cy="13" r="1" fill="currentColor"/><circle cx="12" cy="13" r="1" fill="currentColor"/><circle cx="16" cy="13" r="1" fill="currentColor"/><circle cx="8" cy="17" r="1" fill="currentColor"/><circle cx="12" cy="17" r="1" fill="currentColor"/><circle cx="16" cy="17" r="1" fill="currentColor"/></svg>
-    </button>
-    <button class="btn-icon" onclick="go('s-fichaje')" aria-label="Fichaje">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    </button>
-    <button class="btn-icon" onclick="toggleOrden()" id="btn-orden" aria-label="Ordenar clientes">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M7 12h10M11 18h4"/></svg>
-    </button>
-    <button class="btn-icon" onclick="go('s-search')" aria-label="Buscar todo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-    </button>
-    <button class="btn-icon" onclick="go('s-backup')" aria-label="Copia de seguridad">
+    <button class="btn-icon" onclick="go('s-backup')" aria-label="Backup">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </button>
+  </div>
+  <div class="home-grid">
+    <div class="home-btn" onclick="go('s-clientes-list')">
+      <div class="home-icon" style="background:linear-gradient(135deg,#2c6bed,#1a4fc4)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+      <span>Clientes</span>
+    </div>
+    <div class="home-btn" onclick="go('s-search')">
+      <div class="home-icon" style="background:linear-gradient(135deg,#636366,#3a3a3c)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </div>
+      <span>Buscar</span>
+    </div>
+    <div class="home-btn" onclick="go('s-calc')">
+      <div class="home-icon" style="background:linear-gradient(135deg,#30d158,#1a7a32)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><rect x="7" y="5" width="10" height="4" rx="1"/><circle cx="8" cy="13" r="1" fill="white"/><circle cx="12" cy="13" r="1" fill="white"/><circle cx="16" cy="13" r="1" fill="white"/><circle cx="8" cy="17" r="1" fill="white"/><circle cx="12" cy="17" r="1" fill="white"/><circle cx="16" cy="17" r="1" fill="white"/></svg>
+      </div>
+      <span>Calculadora</span>
+    </div>
+    <div class="home-btn" onclick="go('s-fichaje')">
+      <div class="home-icon" style="background:linear-gradient(135deg,#ff9f0a,#c85a00)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <span>Fichaje</span>
+    </div>
+    <div class="home-btn" onclick="go('s-notas')">
+      <div class="home-icon" style="background:linear-gradient(135deg,#ffd60a,#b8890a)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <span>Notas</span>
+    </div>
+    <div class="home-btn" onclick="go('s-backup')">
+      <div class="home-icon" style="background:linear-gradient(135deg,#64d2ff,#0071a4)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <span>Backup</span>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENTES LIST -->
+<div id="s-clientes-list" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Clientes</h1>
+    <button class="btn-icon" onclick="toggleOrden()" id="btn-orden" aria-label="Ordenar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M7 12h10M11 18h4"/></svg>
     </button>
   </div>
   <div class="search-wrap"><input id="q-cli" type="search" placeholder="Buscar cliente..." oninput="renderCli()"></div>
@@ -193,7 +262,6 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
   </button>
 </div>
-
 <!-- BUSQUEDA GLOBAL -->
 <div id="s-search" class="screen">
   <div class="topbar">
@@ -532,6 +600,32 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
     <div id="fich-export-txt" style="display:none;margin-top:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px;font-size:13px;color:var(--txt2);line-height:1.8;white-space:pre-wrap;font-family:monospace"></div>
   </div>
 </div>
+
+<!-- NOTAS -->
+<div id="s-notas" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Notas</h1>
+    <button class="btn-icon" onclick="limpiarCompletadas()" aria-label="Limpiar completadas" title="Eliminar completadas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </button>
+  </div>
+  <div class="filtro-bar">
+    <button class="filtro-btn activo" id="filtro-todas" onclick="setFiltroNotas('todas')">Todas</button>
+    <button class="filtro-btn" id="filtro-pendientes" onclick="setFiltroNotas('pendientes')">Pendientes</button>
+    <button class="filtro-btn" id="filtro-completadas" onclick="setFiltroNotas('completadas')">Completadas</button>
+  </div>
+  <div id="lst-notas" style="padding-bottom:80px"></div>
+  <div class="nota-input-bar">
+    <input id="nota-nueva-txt" type="text" placeholder="Añadir nota... ej: Llevar cajas a Paco" autocomplete="off"
+      onkeydown="if(event.key==='Enter')agregarNota()">
+    <button onclick="agregarNota()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+  </div>
+</div>
 </div>
 
 <script>
@@ -629,7 +723,7 @@ function renderCli(){
 function openCli(id){curCli=db.clientes.find(c=>c.id===id);document.getElementById('ttl-telas').textContent=curCli.nombre;renderTelas();}
 
 function openFormCli(c){
-  editingCli=c;prevScreenCli=c?'s-telas':'s-cli';
+  editingCli=c;prevScreenCli=c?'s-telas':'s-clientes-list';
   document.getElementById('ttl-fcli').textContent=c?'Editar cliente':'Nuevo cliente';
   document.getElementById('fi-cli-nom').value=c?c.nombre:'';
   document.getElementById('fi-cli-not').value=c?c.notas||'':'';
@@ -845,7 +939,7 @@ function reorder(srcId,targetId){
 // ── BACKUP ───────────────────────────────────────────────
 function exportar(){
   const fecha=new Date().toISOString().slice(0,10);
-  const backup={clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada()};
+  const backup={clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='daurela-backup-'+fecha+'.json';
@@ -881,7 +975,8 @@ function importar(e){
       db={clientes:data.clientes};persist();
       if(data.fichajes)saveFichajes(data.fichajes);
       if(data.jornada){localStorage.setItem('fich_jornada',data.jornada);cargarConfigFichaje();}
-      renderCli();renderFichaje();
+      if(data.notas)saveNotas(data.notas);
+      renderCli();renderFichaje();renderNotas();
       msg.style.display='block';msg.style.color='green';msg.textContent='Restaurado correctamente ('+db.clientes.length+' clientes)';
       setTimeout(()=>msg.style.display='none',4000);toast('Datos restaurados');
     }catch(err){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Error: el archivo no es valido.';}
@@ -1043,7 +1138,7 @@ async function exportarGitHub(){
 
   const fecha=new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
   const filename='backups/daurela-backup-'+fecha+'.json';
-  const backup={clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada()};
+  const backup={clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
   const content=btoa(unescape(encodeURIComponent(JSON.stringify(backup,null,2))));
 
   try{
@@ -1079,6 +1174,157 @@ async function exportarGitHub(){
 }
 
 
+
+
+// ── NOTAS ────────────────────────────────────────────────
+let filtroNotas = 'todas';
+let editandoNota = null;
+
+function loadNotas(){ try{ const d=localStorage.getItem('notas_v1'); return d?JSON.parse(d):[]; }catch(e){return [];} }
+function saveNotas(arr){ localStorage.setItem('notas_v1', JSON.stringify(arr)); }
+
+function setFiltroNotas(f){
+  filtroNotas=f;
+  document.querySelectorAll('.filtro-btn').forEach(b=>b.classList.remove('activo'));
+  document.getElementById('filtro-'+f).classList.add('activo');
+  renderNotas();
+}
+
+function renderNotas(){
+  const notas=loadNotas();
+  const el=document.getElementById('lst-notas');
+
+  let lista=notas;
+  if(filtroNotas==='pendientes') lista=notas.filter(n=>!n.done);
+  if(filtroNotas==='completadas') lista=notas.filter(n=>n.done);
+
+  if(!lista.length){
+    el.innerHTML=`<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <p>${filtroNotas==='completadas'?'Sin notas completadas':'Sin notas pendientes.<br>Añade una abajo'}</p>
+    </div>`;
+    return;
+  }
+
+  // Agrupar por fecha
+  const grupos={};
+  lista.forEach(n=>{
+    const fecha=n.fecha||'Sin fecha';
+    if(!grupos[fecha]) grupos[fecha]=[];
+    grupos[fecha].push(n);
+  });
+
+  let html='';
+  Object.keys(grupos).sort((a,b)=>b.localeCompare(a)).forEach(fecha=>{
+    const fechaLabel=formatFechaNota(fecha);
+    html+=`<div class="nota-fecha-hdr">${fechaLabel}</div>`;
+    grupos[fecha].forEach(n=>{
+      html+=`<div class="nota-item${n.done?' completada':''}">
+        <button class="nota-check${n.done?' done':''}" onclick="toggleNota('${n.id}')">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <div class="nota-body" onclick="editarNota('${n.id}')">
+          <div class="nota-txt">${esc(n.txt)}</div>
+          <div class="nota-meta">${n.hora||''}</div>
+        </div>
+        <div class="nota-actions">
+          <button class="btn-del-direct" onclick="eliminarNota('${n.id}')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div>
+      </div>`;
+    });
+  });
+  el.innerHTML=html;
+}
+
+function formatFechaNota(fecha){
+  if(fecha==='Sin fecha') return 'Sin fecha';
+  const hoy=new Date().toISOString().slice(0,10);
+  const ayer=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  if(fecha===hoy) return 'Hoy';
+  if(fecha===ayer) return 'Ayer';
+  const [y,m,d]=fecha.split('-');
+  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return d+' '+meses[parseInt(m)-1]+' '+y;
+}
+
+function agregarNota(){
+  const input=document.getElementById('nota-nueva-txt');
+  const txt=input.value.trim();
+  if(!txt) return;
+
+  if(editandoNota){
+    // Modo edición
+    const notas=loadNotas();
+    const n=notas.find(n=>n.id===editandoNota);
+    if(n) n.txt=txt;
+    saveNotas(notas);
+    editandoNota=null;
+    input.placeholder='Añadir nota... ej: Llevar cajas a Paco';
+    input.value='';
+    renderNotas();
+    toast('Nota actualizada');
+    return;
+  }
+
+  const ahora=new Date();
+  const nota={
+    id:uid(),
+    txt:txt,
+    done:false,
+    fecha:ahora.toISOString().slice(0,10),
+    hora:ahora.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+  };
+  const notas=loadNotas();
+  notas.unshift(nota);
+  saveNotas(notas);
+  input.value='';
+  renderNotas();
+  toast('Nota añadida');
+}
+
+function toggleNota(id){
+  const notas=loadNotas();
+  const n=notas.find(n=>n.id===id);
+  if(n) n.done=!n.done;
+  saveNotas(notas);
+  renderNotas();
+  toast(n.done?'Completada':'Pendiente');
+}
+
+function editarNota(id){
+  const notas=loadNotas();
+  const n=notas.find(n=>n.id===id);
+  if(!n) return;
+  editandoNota=id;
+  const input=document.getElementById('nota-nueva-txt');
+  input.value=n.txt;
+  input.placeholder='Editar nota...';
+  input.focus();
+}
+
+function eliminarNota(id){
+  if(!confirm('Eliminar esta nota?')) return;
+  const notas=loadNotas().filter(n=>n.id!==id);
+  saveNotas(notas);
+  if(editandoNota===id){
+    editandoNota=null;
+    document.getElementById('nota-nueva-txt').value='';
+  }
+  renderNotas();
+  toast('Nota eliminada');
+}
+
+function limpiarCompletadas(){
+  const notas=loadNotas();
+  const pendientes=notas.filter(n=>!n.done);
+  if(notas.length===pendientes.length){toast('No hay notas completadas');return;}
+  if(!confirm('Eliminar todas las notas completadas?')) return;
+  saveNotas(pendientes);
+  renderNotas();
+  toast('Completadas eliminadas');
+}
 
 // ── FICHAJE ───────────────────────────────────────────────
 let fichMes = new Date().getMonth();
@@ -1233,19 +1479,21 @@ window.addEventListener('popstate', function(e){
   if(!active) return;
   const id = active.id;
 
-  if(id === 's-cli' || id === 's-search'){
+  if(id === 's-cli' || id === 's-clientes-list'){
     // Estamos en la raíz, dejar que el sistema minimice
     history.pushState({screen:'s-cli'}, '', '');
     return;
   }
   // Navegar a la pantalla anterior lógica
-  if(id === 's-telas') go('s-cli');
+  if(id === 's-telas') go('s-clientes-list');
   else if(id === 's-meds') go('s-telas');
   else if(id === 's-det') go('s-meds');
   else if(id === 's-fcli') cancelForm('cli');
   else if(id === 's-ftela') cancelForm('tela');
   else if(id === 's-fmed') cancelForm('med');
   else if(id === 's-backup') go('s-cli');
+  else if(id === 's-notas') go('s-cli');
+
   else if(id === 's-fichaje') go('s-cli');
   else if(id === 's-fich-config') go('s-fichaje');
   else if(id === 's-calc') go('s-cli');
@@ -1260,6 +1508,7 @@ cargarToken();
 history.replaceState({screen:'s-cli'}, '', '');
 renderFichaje();
 cargarConfigFichaje();
+renderNotas();
 </script>
 </body>
 </html>
