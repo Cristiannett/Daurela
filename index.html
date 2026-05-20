@@ -131,7 +131,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .mes-dia .dia-num{font-size:14px;color:var(--txt2);line-height:1}
 .mes-dia .dia-dot{width:5px;height:5px;border-radius:50%;background:var(--taco-txt)}
 .mes-dia .dia-dot.extra{background:#ff9f0a}
-.fichaje-resumen{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 16px 14px}
+.fichaje-resumen{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 14px}
 .fich-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px 12px;text-align:center}
 .fich-lbl{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3);margin-bottom:6px;font-weight:600}
 .fich-num{font-size:22px;font-weight:700;letter-spacing:-0.5px;color:var(--txt)}
@@ -485,11 +485,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
       <div class="fich-num" id="fich-total-extra" style="color:#ff9f0a">0</div>
       <div class="fich-unit">horas</div>
     </div>
-    <div class="fich-box">
-      <div class="fich-lbl">Total</div>
-      <div class="fich-num" id="fich-total-todo">0</div>
-      <div class="fich-unit">horas</div>
-    </div>
+
   </div>
 
   <div id="fich-form-wrap" style="display:none">
@@ -1149,8 +1145,7 @@ function renderFichaje(){
   document.getElementById('fich-calendario').innerHTML=html;
   document.getElementById('fich-total-norm').textContent=totalNorm%1===0?totalNorm:totalNorm.toFixed(1);
   document.getElementById('fich-total-extra').textContent=totalExtra%1===0?totalExtra:totalExtra.toFixed(1);
-  const tot=totalNorm+totalExtra;
-  document.getElementById('fich-total-todo').textContent=tot%1===0?tot:tot.toFixed(1);
+
 }
 
 function seleccionarDia(key, dia){
