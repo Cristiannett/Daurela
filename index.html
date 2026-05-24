@@ -329,9 +329,6 @@ body.font-xl{font-size:22px}
   </div>
   <div class="search-wrap"><input id="q-cli" type="search" placeholder="Buscar cliente..." oninput="renderCli()"></div>
   <div id="lst-cli"></div>
-  <button class="fab" onclick="openFormCli(null)" aria-label="Nuevo cliente">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
-  </button>
 </div>
 <!-- BUSQUEDA GLOBAL -->
 <div id="s-search" class="screen">
@@ -357,9 +354,6 @@ body.font-xl{font-size:22px}
     </button>
   </div>
   <div id="lst-telas"></div>
-  <button class="fab" onclick="openFormTela(null)" aria-label="Nueva tela">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
-  </button>
 </div>
 
 <!-- MEDIDAS -->
@@ -375,9 +369,6 @@ body.font-xl{font-size:22px}
   </div>
   <div id="bc-meds" class="breadcrumb"></div>
   <div id="lst-meds"></div>
-  <button class="fab" onclick="openFormMed(null)" aria-label="Nueva medida">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
-  </button>
 </div>
 
 <!-- DETALLE -->
@@ -705,6 +696,11 @@ body.font-xl{font-size:22px}
     </button>
   </div>
 </div>
+<!-- FAB GLOBAL -->
+<button class="fab" id="fab-global" style="display:none" onclick="fabGlobalClick()" aria-label="Añadir">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
 </div>
 
 <script>
@@ -764,6 +760,7 @@ function go(id, addHistory){
   el.classList.add(isBack?'slide-back':'slide-in');
   el.scrollTop=0;
   if(addHistory) history.pushState({screen:id}, '', '');
+  actualizarFab();
 }
 
 function cancelForm(type){
@@ -1695,6 +1692,32 @@ function mostrarSplash(){
 
 
 
+
+// ── FAB GLOBAL ───────────────────────────────────────────
+const FAB_SCREENS = {
+  's-clientes-list': ()=>openFormCli(null),
+  's-telas': ()=>openFormTela(null),
+  's-meds': ()=>openFormMed(null),
+};
+
+function fabGlobalClick(){
+  const active=document.querySelector('.screen.active');
+  if(!active)return;
+  const fn=FAB_SCREENS[active.id];
+  if(fn)fn();
+}
+
+function actualizarFab(){
+  const active=document.querySelector('.screen.active');
+  const fab=document.getElementById('fab-global');
+  if(!fab)return;
+  if(active&&FAB_SCREENS[active.id]){
+    fab.style.display='flex';
+  } else {
+    fab.style.display='none';
+  }
+}
+
 // ── EASTER EGG ───────────────────────────────────────────
 let logoTimer=null;
 function initEasterEgg(){
@@ -1933,7 +1956,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605241705', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605241712', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -1950,6 +1973,7 @@ cargarConfigFichaje();
 renderNotas();
 cargarFont();
 initEasterEgg();
+actualizarFab();
 initWeather();
 </script>
 </body>
