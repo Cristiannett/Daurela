@@ -1,4 +1,4 @@
-const CACHE = 'daurela-v1';
+const CACHE = 'daurela-202605241547';
 const ASSETS = ['/Daurela/'];
 
 self.addEventListener('install', e => {
