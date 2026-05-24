@@ -124,6 +124,16 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);color:var(--txt);border:1px solid var(--border2);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* TAMAÑO FUENTE */
+body.font-sm{font-size:14px}
+body.font-md{font-size:16px}
+body.font-lg{font-size:19px}
+body.font-xl{font-size:22px}
+.font-selector{display:flex;gap:8px;margin-bottom:20px}
+.font-opt{flex:1;padding:12px 6px;border:1px solid var(--border2);border-radius:var(--rad-sm);background:var(--bg2);color:var(--txt2);cursor:pointer;text-align:center;font-family:inherit;transition:all 0.15s}
+.font-opt.activo{border-color:var(--accent);color:var(--accent);background:var(--bg3);font-weight:600}
+
+
 /* TRANSICIONES */
 .screen{transition:opacity 0.22s ease,transform 0.22s ease}
 .screen.slide-in{animation:slideIn 0.22s ease forwards}
@@ -225,6 +235,11 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 <div id="app">
 
 <div id="toast" class="toast"></div>
+<div id="storage-warn" style="display:none;position:fixed;top:0;left:0;right:0;z-index:150;background:rgba(255,159,10,0.15);border-bottom:1px solid rgba(255,159,10,0.3);padding:10px 16px;align-items:center;gap:10px">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" flex-shrink="0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  <span style="font-size:13px;color:#ff9f0a;flex:1" id="storage-pct"></span>
+  <button onclick="go('s-backup')" style="background:rgba(255,159,10,0.2);border:1px solid rgba(255,159,10,0.3);color:#ff9f0a;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">Backup</button>
+</div>
 
 <!-- CLIENTES -->
 <div id="s-cli" class="screen active">
@@ -626,9 +641,17 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
     <button class="btn-icon" onclick="go('s-fichaje')" aria-label="Volver">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
-    <h1>Configuracion fichaje</h1>
+    <h1>Ajustes</h1>
   </div>
   <div class="form-wrap">
+    <div class="sec-hdr" style="margin:0 -16px 14px">Tamaño de texto</div>
+    <div class="font-selector">
+      <button class="font-opt" id="font-sm" onclick="setFont('sm')">A<span style="font-size:10px"> Pequeño</span></button>
+      <button class="font-opt" id="font-md" onclick="setFont('md')">A<span style="font-size:10px"> Normal</span></button>
+      <button class="font-opt" id="font-lg" onclick="setFont('lg')">A<span style="font-size:10px"> Grande</span></button>
+      <button class="font-opt" id="font-xl" onclick="setFont('xl')">A<span style="font-size:10px"> XL</span></button>
+    </div>
+    <div class="sec-hdr" style="margin:0 -16px 14px">Fichaje</div>
     <div class="fg">
       <label>Horas de jornada normal</label>
       <input id="fich-jornada" type="number" inputmode="decimal" placeholder="6" value="6" step="0.5" oninput="guardarConfigFichaje()">
@@ -678,7 +701,29 @@ let newFoto=null,prevScreenCli=null,formDirty=false;
 let touchDragId=null,touchStartY=0,touchClone=null;
 
 function load(){try{const d=localStorage.getItem(KEY);if(d)db=JSON.parse(d);}catch(e){}}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){alert('No se pudo guardar.');}}
+function persist(){
+  try{
+    const data=JSON.stringify(db);
+    localStorage.setItem(KEY,data);
+    // Comprobar uso aproximado
+    let total=0;
+    for(let k in localStorage) if(localStorage.hasOwnProperty(k)) total+=localStorage[k].length*2;
+    const mb=(total/1024/1024).toFixed(1);
+    const pct=total/(5*1024*1024)*100;
+    if(pct>80){
+      document.getElementById('storage-warn').style.display='flex';
+      document.getElementById('storage-pct').textContent=mb+' MB usados de ~5 MB';
+    } else {
+      document.getElementById('storage-warn').style.display='none';
+    }
+  }catch(e){
+    if(e.name==='QuotaExceededError'){
+      alert('Almacenamiento lleno. Haz una copia de seguridad y elimina algunas fotos para liberar espacio.');
+    } else {
+      alert('No se pudo guardar.');
+    }
+  }
+}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function markDirty(){formDirty=true;}
@@ -1004,7 +1049,7 @@ function reorder(srcId,targetId){
 // ── BACKUP ───────────────────────────────────────────────
 function exportar(){
   const fecha=new Date().toISOString().slice(0,10);
-  const backup={clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
+  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='daurela-backup-'+fecha+'.json';
@@ -1036,6 +1081,12 @@ function importar(e){
     try{
       const data=JSON.parse(ev.target.result);
       if(!data.clientes||!Array.isArray(data.clientes))throw new Error();
+      // Migración de versiones antiguas
+      if(!data.version||data.version<2){
+        data.fichajes=data.fichajes||{};
+        data.notas=data.notas||[];
+        data.jornada=data.jornada||6;
+      }
       if(!confirm('Esto reemplazara todos los datos actuales. Continuar?')){e.target.value='';return;}
       db={clientes:data.clientes};persist();
       if(data.fichajes)saveFichajes(data.fichajes);
@@ -1317,7 +1368,7 @@ async function exportarGitHub(){
 
   const fecha=new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
   const filename='backups/daurela-backup-'+fecha+'.json';
-  const backup={clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
+  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
 
   // Codificar en base64 de forma segura para Unicode
   const jsonStr=JSON.stringify(backup,null,2);
@@ -1626,6 +1677,22 @@ function mostrarSplash(){
   }, 1800);
 }
 
+
+// ── TAMAÑO FUENTE ────────────────────────────────────────
+function setFont(size){
+  document.body.className=document.body.className.replace(/font-\w+/g,'').trim();
+  document.body.classList.add('font-'+size);
+  localStorage.setItem('font_size',size);
+  document.querySelectorAll('.font-opt').forEach(b=>b.classList.remove('activo'));
+  const btn=document.getElementById('font-'+size);
+  if(btn)btn.classList.add('activo');
+}
+
+function cargarFont(){
+  const size=localStorage.getItem('font_size')||'md';
+  setFont(size);
+}
+
 // ── FICHAJE ───────────────────────────────────────────────
 let fichMes = new Date().getMonth();
 let fichAnio = new Date().getFullYear();
@@ -1818,6 +1885,7 @@ mostrarSplash();
 renderFichaje();
 cargarConfigFichaje();
 renderNotas();
+cargarFont();
 initWeather();
 </script>
 </body>
