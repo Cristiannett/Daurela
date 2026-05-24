@@ -7,6 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIkRhdXJlbGEiLCAic2hvcnRfbmFtZSI6ICJEYXVyZWxhIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwYTBhMGEiLCAidGhlbWVfY29sb3IiOiAiIzBhMGEwYSIsICJzdGFydF91cmwiOiAiLiIsICJpY29ucyI6IFt7InNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBeE1ESTBJREV3TWpRaVBqeHlaV04wSUhkcFpIUm9QU0l4TURJMElpQm9aV2xuYUhROUlqRXdNalFpSUhKNFBTSXlNekFpSUdacGJHdzlJaU13WVRCaE1HRWlMejQ4ZEdWNGRDQjRQU0kxTVRJaUlIazlJamN5TUNJZ1ptOXVkQzFtWVcxcGJIazlJa2hsYkhabGRHbGpZU0JPWlhWbExFaGxiSFpsZEdsallTeEJjbWxoYkN4ellXNXpMWE5sY21sbUlpQm1iMjUwTFhOcGVtVTlJalk0TUNJZ1ptOXVkQzEzWldsbmFIUTlJamd3TUNJZ1ptbHNiRDBpZDJocGRHVWlJSFJsZUhRdFlXNWphRzl5UFNKdGFXUmtiR1VpSUd4bGRIUmxjaTF6Y0dGamFXNW5QU0l0TWpBaVBrUThMM1JsZUhRK1BDOXpkbWMrIiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIn1dfQ==">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiIHJ4PSIyMzAiIGZpbGw9IiMwYTBhMGEiLz48dGV4dCB4PSI1MTIiIHk9IjcyMCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSBOZXVlLEhlbHZldGljYSxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjY4MCIgZm9udC13ZWlnaHQ9IjgwMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMjAiPkQ8L3RleHQ+PC9zdmc+">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiIHJ4PSIyMzAiIGZpbGw9IiMwYTBhMGEiLz48dGV4dCB4PSI1MTIiIHk9IjcyMCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSBOZXVlLEhlbHZldGljYSxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjY4MCIgZm9udC13ZWlnaHQ9IjgwMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMjAiPkQ8L3RleHQ+PC9zdmc+">
+<meta name="apple-mobile-web-app-title" content="Daurela">
 <title><span class="app-name">Daurela</span></title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -742,10 +746,15 @@ function renderCli(){
   const el=document.getElementById('lst-cli');
   if(!list.length){el.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><p>${q?'Sin resultados para "<strong>'+esc(q)+'</strong>"':'Sin clientes.<br>Pulsa <strong>+</strong> para añadir el primero'}</p></div>`;return;}
   el.innerHTML=list.map(c=>`
-    <div class="list-item" onclick="openCli('${c.id}');go('s-telas')">
-      <div class="li-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-      <div class="li-info"><div class="li-name">${esc(c.nombre)}</div><div class="li-sub">${c.telas.length} tela${c.telas.length!==1?'s':''}</div></div>
-      <div class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
+    <div class="list-item" id="ci-${c.id}" draggable="true"
+      ondragstart="dStartCli(event,'${c.id}')" ondragover="dOver(event)" ondrop="dDropCli(event,'${c.id}')" ondragend="dEndCli()">
+      <div class="drag-handle"
+        ontouchstart="tStartCli(event,'${c.id}')" ontouchmove="tMoveCli(event)" ontouchend="tEndCli(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+      </div>
+      <div class="li-icon" onclick="openCli('${c.id}');go('s-telas')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <div class="li-info" onclick="openCli('${c.id}');go('s-telas')"><div class="li-name">${esc(c.nombre)}</div><div class="li-sub">${c.telas.length} tela${c.telas.length!==1?'s':''}</div></div>
+      <div class="chevron" onclick="openCli('${c.id}');go('s-telas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
     </div>`).join('');
 }
 
@@ -777,11 +786,16 @@ function renderTelas(){
   const el=document.getElementById('lst-telas');
   if(!curCli.telas.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><p>Sin telas.<br>Pulsa <strong>+</strong> para añadir una</p></div>';return;}
   el.innerHTML=curCli.telas.map(t=>`
-    <div class="list-item" onclick="openTela('${t.id}')">
-      <div class="li-icon">${t.foto?`<img src="${t.foto}" alt="">`:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'}</div>
-      <div class="li-info"><div class="li-name">${esc(t.nombre)}</div><div class="li-sub">${t.medidas.length} medida${t.medidas.length!==1?'s':''}</div></div>
-      <span class="tag-${t.medidas.some(m=>m.tipo==='entera')?'entera':'taco'}" style="font-size:11px;padding:3px 8px">${t.medidas.some(m=>m.tipo==='entera')?'Pieza':'Taco'}</span>
-      <div class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
+    <div class="list-item" id="ti-${t.id}" draggable="true"
+      ondragstart="dStartTela(event,'${t.id}')" ondragover="dOver(event)" ondrop="dDropTela(event,'${t.id}')" ondragend="dEndTela()">
+      <div class="drag-handle"
+        ontouchstart="tStartTela(event,'${t.id}')" ontouchmove="tMoveTela(event)" ontouchend="tEndTela(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+      </div>
+      <div class="li-icon" onclick="openTela('${t.id}')">${t.foto?`<img src="${t.foto}" alt="">`:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'}</div>
+      <div class="li-info" onclick="openTela('${t.id}')"><div class="li-name">${esc(t.nombre)}</div><div class="li-sub">${t.medidas.length} medida${t.medidas.length!==1?'s':''}</div></div>
+      <span class="tag-${t.medidas.some(m=>m.tipo==='entera')?'entera':'taco'}" style="font-size:11px;padding:3px 8px" onclick="openTela('${t.id}')">${t.medidas.some(m=>m.tipo==='entera')?'Pieza':'Taco'}</span>
+      <div class="chevron" onclick="openTela('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
     </div>`).join('');
 }
 
@@ -1111,6 +1125,93 @@ function limpiarCalc(){
   document.getElementById('calc-output').style.display='none';
 }
 
+
+
+// ── DRAG CLIENTES ────────────────────────────────────────
+let dragSrcCli=null,touchDragCliId=null,touchStartCliY=0,touchCloneCli=null;
+
+function dStartCli(e,id){dragSrcCli=id;e.dataTransfer.effectAllowed='move';setTimeout(()=>{const el=document.getElementById('ci-'+id);if(el)el.classList.add('dragging');},0);}
+function dDropCli(e,targetId){e.preventDefault();if(dragSrcCli&&dragSrcCli!==targetId)reorderCli(dragSrcCli,targetId);dEndCli();}
+function dEndCli(){document.querySelectorAll('.list-item.dragging').forEach(el=>el.classList.remove('dragging'));dragSrcCli=null;}
+
+function tStartCli(e,id){
+  touchDragCliId=id;touchStartCliY=e.touches[0].clientY;
+  const src=document.getElementById('ci-'+id);
+  touchCloneCli=src.cloneNode(true);
+  const r=src.getBoundingClientRect();
+  touchCloneCli.style.cssText=`position:fixed;left:0;right:0;top:${r.top}px;opacity:0.85;z-index:999;background:var(--bg2);pointer-events:none;border-bottom:1px solid var(--border)`;
+  document.body.appendChild(touchCloneCli);src.classList.add('dragging');e.preventDefault();
+}
+function tMoveCli(e){
+  if(!touchDragCliId||!touchCloneCli)return;
+  const dy=e.touches[0].clientY-touchStartCliY;
+  touchCloneCli.style.top=(parseFloat(touchCloneCli.style.top)+dy)+'px';
+  touchStartCliY=e.touches[0].clientY;e.preventDefault();
+}
+function tEndCli(e){
+  if(!touchDragCliId||!touchCloneCli)return;
+  const mid=parseFloat(touchCloneCli.style.top)+touchCloneCli.getBoundingClientRect().height/2;
+  document.body.removeChild(touchCloneCli);touchCloneCli=null;
+  document.querySelectorAll('.list-item.dragging').forEach(el=>el.classList.remove('dragging'));
+  let targetId=null;
+  document.querySelectorAll('#lst-cli .list-item').forEach(item=>{
+    const r=item.getBoundingClientRect();
+    if(mid>=r.top&&mid<=r.bottom){const id=item.id.replace('ci-','');if(id!==touchDragCliId)targetId=id;}
+  });
+  if(targetId)reorderCli(touchDragCliId,targetId);
+  touchDragCliId=null;
+}
+
+function reorderCli(srcId,targetId){
+  const arr=db.clientes;
+  const si=arr.findIndex(c=>c.id===srcId),ti=arr.findIndex(c=>c.id===targetId);
+  if(si<0||ti<0)return;
+  const[item]=arr.splice(si,1);arr.splice(ti,0,item);
+  persist();renderCli();
+}
+
+// ── DRAG TELAS ───────────────────────────────────────────
+let dragSrcTela=null,touchDragTelaId=null,touchStartTelaY=0,touchCloneTela=null;
+
+function dStartTela(e,id){dragSrcTela=id;e.dataTransfer.effectAllowed='move';setTimeout(()=>{const el=document.getElementById('ti-'+id);if(el)el.classList.add('dragging');},0);}
+function dDropTela(e,targetId){e.preventDefault();if(dragSrcTela&&dragSrcTela!==targetId)reorderTela(dragSrcTela,targetId);dEndTela();}
+function dEndTela(){document.querySelectorAll('.list-item.dragging').forEach(el=>el.classList.remove('dragging'));dragSrcTela=null;}
+
+function tStartTela(e,id){
+  touchDragTelaId=id;touchStartTelaY=e.touches[0].clientY;
+  const src=document.getElementById('ti-'+id);
+  touchCloneTela=src.cloneNode(true);
+  const r=src.getBoundingClientRect();
+  touchCloneTela.style.cssText=`position:fixed;left:0;right:0;top:${r.top}px;opacity:0.85;z-index:999;background:var(--bg2);pointer-events:none;border-bottom:1px solid var(--border)`;
+  document.body.appendChild(touchCloneTela);src.classList.add('dragging');e.preventDefault();
+}
+function tMoveTela(e){
+  if(!touchDragTelaId||!touchCloneTela)return;
+  const dy=e.touches[0].clientY-touchStartTelaY;
+  touchCloneTela.style.top=(parseFloat(touchCloneTela.style.top)+dy)+'px';
+  touchStartTelaY=e.touches[0].clientY;e.preventDefault();
+}
+function tEndTela(e){
+  if(!touchDragTelaId||!touchCloneTela)return;
+  const mid=parseFloat(touchCloneTela.style.top)+touchCloneTela.getBoundingClientRect().height/2;
+  document.body.removeChild(touchCloneTela);touchCloneTela=null;
+  document.querySelectorAll('.list-item.dragging').forEach(el=>el.classList.remove('dragging'));
+  let targetId=null;
+  document.querySelectorAll('#lst-telas .list-item').forEach(item=>{
+    const r=item.getBoundingClientRect();
+    if(mid>=r.top&&mid<=r.bottom){const id=item.id.replace('ti-','');if(id!==touchDragTelaId)targetId=id;}
+  });
+  if(targetId)reorderTela(touchDragTelaId,targetId);
+  touchDragTelaId=null;
+}
+
+function reorderTela(srcId,targetId){
+  const arr=curCli.telas;
+  const si=arr.findIndex(t=>t.id===srcId),ti=arr.findIndex(t=>t.id===targetId);
+  if(si<0||ti<0)return;
+  const[item]=arr.splice(si,1);arr.splice(ti,0,item);
+  persist();renderTelas();
+}
 
 // ── ORDEN CLIENTES ───────────────────────────────────────
 let ordenAZ = false;
