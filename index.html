@@ -1869,7 +1869,7 @@ window.addEventListener('popstate', function(e){
 
 
 // ── SERVICE WORKER ───────────────────────────────────────
-if('serviceWorker' in navigator){
+if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
   navigator.serviceWorker.register('/Daurela/sw.js', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
