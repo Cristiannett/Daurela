@@ -345,7 +345,7 @@ body.font-xl{font-size:22px}
 <!-- TELAS -->
 <div id="s-telas" class="screen">
   <div class="topbar">
-    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+    <button class="btn-icon" onclick="go('s-clientes-list')" aria-label="Volver">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
     <h1 id="ttl-telas"></h1>
@@ -1933,15 +1933,15 @@ window.addEventListener('popstate', function(e){
   if(!active) return;
   const id = active.id;
 
-  if(id === 's-cli' || id === 's-clientes-list'){
+  if(id === 's-cli'){
     // Estamos en la raíz, dejar que el sistema minimice
     history.pushState({screen:'s-cli'}, '', '');
     return;
   }
   // Navegar a la pantalla anterior lógica
-  if(id === 's-telas') go('s-clientes-list');
-  else if(id === 's-meds') go('s-telas');
-  else if(id === 's-det') go('s-meds');
+  if(id === 's-telas') go('s-clientes-list', false);
+  else if(id === 's-meds') go('s-telas', false);
+  else if(id === 's-det') go('s-meds', false);
   else if(id === 's-fcli') cancelForm('cli');
   else if(id === 's-ftela') cancelForm('tela');
   else if(id === 's-fmed') cancelForm('med');
@@ -1957,7 +1957,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605241721', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605241723', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
