@@ -124,6 +124,14 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);color:var(--txt);border:1px solid var(--border2);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* TRANSICIONES */
+.screen{transition:opacity 0.22s ease,transform 0.22s ease}
+.screen.slide-in{animation:slideIn 0.22s ease forwards}
+.screen.slide-back{animation:slideBack 0.22s ease forwards}
+@keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideBack{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+
+
 /* SPLASH */
 #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity 0.5s ease,transform 0.5s ease}
 #splash.hide{opacity:0;transform:scale(1.05);pointer-events:none}
@@ -682,10 +690,19 @@ function toast(msg){
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);
 }
 
+let _prevScreen=null;
 function go(id, addHistory){
   if(addHistory===undefined) addHistory=true;
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById(id);el.classList.add('active');el.scrollTop=0;
+  const prev=document.querySelector('.screen.active');
+  const isBack=_prevScreen===id;
+  _prevScreen=prev?prev.id:null;
+  document.querySelectorAll('.screen').forEach(s=>{
+    s.classList.remove('active','slide-in','slide-back');
+  });
+  const el=document.getElementById(id);
+  el.classList.add('active');
+  el.classList.add(isBack?'slide-back':'slide-in');
+  el.scrollTop=0;
   if(addHistory) history.pushState({screen:id}, '', '');
 }
 
@@ -740,12 +757,16 @@ function renderSearch(){
 
 // ── CLIENTES ────────────────────────────────────────────
 function renderCli(){
+  cliPage=1;
   const q=(document.getElementById('q-cli').value||'').toLowerCase();
   let list=db.clientes.filter(c=>c.nombre.toLowerCase().includes(q));
   if(ordenAZ)list=[...list].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   const el=document.getElementById('lst-cli');
   if(!list.length){el.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><p>${q?'Sin resultados para "<strong>'+esc(q)+'</strong>"':'Sin clientes.<br>Pulsa <strong>+</strong> para añadir el primero'}</p></div>`;return;}
-  el.innerHTML=list.map(c=>`
+  const PAGE=20;
+  const visible=list.slice(0,PAGE);
+  const resto=list.length-PAGE;
+  el.innerHTML=visible.map(c=>`
     <div class="list-item" id="ci-${c.id}" draggable="true"
       ondragstart="dStartCli(event,'${c.id}')" ondragover="dOver(event)" ondrop="dDropCli(event,'${c.id}')" ondragend="dEndCli()">
       <div class="drag-handle"
@@ -755,7 +776,8 @@ function renderCli(){
       <div class="li-icon" onclick="openCli('${c.id}');go('s-telas')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
       <div class="li-info" onclick="openCli('${c.id}');go('s-telas')"><div class="li-name">${esc(c.nombre)}</div><div class="li-sub">${c.telas.length} tela${c.telas.length!==1?'s':''}</div></div>
       <div class="chevron" onclick="openCli('${c.id}');go('s-telas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
-    </div>`).join('');
+    </div>`).join('')
+  +(resto>0?`<div style="padding:14px 16px;text-align:center"><button class="btn-secondary" onclick="cargarMasCli()" style="width:auto;padding:10px 24px">Ver ${resto} más</button></div>`:'');
 }
 
 function openCli(id){curCli=db.clientes.find(c=>c.id===id);document.getElementById('ttl-telas').textContent=curCli.nombre;renderTelas();}
@@ -1126,6 +1148,33 @@ function limpiarCalc(){
 }
 
 
+
+
+// ── LAZY LOADING CLIENTES ────────────────────────────────
+let cliPage=1;
+function cargarMasCli(){
+  cliPage++;
+  const q=(document.getElementById('q-cli').value||'').toLowerCase();
+  let list=db.clientes.filter(c=>c.nombre.toLowerCase().includes(q));
+  if(ordenAZ)list=[...list].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  const PAGE=20;
+  const visible=list.slice(0,PAGE*cliPage);
+  const resto=list.length-(PAGE*cliPage);
+  const el=document.getElementById('lst-cli');
+  const items=el.querySelectorAll('.list-item');
+  // Añadir los nuevos al final (quitar el botón primero)
+  const btnWrap=el.querySelector('div[style*="text-align:center"]');
+  if(btnWrap)btnWrap.remove();
+  const nuevos=list.slice(PAGE*(cliPage-1),PAGE*cliPage);
+  nuevos.forEach(c=>{
+    el.insertAdjacentHTML('beforeend',`<div class="list-item" id="ci-${c.id}">
+      <div class="li-icon" onclick="openCli('${c.id}');go('s-telas')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <div class="li-info" onclick="openCli('${c.id}');go('s-telas')"><div class="li-name">${esc(c.nombre)}</div><div class="li-sub">${c.telas.length} tela${c.telas.length!==1?'s':''}</div></div>
+      <div class="chevron" onclick="openCli('${c.id}');go('s-telas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>`);
+  });
+  if(resto>0) el.insertAdjacentHTML('beforeend',`<div style="padding:14px 16px;text-align:center"><button class="btn-secondary" onclick="cargarMasCli()" style="width:auto;padding:10px 24px">Ver ${resto} más</button></div>`);
+}
 
 // ── DRAG CLIENTES ────────────────────────────────────────
 let dragSrcCli=null,touchDragCliId=null,touchStartCliY=0,touchCloneCli=null;
@@ -1750,6 +1799,14 @@ window.addEventListener('popstate', function(e){
   else if(id === 's-calc') go('s-cli');
   else go('s-cli');
 });
+
+
+// ── SERVICE WORKER ───────────────────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/Daurela/sw.js', {scope:'/Daurela/'})
+    .then(()=>console.log('SW registrado'))
+    .catch(e=>console.log('SW error:',e));
+}
 
 // ── INIT ─────────────────────────────────────────────────
 load();
