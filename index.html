@@ -124,6 +124,16 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);color:var(--txt);border:1px solid var(--border2);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* GRID CLIENTES */
+.cli-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px}
+.cli-card{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.cli-card:active .cli-card-icon{transform:scale(0.92);opacity:0.8}
+.cli-card-icon{width:76px;height:76px;border-radius:18px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.cli-card-icon span{font-size:28px;font-weight:800;color:var(--txt2);letter-spacing:-1px;text-transform:uppercase}
+.cli-card-name{font-size:11px;font-weight:500;color:var(--txt2);text-align:center;line-height:1.3;word-break:break-word;max-width:80px}
+.cli-grid-load{grid-column:1/-1;text-align:center;padding:8px 0}
+
+
 /* EASTER EGG */
 .confeti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:9999;animation:caer 2.5s ease-in forwards}
 @keyframes caer{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
@@ -813,21 +823,22 @@ function renderCli(){
   if(ordenAZ)list=[...list].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   const el=document.getElementById('lst-cli');
   if(!list.length){el.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><p>${q?'Sin resultados para "<strong>'+esc(q)+'</strong>"':'Sin clientes.<br>Pulsa <strong>+</strong> para añadir el primero'}</p></div>`;return;}
+  const COLORES=["linear-gradient(135deg,#2c6bed,#1a4fc4)", "linear-gradient(135deg,#30d158,#1a7a32)", "linear-gradient(135deg,#ff9f0a,#c85a00)", "linear-gradient(135deg,#ff453a,#c0392b)", "linear-gradient(135deg,#bf5af2,#7d3ab5)", "linear-gradient(135deg,#64d2ff,#0071a4)", "linear-gradient(135deg,#ffd60a,#b8890a)", "linear-gradient(135deg,#ff6b6b,#c0392b)", "linear-gradient(135deg,#4ecdc4,#1a7a74)"];
   const PAGE=20;
   const visible=list.slice(0,PAGE);
   const resto=list.length-PAGE;
-  el.innerHTML=visible.map(c=>`
-    <div class="list-item" id="ci-${c.id}" draggable="true"
-      ondragstart="dStartCli(event,'${c.id}')" ondragover="dOver(event)" ondrop="dDropCli(event,'${c.id}')" ondragend="dEndCli()">
-      <div class="drag-handle"
-        ontouchstart="tStartCli(event,'${c.id}')" ontouchmove="tMoveCli(event)" ontouchend="tEndCli(event)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+  el.innerHTML='<div class="cli-grid">'+visible.map((c,i)=>{
+    const color=COLORES[i%COLORES.length];
+    const iniciales=c.nombre.trim().split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    return `<div class="cli-card" onclick="openCli('${c.id}');go('s-telas')">
+      <div class="cli-card-icon" style="background:${color}">
+        <span>${iniciales}</span>
       </div>
-      <div class="li-icon" onclick="openCli('${c.id}');go('s-telas')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-      <div class="li-info" onclick="openCli('${c.id}');go('s-telas')"><div class="li-name">${esc(c.nombre)}</div><div class="li-sub">${c.telas.length} tela${c.telas.length!==1?'s':''}</div></div>
-      <div class="chevron" onclick="openCli('${c.id}');go('s-telas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg></div>
-    </div>`).join('')
-  +(resto>0?`<div style="padding:14px 16px;text-align:center"><button class="btn-secondary" onclick="cargarMasCli()" style="width:auto;padding:10px 24px">Ver ${resto} más</button></div>`:'');
+      <div class="cli-card-name">${esc(c.nombre)}</div>
+    </div>`;
+  }).join('')
+  +(resto>0?`<div class="cli-grid-load"><button class="btn-secondary" onclick="cargarMasCli()" style="width:auto;padding:10px 24px">Ver ${resto} más</button></div>`:'')
+  +'</div>';
 }
 
 function openCli(id){curCli=db.clientes.find(c=>c.id===id);document.getElementById('ttl-telas').textContent=curCli.nombre;renderTelas();}
@@ -1922,7 +1933,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605241613', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605241705', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
