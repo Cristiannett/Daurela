@@ -2047,7 +2047,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311601', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311609', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2183,16 +2183,18 @@ async function syncFirestore(){
     };
     window._lastSave = data.timestamp;
     const docRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
+    console.log('Intentando sync con uid:', uid);
+    console.log('_fireUser:', window._fireUser ? window._fireUser.email : 'null');
+    console.log('_fireDB:', window._fireDB ? 'OK' : 'null');
+    console.log('_fireFns:', window._fireFns ? 'OK' : 'null');
     await window._fireFns.setDoc(docRef, data);
     showSyncIndicator('Guardado');
   }catch(e){
     console.error('Sync error:', e);
-    // Si es error de permisos, probablemente no está autenticado
-    if(e.code === 'permission-denied'){
-      showSyncIndicator('Inicia sesion');
-    } else {
-      showSyncIndicator('Error sync');
-    }
+    const msg = e.code || e.message || 'desconocido';
+    showSyncIndicator('Error: '+msg);
+    // Mostrar también como toast para verlo mejor
+    toast('Firebase error: '+msg);
   }
 }
 
