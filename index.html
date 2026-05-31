@@ -124,35 +124,6 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);color:var(--txt);border:1px solid var(--border2);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* TIPOS DE DIA FICHAJE */
-.mes-dia.vacaciones .dia-num{color:#0a84ff}
-.mes-dia.festivo .dia-num{color:#ff453a}
-.mes-dia.libre .dia-num{color:#bf5af2}
-.dia-dot.vacaciones{background:#0a84ff}
-.dia-dot.festivo{background:#ff453a}
-.dia-dot.libre{background:#bf5af2}
-.tipo-dia-selector{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.tipo-dia-btn{flex:1;min-width:0;padding:8px 4px;border-radius:var(--rad-sm);font-size:12px;font-weight:500;border:1px solid var(--border2);background:var(--bg3);color:var(--txt2);cursor:pointer;text-align:center;font-family:inherit;transition:all 0.15s}
-.tipo-dia-btn.activo{font-weight:700}
-.tipo-dia-btn.t-normal.activo{background:rgba(52,199,89,0.15);color:#34c759;border-color:#34c759}
-.tipo-dia-btn.t-vacaciones.activo{background:rgba(10,132,255,0.15);color:#0a84ff;border-color:#0a84ff}
-.tipo-dia-btn.t-festivo.activo{background:rgba(255,69,58,0.15);color:#ff453a;border-color:#ff453a}
-.tipo-dia-btn.t-libre.activo{background:rgba(191,90,242,0.15);color:#bf5af2;border-color:#bf5af2}
-
-
-/* BADGES */
-.home-btn{position:relative}
-.badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ff453a;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg);z-index:2;pointer-events:none}
-.badge.verde{background:var(--taco-txt)}
-
-/* PEDIDOS GUARDADOS */
-.pedido-item{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;cursor:pointer;background:var(--bg)}
-.pedido-item:active{background:var(--bg2)}
-.pedido-info{flex:1;min-width:0}
-.pedido-nombre{font-size:15px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pedido-meta{font-size:12px;color:var(--txt2);margin-top:2px}
-
-
 /* GRID CLIENTES */
 .cli-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px}
 .cli-card{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -219,7 +190,7 @@ body.font-xl{font-size:22px}
 .nota-meta{font-size:12px;color:var(--txt3);margin-top:3px}
 .nota-actions{display:flex;gap:4px;flex-shrink:0}
 .nota-fecha-hdr{padding:8px 16px 5px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--txt3);background:var(--bg2);border-bottom:1px solid var(--border)}
-.nota-input-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;z-index:90}
+.nota-input-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;z-index:10}
 .nota-input-bar input{flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none}
 .nota-input-bar input:focus{border-color:var(--border3)}
 .nota-input-bar button{background:var(--accent);color:var(--accent-txt);border:none;border-radius:var(--rad);padding:0 18px;font-size:15px;font-weight:600;cursor:pointer;flex-shrink:0}
@@ -269,47 +240,6 @@ body.font-xl{font-size:22px}
 .calc-linea-hdr span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3)}
 
 </style>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyD6fFNWuxNGoJ0KCEBRLL7HDPWhkGeiJQU",
-    authDomain: "daurela-5d59c.firebaseapp.com",
-    projectId: "daurela-5d59c",
-    storageBucket: "daurela-5d59c.firebasestorage.app",
-    messagingSenderId: "1052691773640",
-    appId: "1:1052691773640:web:60522adf6830f58cac4dfd"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db_fire = getFirestore(app);
-  const provider = new GoogleAuthProvider();
-
-  window._fireAuth = auth;
-  window._fireDB = db_fire;
-  window._fireProvider = provider;
-  window._fireFns = { signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot };
-
-  onAuthStateChanged(auth, user => {
-    if(user){
-      window._fireUser = user;
-      const btn = document.getElementById('auth-btn');
-      if(btn) btn.innerHTML = `<img src="${user.photoURL}" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border2)" alt="">`;
-      const status = document.getElementById('auth-status');
-      if(status){ status.textContent = user.displayName; status.style.display = 'block'; }
-      window.initFirestore && window.initFirestore();
-    } else {
-      window._fireUser = null;
-      const btn = document.getElementById('auth-btn');
-      if(btn) btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-      const status = document.getElementById('auth-status');
-      if(status) status.style.display = 'none';
-    }
-  });
-</script>
 </head>
 <body>
 <div id="splash">
@@ -320,12 +250,8 @@ body.font-xl{font-size:22px}
 <div id="app">
 
 <div id="toast" class="toast"></div>
-<div id="sync-indicator" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:16px;z-index:200;font-size:11px;color:var(--txt3);display:none;align-items:center;gap:4px">
-  <div id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:#30d158;animation:pulse 1.5s infinite"></div>
-  <span id="sync-txt">Sincronizando...</span>
-</div>
-<div id="storage-warn" style="display:none;position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:16px;right:16px;z-index:150;background:rgba(255,159,10,0.15);border:1px solid rgba(255,159,10,0.3);border-radius:12px;padding:10px 14px;align-items:center;gap:10px">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+<div id="storage-warn" style="display:none;position:fixed;top:0;left:0;right:0;z-index:150;background:rgba(255,159,10,0.15);border-bottom:1px solid rgba(255,159,10,0.3);padding:10px 16px;align-items:center;gap:10px">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" flex-shrink="0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   <span style="font-size:13px;color:#ff9f0a;flex:1" id="storage-pct"></span>
   <button onclick="go('s-backup')" style="background:rgba(255,159,10,0.2);border:1px solid rgba(255,159,10,0.3);color:#ff9f0a;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">Backup</button>
 </div>
@@ -334,10 +260,6 @@ body.font-xl{font-size:22px}
 <div id="s-cli" class="screen active">
   <div class="topbar" style="border-bottom:none">
     <h1><span class="app-name" id="logo-daurela" oncontextmenu="return false">Daurela</span></h1>
-<span id="auth-status" style="font-size:12px;color:var(--txt3);display:none;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-    <button class="btn-icon" id="auth-btn" onclick="loginGoogle()" aria-label="Cuenta Google">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    </button>
     <button class="btn-icon" onclick="go('s-backup')" aria-label="Backup">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     </button>
@@ -368,7 +290,6 @@ body.font-xl{font-size:22px}
       <span>Buscar</span>
     </div>
     <div class="home-btn" onclick="go('s-calc')">
-      <span class="badge verde" id="badge-calc" style="display:none"></span>
       <div class="home-icon" style="background:linear-gradient(135deg,#30d158,#1a7a32)">
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><rect x="7" y="5" width="10" height="4" rx="1"/><circle cx="8" cy="13" r="1" fill="white"/><circle cx="12" cy="13" r="1" fill="white"/><circle cx="16" cy="13" r="1" fill="white"/><circle cx="8" cy="17" r="1" fill="white"/><circle cx="12" cy="17" r="1" fill="white"/><circle cx="16" cy="17" r="1" fill="white"/></svg>
       </div>
@@ -381,7 +302,6 @@ body.font-xl{font-size:22px}
       <span>Fichaje</span>
     </div>
     <div class="home-btn" onclick="go('s-notas')">
-      <span class="badge" id="badge-notas" style="display:none"></span>
       <div class="home-icon" style="background:linear-gradient(135deg,#ffd60a,#b8890a)">
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       </div>
@@ -604,17 +524,6 @@ body.font-xl{font-size:22px}
 </div>
 
 
-
-<!-- PEDIDOS GUARDADOS -->
-<div id="s-pedidos" class="screen">
-  <div class="topbar">
-    <button class="btn-icon" onclick="go('s-calc')" aria-label="Volver">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-    </button>
-    <h1>Pedidos guardados</h1>
-  </div>
-  <div id="lst-pedidos"></div>
-</div>
 <!-- CALCULADORA DE PEDIDOS -->
 <div id="s-calc" class="screen">
   <div class="topbar">
@@ -665,8 +574,6 @@ body.font-xl{font-size:22px}
           <span style="font-size:14px;color:var(--txt2)" id="calc-sobra-val">—</span>
         </div>
       </div>
-      <button class="btn-primary" onclick="guardarPedido()" style="margin-top:0">Guardar pedido</button>
-      <button class="btn-secondary" onclick="verPedidosGuardados()">Ver pedidos guardados</button>
       <button class="btn-secondary" onclick="limpiarCalc()">Limpiar todo</button>
     </div>
 
@@ -714,22 +621,14 @@ body.font-xl{font-size:22px}
   <div id="fich-form-wrap" style="display:none">
     <div class="fich-form">
       <div class="fich-form-title" id="fich-form-titulo">Apuntar horas</div>
-      <div class="tipo-dia-selector">
-        <button class="tipo-dia-btn t-normal activo" id="tdias-normal" onclick="setTipoDia('normal')">💼 Normal</button>
-        <button class="tipo-dia-btn t-vacaciones" id="tdias-vacaciones" onclick="setTipoDia('vacaciones')">🏖️ Vacaciones</button>
-        <button class="tipo-dia-btn t-festivo" id="tdias-festivo" onclick="setTipoDia('festivo')">🎉 Festivo</button>
-        <button class="tipo-dia-btn t-libre" id="tdias-libre" onclick="setTipoDia('libre')">😴 Libre</button>
-      </div>
-      <div id="fich-horas-wrap">
-        <div class="horas-row">
-          <div class="fg" style="margin-bottom:0">
-            <label>Horas normales</label>
-            <input id="fich-norm" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
-          </div>
-          <div class="fg" style="margin-bottom:0">
-            <label>Horas extra</label>
-            <input id="fich-extra" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
-          </div>
+      <div class="horas-row">
+        <div class="fg" style="margin-bottom:0">
+          <label>Horas normales</label>
+          <input id="fich-norm" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label>Horas extra</label>
+          <input id="fich-extra" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
         </div>
       </div>
       <div class="fg" style="margin-bottom:12px">
@@ -767,10 +666,7 @@ body.font-xl{font-size:22px}
     <div class="divider"></div>
     <div class="sec-hdr" style="margin:0 -16px 14px">Exportar fichaje</div>
     <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Exporta el resumen del mes actual en formato texto para copiarlo o enviarlo.</p>
-    <button class="btn-secondary" onclick="exportarFichajeMes()" style="margin-top:0">Copiar resumen del mes</button>
-    <button class="btn-secondary" onclick="compartirFichajeWhatsApp()" style="margin-top:8px">
-      Enviar por WhatsApp
-    </button>
+    <button class="btn-secondary" onclick="exportarFichajeMes()" style="margin-top:0">Exportar resumen del mes</button>
     <div id="fich-export-txt" style="display:none;margin-top:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px;font-size:13px;color:var(--txt2);line-height:1.8;white-space:pre-wrap;font-family:monospace"></div>
   </div>
 </div>
@@ -791,17 +687,15 @@ body.font-xl{font-size:22px}
     <button class="filtro-btn" id="filtro-pendientes" onclick="setFiltroNotas('pendientes')">Pendientes</button>
     <button class="filtro-btn" id="filtro-completadas" onclick="setFiltroNotas('completadas')">Completadas</button>
   </div>
-  <div id="lst-notas" style="padding-bottom:120px"></div>
+  <div id="lst-notas" style="padding-bottom:80px"></div>
+  <div class="nota-input-bar">
+    <input id="nota-nueva-txt" type="text" placeholder="Añadir nota... ej: Llevar cajas a Paco" autocomplete="off"
+      onkeydown="if(event.key==='Enter')agregarNota()">
+    <button onclick="agregarNota()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+  </div>
 </div>
-<!-- NOTA INPUT BAR GLOBAL -->
-<div class="nota-input-bar" id="nota-input-bar-global" style="display:none">
-  <input id="nota-nueva-txt" type="text" placeholder="Añadir nota..." autocomplete="off"
-    onkeydown="if(event.key==='Enter')agregarNota()">
-  <button onclick="agregarNota()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>
-</div>
-
 <!-- FAB GLOBAL -->
 <button class="fab" id="fab-global" style="display:none" onclick="fabGlobalClick()" aria-label="Añadir">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
@@ -809,7 +703,7 @@ body.font-xl{font-size:22px}
 
 </div>
 
-<script>
+<script type="module">
 const KEY='textil_v3';
 let db={clientes:[]};
 let curCli=null,curTela=null,curMed=null;
@@ -822,20 +716,16 @@ function persist(){
   try{
     const data=JSON.stringify(db);
     localStorage.setItem(KEY,data);
-    // Sync con Firebase si hay usuario
-    clearTimeout(window._syncDebounce);
-    window._syncDebounce=setTimeout(()=>syncFirestore(),1500);
     // Comprobar uso aproximado
     let total=0;
     for(let k in localStorage) if(localStorage.hasOwnProperty(k)) total+=localStorage[k].length*2;
     const mb=(total/1024/1024).toFixed(1);
     const pct=total/(5*1024*1024)*100;
     if(pct>80){
-      const sw=document.getElementById('storage-warn');
+      document.getElementById('storage-warn').style.display='flex';
       document.getElementById('storage-pct').textContent=mb+' MB usados de ~5 MB';
-      sw.style.display='flex';
-      clearTimeout(window._storageWarnTimer);
-      window._storageWarnTimer=setTimeout(()=>sw.style.display='none', 5000);
+    } else {
+      document.getElementById('storage-warn').style.display='none';
     }
   }catch(e){
     if(e.name==='QuotaExceededError'){
@@ -871,13 +761,7 @@ function go(id, addHistory){
   el.scrollTop=0;
   if(addHistory) history.pushState({screen:id}, '', '');
   actualizarFab();
-  if(id==='s-cli')actualizarBadges();
-  if(id==='s-notas'){
-    renderNotas();
-    document.getElementById('nota-input-bar-global').style.display='flex';
-  } else {
-    document.getElementById('nota-input-bar-global').style.display='none';
-  }
+  if(id==='s-notas') renderNotas();
 }
 
 function cancelForm(type){
@@ -1179,7 +1063,7 @@ function reorder(srcId,targetId){
 // ── BACKUP ───────────────────────────────────────────────
 function exportar(){
   const fecha=new Date().toISOString().slice(0,10);
-  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas(),pedidos:loadPedidos()};
+  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='daurela-backup-'+fecha+'.json';
@@ -1222,8 +1106,7 @@ function importar(e){
       if(data.fichajes)saveFichajes(data.fichajes);
       if(data.jornada){localStorage.setItem('fich_jornada',data.jornada);cargarConfigFichaje();}
       if(data.notas)saveNotas(data.notas);
-      if(data.pedidos)savePedidos(data.pedidos);
-      renderCli();renderFichaje();
+      renderCli();renderFichaje();renderNotas();
       msg.style.display='block';msg.style.color='green';msg.textContent='Restaurado correctamente ('+db.clientes.length+' clientes)';
       setTimeout(()=>msg.style.display='none',4000);toast('Datos restaurados');
     }catch(err){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Error: el archivo no es valido.';}
@@ -1499,7 +1382,7 @@ async function exportarGitHub(){
 
   const fecha=new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
   const filename='backups/daurela-backup-'+fecha+'.json';
-  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas(),pedidos:loadPedidos()};
+  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
 
   // Codificar en base64 de forma segura para Unicode
   const jsonStr=JSON.stringify(backup,null,2);
@@ -1560,7 +1443,7 @@ async function exportarGitHub(){
 
 
 // ── TIEMPO ───────────────────────────────────────────────
-async async function fetchWeather(){
+async function fetchWeather(){
   const iconEl=document.getElementById('weather-icon');
   const tempEl=document.getElementById('weather-temp');
   const descEl=document.getElementById('weather-desc');
@@ -1943,17 +1826,11 @@ function renderFichaje(){
     let clases='mes-dia'+(esHoy?' hoy':'')+(reg?' con-horas':'')+(seleccionado?' hoy':'');
     let dot='';
     if(reg){
-      const tipo=reg.tipo||'normal';
-      if(tipo==='normal'){
-        totalNorm+=reg.norm||0;
-        totalExtra+=reg.extra||0;
-        dot=`<div class="dia-dot${(reg.extra>0)?' extra':''}"></div>`;
-      } else {
-        dot=`<div class="dia-dot ${tipo}"></div>`;
-      }
+      totalNorm+=reg.norm||0;
+      totalExtra+=reg.extra||0;
+      dot=`<div class="dia-dot${(reg.extra>0)?' extra':''}"></div>`;
     }
-    const clasesTipo=reg&&reg.tipo&&reg.tipo!=='normal'?' '+reg.tipo:'';
-    html+=`<div class="${clases+clasesTipo}" onclick="seleccionarDia('${key}',${d})">
+    html+=`<div class="${clases}" onclick="seleccionarDia('${key}',${d})">
       <span class="dia-num">${d}</span>${dot}
     </div>`;
   }
@@ -1977,13 +1854,10 @@ function seleccionarDia(key, dia){
   const reg=fichajes[key]||{norm:'',extra:'',nota:''};
   const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('fich-form-titulo').textContent='Dia '+dia+' de '+meses[fichMes];
-  const tipo = reg.tipo || 'normal';
-  setTipoDia(tipo);
   document.getElementById('fich-norm').value=reg.norm||'';
   document.getElementById('fich-extra').value=reg.extra||'';
   document.getElementById('fich-nota').value=reg.nota||'';
   document.getElementById('btn-del-fich').style.display=fichajes[key]?'block':'none';
-  if(!reg) setTipoDia('normal');
   document.getElementById('fich-form-wrap').style.display='block';
   document.getElementById('fich-form-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
   renderFichaje();
@@ -1992,19 +1866,18 @@ function seleccionarDia(key, dia){
 function guardarFichaje(){
   if(!fichDiaSeleccionado)return;
   const jornada=getJornada();
-  const tipo = tipoDiaActual || 'normal';
-  let norm = tipo === 'normal' ? (parseFloat(document.getElementById('fich-norm').value)||0) : 0;
-  let extra = tipo === 'normal' ? (parseFloat(document.getElementById('fich-extra').value)||0) : 0;
-  const nota = document.getElementById('fich-nota').value.trim();
+  let norm=parseFloat(document.getElementById('fich-norm').value)||0;
+  let extra=parseFloat(document.getElementById('fich-extra').value)||0;
+  const nota=document.getElementById('fich-nota').value.trim();
 
-  // Auto-calcular extras si superan la jornada
-  if(tipo === 'normal' && norm > jornada && extra === 0){
-    extra = parseFloat((norm-jornada).toFixed(2));
-    norm = jornada;
+  // Auto-calcular extras si solo ponen horas normales y superan la jornada
+  if(norm>jornada&&extra===0){
+    extra=parseFloat((norm-jornada).toFixed(2));
+    norm=jornada;
   }
 
-  const fichajes = loadFichajes();
-  fichajes[fichDiaSeleccionado] = {tipo, norm, extra, nota};
+  const fichajes=loadFichajes();
+  fichajes[fichDiaSeleccionado]={norm,extra,nota};
   saveFichajes(fichajes);
   document.getElementById('fich-form-wrap').style.display='none';
   fichDiaSeleccionado=null;
@@ -2034,18 +1907,12 @@ function exportarFichajeMes(){
     const key=fichAnio+'-'+String(fichMes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     const reg=fichajes[key];
     if(reg){
-      if(reg.tipo && reg.tipo!=='normal'){
-        const emojis={vacaciones:'🏖️',festivo:'🎉',libre:'😴'};
-        txt+=`Dia ${String(d).padStart(2,' ')}: ${emojis[reg.tipo]||''} ${reg.tipo.charAt(0).toUpperCase()+reg.tipo.slice(1)}`;
-        if(reg.nota) txt+=` (${reg.nota})`;
-      } else {
-        txt+=`Dia ${String(d).padStart(2,' ')}: ${reg.norm}h normales`;
-        if(reg.extra>0) txt+=` + ${reg.extra}h extras`;
-        if(reg.nota) txt+=` (${reg.nota})`;
-        totalNorm+=reg.norm||0;
-        totalExtra+=reg.extra||0;
-      }
+      txt+=`Dia ${String(d).padStart(2,' ')}: ${reg.norm}h normales`;
+      if(reg.extra>0) txt+=` + ${reg.extra}h extras`;
+      if(reg.nota) txt+=` (${reg.nota})`;
       txt+='\n';
+      totalNorm+=reg.norm||0;
+      totalExtra+=reg.extra||0;
     }
   }
   txt+='━━━━━━━━━━━━━━━━━━━━━━━━\n';
@@ -2090,391 +1957,94 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311638', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311649', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
 
-
-// ── PEDIDOS GUARDADOS ────────────────────────────────────
-function loadPedidos(){try{const d=localStorage.getItem('pedidos_v1');return d?JSON.parse(d):[];}catch(e){return[];}}
-function savePedidos(arr){localStorage.setItem('pedidos_v1',JSON.stringify(arr));}
-
-function guardarPedido(){
-  const margen=parseFloat(document.getElementById('calc-margen').value)||0;
-  const pieza=parseFloat(document.getElementById('calc-pieza').value)||0;
-  const lineas=calcLineas.filter(l=>parseFloat(l.talla)>0&&parseInt(l.uds)>0);
-  if(!lineas.length){toast('Anade al menos una linea');return;}
-  const nombre=prompt('Nombre del pedido:');
-  if(!nombre||!nombre.trim())return;
-  const pedido={id:uid(),nombre:nombre.trim(),fecha:new Date().toISOString().slice(0,10),margen,pieza,lineas:JSON.parse(JSON.stringify(lineas))};
-  const pedidos=loadPedidos();pedidos.unshift(pedido);savePedidos(pedidos);
-  toast('Pedido guardado');actualizarBadges();
-}
-
-function verPedidosGuardados(){renderPedidos();go('s-pedidos');}
-
-function renderPedidos(){
-  const pedidos=loadPedidos();
-  const el=document.getElementById('lst-pedidos');
-  if(!pedidos.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg><p>Sin pedidos guardados.<br>Calcula un pedido y pulsa<br><strong>Guardar pedido</strong></p></div>';return;}
-  el.innerHTML=pedidos.map(p=>`
-    <div class="pedido-item">
-      <div class="li-icon" style="background:var(--bg3)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg></div>
-      <div class="pedido-info" onclick="cargarPedido('${p.id}')">
-        <div class="pedido-nombre">${esc(p.nombre)}</div>
-        <div class="pedido-meta">${p.fecha} &middot; ${p.lineas.length} talla${p.lineas.length!==1?'s':''} &middot; Margen ${p.margen}cm &middot; Pieza ${p.pieza}m</div>
-      </div>
-      <button class="btn-del-direct" onclick="eliminarPedido('${p.id}')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      </button>
-    </div>`).join('');
-}
-
-function cargarPedido(id){
-  const p=loadPedidos().find(p=>p.id===id);if(!p)return;
-  document.getElementById('calc-margen').value=p.margen;
-  document.getElementById('calc-pieza').value=p.pieza;
-  calcLineas=JSON.parse(JSON.stringify(p.lineas));
-  renderLineas();calcular();go('s-calc');
-  toast('Pedido cargado: '+p.nombre);
-}
-
-function eliminarPedido(id){
-  if(!confirm('Eliminar este pedido?'))return;
-  savePedidos(loadPedidos().filter(p=>p.id!==id));
-  renderPedidos();actualizarBadges();toast('Pedido eliminado');
-}
-
-// ── BADGES ───────────────────────────────────────────────
-function actualizarBadges(){
-  const notas=loadNotas().filter(n=>!n.done).length;
-  setBadge('badge-notas',notas,false);
-  const pedidos=loadPedidos().length;
-  setBadge('badge-calc',pedidos,true);
-
-}
-
-function setBadge(id,count,esVerde){
-  const el=document.getElementById(id);if(!el)return;
-  if(count>0){el.textContent=count>99?'99+':count;el.style.display='flex';if(esVerde)el.classList.add('verde');}
-  else{el.style.display='none';}
-}
-
-
-// ── FIREBASE ──────────────────────────────────────────────
-let fireUnsubscribe = null;
-
-async function loginGoogle(){
-  if(window._fireUser){
-    // Ya logueado — preguntar si cerrar sesión
-    if(confirm('Cerrar sesion de '+window._fireUser.displayName+'?')){
-      await window._fireFns.signOut(window._fireAuth);
-      toast('Sesion cerrada');
-    }
-    return;
-  }
-  try{
-    await window._fireFns.signInWithPopup(window._fireAuth, window._fireProvider);
-    toast('Sesion iniciada');
-  }catch(e){
-    toast('Error al iniciar sesion');
-    console.error(e);
-  }
-}
-
-window.initFirestore = function(){
-  if(!window._fireUser) return;
-  const uid = window._fireUser.uid;
-  const docRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
-
-  // Escuchar cambios en tiempo real
-  if(fireUnsubscribe) fireUnsubscribe();
-  fireUnsubscribe = window._fireFns.onSnapshot(docRef, snap => {
-    if(snap.exists()){
-      const remoto = snap.data();
-      const tsRemoto = remoto.ts || remoto.timestamp || 0;
-      const tsLocal = window._lastSave || 0;
-
-      // Solo hacer merge si los datos remotos son de otra sesión
-      if(tsRemoto > 0 && tsRemoto !== tsLocal){
-        const merged = mergeData(remoto);
-        if(merged){
-          persist();
-          renderCli();
-          renderFichaje();
-          actualizarBadges();
-          showSyncIndicator('Sincronizado');
-          // Subir el merge a Firebase
-          clearTimeout(window._syncDebounce);
-          window._syncDebounce = setTimeout(()=>syncFirestore(), 2000);
-        }
-      }
-    }
-  });
-}
-
-
-// ── MERGE DE DATOS ───────────────────────────────────────
-function mergeData(remoto){
-  let cambios = false;
-
-  // CLIENTES: combinar por ID — si existe en remoto pero no en local, añadir
-  if(remoto.clientes && Array.isArray(remoto.clientes)){
-    const idsLocales = new Set(db.clientes.map(c => c.id));
-    remoto.clientes.forEach(cRemoto => {
-      if(!idsLocales.has(cRemoto.id)){
-        // Cliente nuevo en remoto, añadir a local
-        db.clientes.push(cRemoto);
-        cambios = true;
-      } else {
-        // Cliente existe en ambos — mergear telas
-        const cLocal = db.clientes.find(c => c.id === cRemoto.id);
-        if(cLocal && cRemoto.telas){
-          const idsTelaLocal = new Set((cLocal.telas || []).map(t => t.id));
-          cRemoto.telas.forEach(tRemota => {
-            if(!idsTelaLocal.has(tRemota.id)){
-              // Tela nueva en remoto
-              cLocal.telas = cLocal.telas || [];
-              cLocal.telas.push(tRemota);
-              cambios = true;
-            } else {
-              // Tela existe en ambos — mergear medidas
-              const tLocal = cLocal.telas.find(t => t.id === tRemota.id);
-              if(tLocal && tRemota.medidas){
-                const idsMedLocal = new Set((tLocal.medidas || []).map(m => m.id));
-                tRemota.medidas.forEach(mRemota => {
-                  if(!idsMedLocal.has(mRemota.id)){
-                    tLocal.medidas = tLocal.medidas || [];
-                    tLocal.medidas.push(mRemota);
-                    cambios = true;
-                  }
-                });
-              }
-            }
-          });
-        }
-      }
-    });
-  }
-
-  // NOTAS: combinar por ID
-  if(remoto.notas && Array.isArray(remoto.notas)){
-    const notasLocales = loadNotas();
-    const idsLocal = new Set(notasLocales.map(n => n.id));
-    let notasCambios = false;
-    remoto.notas.forEach(nRemota => {
-      if(!idsLocal.has(nRemota.id)){
-        notasLocales.push(nRemota);
-        notasCambios = true;
-        cambios = true;
-      }
-    });
-    if(notasCambios) saveNotas(notasLocales);
-  }
-
-  // FICHAJES: combinar por fecha — local tiene prioridad
-  if(remoto.fichajes){
-    const fichajesLocales = loadFichajes();
-    let fCambios = false;
-    Object.keys(remoto.fichajes).forEach(fecha => {
-      if(!fichajesLocales[fecha]){
-        fichajesLocales[fecha] = remoto.fichajes[fecha];
-        fCambios = true;
-        cambios = true;
-      }
-    });
-    if(fCambios) saveFichajes(fichajesLocales);
-  }
-
-  // PEDIDOS: combinar por ID
-  if(remoto.pedidos && Array.isArray(remoto.pedidos)){
-    const pedidosLocales = loadPedidos();
-    const idsLocal = new Set(pedidosLocales.map(p => p.id));
-    let pCambios = false;
-    remoto.pedidos.forEach(pRemoto => {
-      if(!idsLocal.has(pRemoto.id)){
-        pedidosLocales.push(pRemoto);
-        pCambios = true;
-        cambios = true;
-      }
-    });
-    if(pCambios) savePedidos(pedidosLocales);
-  }
-
-  return cambios;
-}
-
-async function syncFirestore(){
-  if(!window._fireUser || !window._fireFns || !window._fireDB) return;
-  const uid = window._fireUser.uid;
-  try{
-    showSyncIndicator('Sincronizando...');
-    // Eliminar fotos (base64) y limpiar undefined usando JSON round-trip
-    const cliLimpios = JSON.parse(JSON.stringify(db.clientes.map(cli => ({
-      id: cli.id || '',
-      nombre: cli.nombre || '',
-      notas: cli.notas || '',
-      telas: (cli.telas || []).map(t => ({
-        id: t.id || '',
-        nombre: t.nombre || '',
-        notas: t.notas || '',
-        medidas: (t.medidas || []).map(m => ({
-          id: m.id || '',
-          nombre: m.nombre || '',
-          tipo: m.tipo || 'taco',
-          ta: Number(m.ta) || 0,
-          cl: Number(m.cl) || 0,
-          obs: m.obs || ''
-        }))
-      }))
-    }))));
-
-    const fichajesRaw = loadFichajes() || {};
-    const fichajesLimpios = {};
-    Object.keys(fichajesRaw).forEach(k => {
-      fichajesLimpios[k] = {
-        norm: Number(fichajesRaw[k].norm) || 0,
-        extra: Number(fichajesRaw[k].extra) || 0,
-        nota: fichajesRaw[k].nota || ''
-      };
-    });
-
-    const data = {
-      v: 2,
-      ts: Date.now(),
-      clientes: cliLimpios,
-      fichajes: fichajesLimpios,
-      jornada: Number(getJornada()) || 6,
-      notas: (loadNotas() || []).map(n => ({
-        id: String(n.id || ''),
-        txt: String(n.txt || ''),
-        done: Boolean(n.done),
-        fecha: String(n.fecha || ''),
-        hora: String(n.hora || '')
-      })),
-      pedidos: (loadPedidos() || []).map(p => ({
-        id: String(p.id || ''),
-        nombre: String(p.nombre || ''),
-        fecha: String(p.fecha || ''),
-        margen: Number(p.margen) || 0,
-        pieza: Number(p.pieza) || 0,
-        lineas: (p.lineas || []).map(l => ({
-          id: String(l.id || ''),
-          nombre: String(l.nombre || ''),
-          talla: String(l.talla || ''),
-          uds: String(l.uds || '')
-        }))
-      }))
-    };
-    window._lastSave = data.timestamp;
-    const docRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
-    await window._fireFns.setDoc(docRef, data);
-    showSyncIndicator('Guardado');
-  }catch(e){
-    console.error('Sync error:', e);
-    const msg = e.code || e.message || 'desconocido';
-    showSyncIndicator('Error sync');
-    toast('Sync error: '+msg);
-  }
-}
-
-function showSyncIndicator(txt){
-  const el = document.getElementById('sync-indicator');
-  const txtEl = document.getElementById('sync-txt');
-  const dot = document.getElementById('sync-dot');
-  if(!el || !txtEl) return;
-  txtEl.textContent = txt;
-  el.style.display = 'flex';
-  if(dot){
-    if(txt === 'Guardado') dot.style.background = '#30d158';
-    else if(txt.includes('Error') || txt.includes('sesion')) dot.style.background = '#ff453a';
-    else dot.style.background = '#ff9f0a';
-  }
-  clearTimeout(window._syncTimer);
-  window._syncTimer = setTimeout(() => el.style.display = 'none', 2500);
-}
-
-// Auto-sync cada vez que se guarda algo
-const _origPersist = window.persist;
-
-
-// ── TIPO DE DIA ──────────────────────────────────────────
-let tipoDiaActual = 'normal';
-
-function setTipoDia(tipo){
-  tipoDiaActual = tipo;
-  document.querySelectorAll('.tipo-dia-btn').forEach(b => b.classList.remove('activo'));
-  const btn = document.getElementById('tdias-'+tipo);
-  if(btn) btn.classList.add('activo');
-  // Mostrar/ocultar campos de horas
-  const wrap = document.getElementById('fich-horas-wrap');
-  if(wrap) wrap.style.display = tipo === 'normal' ? 'block' : 'none';
-}
-
-// ── WHATSAPP FICHAJE ─────────────────────────────────────
-function compartirFichajeWhatsApp(){
-  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const fichajes=loadFichajes();
-  const diasMes=new Date(fichAnio,fichMes+1,0).getDate();
-  let txt='*'+meses[fichMes]+' '+fichAnio+'*
-';
-  txt+='━━━━━━━━━━━━━━━━━━━━━━━━
-';
-  let totalNorm=0,totalExtra=0;
-  for(let d=1;d<=diasMes;d++){
-    const key=fichAnio+'-'+String(fichMes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const reg=fichajes[key];
-    if(reg){
-      if(reg.tipo && reg.tipo !== 'normal'){
-        const emojis={vacaciones:'🏖️',festivo:'🎉',libre:'😴'};
-        txt+=`Día ${String(d).padStart(2,' ')}: ${emojis[reg.tipo]||''} ${reg.tipo.charAt(0).toUpperCase()+reg.tipo.slice(1)}`;
-        if(reg.nota) txt+=` (${reg.nota})`;
-      } else {
-        txt+=`Día ${String(d).padStart(2,' ')}: ${reg.norm}h normales`;
-        if(reg.extra>0) txt+=` + ${reg.extra}h extras`;
-        if(reg.nota) txt+=` (${reg.nota})`;
-        totalNorm+=reg.norm||0;
-        totalExtra+=reg.extra||0;
-      }
-      txt+='
-';
-    }
-  }
-  txt+='━━━━━━━━━━━━━━━━━━━━━━━━
-';
-  txt+=`Total normales: *${totalNorm}h*
-`;
-  txt+=`Total extras:   *${totalExtra}h*
-`;
-  txt+=`TOTAL:          *${totalNorm+totalExtra}h*`;
-  const url='https://wa.me/?text='+encodeURIComponent(txt);
-  window.open(url,'_blank');
-}
+// Exponer al window
+try{window.addLinea=addLinea;}catch(e){}
+try{window.agregarNota=agregarNota;}catch(e){}
+try{window.calcLineaField=calcLineaField;}catch(e){}
+try{window.calcular=calcular;}catch(e){}
+try{window.cambiarMes=cambiarMes;}catch(e){}
+try{window.cancelForm=cancelForm;}catch(e){}
+try{window.cargarMasCli=cargarMasCli;}catch(e){}
+try{window.dDrop=dDrop;}catch(e){}
+try{window.dDropCli=dDropCli;}catch(e){}
+try{window.dDropTela=dDropTela;}catch(e){}
+try{window.dEnd=dEnd;}catch(e){}
+try{window.dEndCli=dEndCli;}catch(e){}
+try{window.dEndTela=dEndTela;}catch(e){}
+try{window.dOver=dOver;}catch(e){}
+try{window.dStart=dStart;}catch(e){}
+try{window.dStartCli=dStartCli;}catch(e){}
+try{window.dStartTela=dStartTela;}catch(e){}
+try{window.delCli=delCli;}catch(e){}
+try{window.delMed=delMed;}catch(e){}
+try{window.delTela=delTela;}catch(e){}
+try{window.duplicarDesdeForm=duplicarDesdeForm;}catch(e){}
+try{window.duplicarMed=duplicarMed;}catch(e){}
+try{window.editarNota=editarNota;}catch(e){}
+try{window.eliminarFichaje=eliminarFichaje;}catch(e){}
+try{window.eliminarNota=eliminarNota;}catch(e){}
+try{window.exportar=exportar;}catch(e){}
+try{window.exportarCSV=exportarCSV;}catch(e){}
+try{window.exportarFichajeMes=exportarFichajeMes;}catch(e){}
+try{window.exportarGitHub=exportarGitHub;}catch(e){}
+try{window.fabGlobalClick=fabGlobalClick;}catch(e){}
+try{window.fetchWeather=fetchWeather;}catch(e){}
+try{window.go=go;}catch(e){}
+try{window.guardarConfigFichaje=guardarConfigFichaje;}catch(e){}
+try{window.guardarFichaje=guardarFichaje;}catch(e){}
+try{window.guardarToken=guardarToken;}catch(e){}
+try{window.importar=importar;}catch(e){}
+try{window.limpiarCalc=limpiarCalc;}catch(e){}
+try{window.limpiarCompletadas=limpiarCompletadas;}catch(e){}
+try{window.loadFoto=loadFoto;}catch(e){}
+try{window.markDirty=markDirty;}catch(e){}
+try{window.openCli=openCli;}catch(e){}
+try{window.openFormCli=openFormCli;}catch(e){}
+try{window.openFormMed=openFormMed;}catch(e){}
+try{window.openFormTela=openFormTela;}catch(e){}
+try{window.openMed=openMed;}catch(e){}
+try{window.openTela=openTela;}catch(e){}
+try{window.quitarFoto=quitarFoto;}catch(e){}
+try{window.removeLinea=removeLinea;}catch(e){}
+try{window.renderCli=renderCli;}catch(e){}
+try{window.renderSearch=renderSearch;}catch(e){}
+try{window.saveCli=saveCli;}catch(e){}
+try{window.saveMed=saveMed;}catch(e){}
+try{window.saveTela=saveTela;}catch(e){}
+try{window.seleccionarDia=seleccionarDia;}catch(e){}
+try{window.setFiltroNotas=setFiltroNotas;}catch(e){}
+try{window.setFont=setFont;}catch(e){}
+try{window.tEnd=tEnd;}catch(e){}
+try{window.tEndCli=tEndCli;}catch(e){}
+try{window.tEndTela=tEndTela;}catch(e){}
+try{window.tMove=tMove;}catch(e){}
+try{window.tMoveCli=tMoveCli;}catch(e){}
+try{window.tMoveTela=tMoveTela;}catch(e){}
+try{window.tStart=tStart;}catch(e){}
+try{window.tStartCli=tStartCli;}catch(e){}
+try{window.tStartTela=tStartTela;}catch(e){}
+try{window.toggleNota=toggleNota;}catch(e){}
+try{window.toggleOrden=toggleOrden;}catch(e){}
+try{window.toggleToken=toggleToken;}catch(e){}
 
 // ── INIT ─────────────────────────────────────────────────
-window.onerror = function(msg, src, line, col, err){
-  console.error('Error global:', msg, 'linea:', line, err);
-  // Mostrar la app aunque haya error
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  const cli = document.getElementById('s-cli');
-  if(cli) cli.classList.add('active');
-  return false;
-};
-
-try{ load(); }catch(e){ console.error('load error:', e); }
-try{ renderCli(); }catch(e){ console.error('renderCli error:', e); }
-try{ initCalc(); }catch(e){ console.error('initCalc error:', e); }
-try{ cargarToken(); }catch(e){ console.error('cargarToken error:', e); }
-try{ history.replaceState({screen:'s-cli'}, '', ''); }catch(e){}
-try{ mostrarSplash(); }catch(e){ console.error('splash error:', e); }
-try{ renderFichaje(); }catch(e){ console.error('renderFichaje error:', e); }
-try{ cargarConfigFichaje(); }catch(e){ console.error('config error:', e); }
-try{ cargarFont(); }catch(e){ console.error('font error:', e); }
-try{ initEasterEgg(); }catch(e){ console.error('easter error:', e); }
-try{ actualizarFab(); }catch(e){ console.error('fab error:', e); }
-try{ actualizarBadges(); }catch(e){ console.error('badges error:', e); }
-try{ initWeather(); }catch(e){ console.error('weather error:', e); }
+load();
+renderCli();
+initCalc();
+cargarToken();
+history.replaceState({screen:'s-cli'}, '', '');
+mostrarSplash();
+renderFichaje();
+cargarConfigFichaje();
+cargarFont();
+initEasterEgg();
+actualizarFab();
+initWeather();
 </script>
 </body>
 </html>
