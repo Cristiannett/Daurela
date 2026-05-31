@@ -2090,7 +2090,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311625', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311635', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2453,19 +2453,28 @@ function compartirFichajeWhatsApp(){
 }
 
 // ── INIT ─────────────────────────────────────────────────
-load();
-renderCli();
-initCalc();
-cargarToken();
-history.replaceState({screen:'s-cli'}, '', '');
-mostrarSplash();
-renderFichaje();
-cargarConfigFichaje();
-cargarFont();
-initEasterEgg();
-actualizarFab();
-actualizarBadges();
-initWeather();
+window.onerror = function(msg, src, line, col, err){
+  console.error('Error global:', msg, 'linea:', line, err);
+  // Mostrar la app aunque haya error
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const cli = document.getElementById('s-cli');
+  if(cli) cli.classList.add('active');
+  return false;
+};
+
+try{ load(); }catch(e){ console.error('load error:', e); }
+try{ renderCli(); }catch(e){ console.error('renderCli error:', e); }
+try{ initCalc(); }catch(e){ console.error('initCalc error:', e); }
+try{ cargarToken(); }catch(e){ console.error('cargarToken error:', e); }
+try{ history.replaceState({screen:'s-cli'}, '', ''); }catch(e){}
+try{ mostrarSplash(); }catch(e){ console.error('splash error:', e); }
+try{ renderFichaje(); }catch(e){ console.error('renderFichaje error:', e); }
+try{ cargarConfigFichaje(); }catch(e){ console.error('config error:', e); }
+try{ cargarFont(); }catch(e){ console.error('font error:', e); }
+try{ initEasterEgg(); }catch(e){ console.error('easter error:', e); }
+try{ actualizarFab(); }catch(e){ console.error('fab error:', e); }
+try{ actualizarBadges(); }catch(e){ console.error('badges error:', e); }
+try{ initWeather(); }catch(e){ console.error('weather error:', e); }
 </script>
 </body>
 </html>
