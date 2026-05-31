@@ -1,0 +1,1286 @@
+{
+  "version": 2,
+  "clientes": [
+    {
+      "notas": "",
+      "id": "mpd4qiklqyig",
+      "telas": [
+        {
+          "notas": "",
+          "id": "mpd4sn5kbqg5",
+          "foto": null,
+          "medidas": [
+            {
+              "id": "mpd4t4ruy22k",
+              "cl": 94,
+              "nombre": "60x40",
+              "obs": "",
+              "tipo": "entera",
+              "ta": 66
+            },
+            {
+              "cl": 88,
+              "id": "mpd5xigx9ams",
+              "tipo": "entera",
+              "ta": 85,
+              "obs": "",
+              "nombre": "80"
+            }
+          ],
+          "nombre": "Americano/Spaldin"
+        },
+        {
+          "foto": null,
+          "medidas": [],
+          "nombre": "Dormitienda",
+          "notas": "",
+          "id": "mpdrunfk445e"
+        },
+        {
+          "nombre": "Cuadros Moyca",
+          "medidas": [],
+          "foto": null,
+          "id": "mpdrtixyesic",
+          "notas": ""
+        },
+        {
+          "id": "mpdrufom1zg5",
+          "notas": "",
+          "nombre": "Funda Mariposas Blanco/Negro",
+          "medidas": [
+            {
+              "cl": 65,
+              "id": "mpec26px9e7j",
+              "ta": 0,
+              "tipo": "taco",
+              "nombre": "Negro",
+              "obs": ""
+            },
+            {
+              "tipo": "taco",
+              "ta": 0,
+              "nombre": "Blanco",
+              "obs": "",
+              "cl": 66,
+              "id": "mpec2c4h4brl"
+            }
+          ],
+          "foto": null
+        },
+        {
+          "nombre": "Aloe Dennys",
+          "medidas": [],
+          "foto": null,
+          "id": "mpdruv1m661r",
+          "notas": ""
+        },
+        {
+          "id": "mpdruzbpbnot",
+          "notas": "",
+          "nombre": "Bamboo Dennys",
+          "foto": null,
+          "medidas": []
+        },
+        {
+          "medidas": [],
+          "foto": null,
+          "nombre": "Aloe Blanco",
+          "notas": "",
+          "id": "mpdrv9zog620"
+        },
+        {
+          "medidas": [
+            {
+              "tipo": "entera",
+              "ta": 49,
+              "nombre": "Solapa",
+              "obs": "",
+              "cl": 157,
+              "id": "mpebc5mpn4u1"
+            },
+            {
+              "tipo": "entera",
+              "ta": 31,
+              "obs": "",
+              "nombre": "Viaje Solapa",
+              "cl": 110,
+              "id": "mpebcwni5j8r"
+            }
+          ],
+          "foto": null,
+          "nombre": "Onyx",
+          "notas": "",
+          "id": "mpebbosxnrxi"
+        },
+        {
+          "notas": "",
+          "id": "mpebdf75zmbo",
+          "medidas": [
+            {
+              "cl": 65,
+              "id": "mpebdtj9jx4u",
+              "ta": 85,
+              "tipo": "taco",
+              "obs": "",
+              "nombre": "Platananda"
+            },
+            {
+              "id": "mpebe87dnsgs",
+              "cl": 75,
+              "nombre": "Plana",
+              "obs": "",
+              "tipo": "taco",
+              "ta": 57
+            }
+          ],
+          "foto": null,
+          "nombre": "Mariposas"
+        },
+        {
+          "nombre": "Cervicales",
+          "foto": null,
+          "medidas": [
+            {
+              "cl": 75,
+              "id": "mpebfefg0nwz",
+              "ta": 85,
+              "tipo": "taco",
+              "obs": "",
+              "nombre": "CV50"
+            },
+            {
+              "ta": 85,
+              "tipo": "taco",
+              "nombre": "CV60",
+              "obs": "",
+              "cl": 88,
+              "id": "mpebfgl9fcnj"
+            },
+            {
+              "ta": 85,
+              "tipo": "taco",
+              "nombre": "CV67",
+              "obs": "",
+              "cl": 88,
+              "id": "mpebg1f1zimx"
+            }
+          ],
+          "id": "mpebesilch08",
+          "notas": ""
+        },
+        {
+          "nombre": "Interiores",
+          "medidas": [
+            {
+              "id": "mpebh2zs6x9r",
+              "cl": 15,
+              "nombre": "Medidas estándar",
+              "obs": "+15 a la medida",
+              "tipo": "taco",
+              "ta": 0
+            },
+            {
+              "nombre": "60*40",
+              "obs": "75*40",
+              "ta": 0,
+              "tipo": "taco",
+              "id": "mpebhsjaedia",
+              "cl": 15
+            },
+            {
+              "obs": "95*60",
+              "nombre": "60*60",
+              "ta": 0,
+              "tipo": "taco",
+              "id": "mpebi9i9oate",
+              "cl": 35
+            },
+            {
+              "tipo": "taco",
+              "ta": 0,
+              "nombre": "50*70",
+              "obs": "Corte 90cm",
+              "cl": 90,
+              "id": "mpebrqsgno2f"
+            }
+          ],
+          "foto": null,
+          "id": "mpebgaf3rdaj",
+          "notas": ""
+        },
+        {
+          "id": "mpebkclbu6gr",
+          "notas": "Negro y Gris",
+          "nombre": "Asientos",
+          "foto": null,
+          "medidas": [
+            {
+              "id": "mpebktdlxmnq",
+              "cl": 61,
+              "obs": "",
+              "nombre": "Negro",
+              "ta": 61,
+              "tipo": "entera"
+            },
+            {
+              "ta": 43,
+              "tipo": "taco",
+              "nombre": "Gris",
+              "obs": "",
+              "cl": 43,
+              "id": "mpebl2zuy3e3"
+            }
+          ]
+        },
+        {
+          "nombre": "Viaje",
+          "medidas": [
+            {
+              "tipo": "taco",
+              "ta": 48,
+              "obs": "",
+              "nombre": "Viaje",
+              "cl": 59,
+              "id": "mpebmcj84yhy"
+            }
+          ],
+          "foto": null,
+          "id": "mpeblhcmi7jd",
+          "notas": ""
+        },
+        {
+          "notas": "",
+          "id": "mpebmpf1z113",
+          "medidas": [
+            {
+              "obs": "",
+              "nombre": "Cuna",
+              "tipo": "taco",
+              "ta": 32,
+              "id": "mpebn3fr9b5k",
+              "cl": 125
+            }
+          ],
+          "foto": null,
+          "nombre": "Cuna"
+        },
+        {
+          "notas": "",
+          "id": "mpebnkv1fcrp",
+          "medidas": [
+            {
+              "nombre": "60*40",
+              "obs": "",
+              "tipo": "taco",
+              "ta": 69,
+              "id": "mpebnud1tzf5",
+              "cl": 95
+            }
+          ],
+          "foto": null,
+          "nombre": "Cutí cuadros gris"
+        },
+        {
+          "id": "mpebow5ipcxt",
+          "notas": "",
+          "nombre": "Krnest",
+          "foto": null,
+          "medidas": [
+            {
+              "obs": "",
+              "nombre": "60*40*6",
+              "ta": 66,
+              "tipo": "entera",
+              "id": "mpebpe7x0ytz",
+              "cl": 93
+            },
+            {
+              "cl": 94,
+              "id": "mpebq144n5hj",
+              "tipo": "entera",
+              "ta": 66,
+              "obs": "",
+              "nombre": "60*40*8"
+            },
+            {
+              "tipo": "entera",
+              "ta": 32,
+              "nombre": "Cuna",
+              "obs": "",
+              "cl": 125,
+              "id": "mpebqbezplcb"
+            }
+          ]
+        },
+        {
+          "nombre": "Nantes Grueso Ribete",
+          "medidas": [
+            {
+              "cl": 10,
+              "id": "mpebtyj1miuq",
+              "tipo": "taco",
+              "ta": 44,
+              "obs": "Cara a Cara +10cm",
+              "nombre": "Estándar"
+            },
+            {
+              "nombre": "60*40",
+              "obs": "Cara a Cara",
+              "ta": 67,
+              "tipo": "taco",
+              "id": "mpebudcdq86d",
+              "cl": 50
+            }
+          ],
+          "foto": null,
+          "id": "mpebtb7ratus",
+          "notas": ""
+        },
+        {
+          "medidas": [
+            {
+              "cl": 8,
+              "id": "mpebx8e3o6x8",
+              "ta": 85,
+              "tipo": "entera",
+              "obs": "",
+              "nombre": "Tamaños Normales"
+            },
+            {
+              "nombre": "60*60",
+              "obs": "",
+              "tipo": "entera",
+              "ta": 68,
+              "id": "mpebxoek6q5x",
+              "cl": 136
+            },
+            {
+              "nombre": "60*40",
+              "obs": "",
+              "ta": 97,
+              "tipo": "entera",
+              "id": "mpebxzo5itux",
+              "cl": 68
+            }
+          ],
+          "foto": null,
+          "nombre": "Cutti Raya Horizontal",
+          "notas": "",
+          "id": "mpebwsclzqti"
+        },
+        {
+          "notas": "",
+          "id": "mpebznpw62ab",
+          "medidas": [
+            {
+              "cl": 116,
+              "id": "mpebzxmd7j70",
+              "ta": 53,
+              "tipo": "taco",
+              "nombre": "45*45",
+              "obs": ""
+            }
+          ],
+          "foto": null,
+          "nombre": "Nantes Grueso 45*45"
+        },
+        {
+          "id": "mpec069kd4oo",
+          "notas": "",
+          "nombre": "Collarín",
+          "foto": null,
+          "medidas": [
+            {
+              "obs": "Cara a Cara",
+              "nombre": "Collarín",
+              "ta": 85,
+              "tipo": "taco",
+              "id": "mpec0jeiid1x",
+              "cl": 50
+            }
+          ]
+        },
+        {
+          "notas": "",
+          "id": "mpec0usc6n88",
+          "foto": null,
+          "medidas": [
+            {
+              "ta": 21,
+              "tipo": "taco",
+              "obs": "",
+              "nombre": "Tlf",
+              "cl": 16,
+              "id": "mpec15knqjx3"
+            }
+          ],
+          "nombre": "Sacos Beige (tlf)"
+        }
+      ],
+      "nombre": "Funqualis"
+    },
+    {
+      "notas": "",
+      "id": "mpd4x3u9x6fw",
+      "telas": [
+        {
+          "id": "mpd4xikhgk8g",
+          "notas": "Mamoud",
+          "nombre": "Paris",
+          "medidas": [
+            {
+              "cl": 7,
+              "id": "mpd4xy3immsc",
+              "tipo": "entera",
+              "ta": 195,
+              "nombre": "Protector",
+              "obs": "+7cm de la medida\nMamoud"
+            },
+            {
+              "tipo": "entera",
+              "ta": 87,
+              "nombre": "Funda almohada",
+              "obs": "",
+              "cl": 9,
+              "id": "mpd4z89gal3r"
+            }
+          ],
+          "foto": null
+        },
+        {
+          "nombre": "Lisboa",
+          "foto": null,
+          "medidas": [
+            {
+              "cl": 7,
+              "id": "mpehzlmblown",
+              "ta": 195,
+              "tipo": "taco",
+              "nombre": "Estándar",
+              "obs": ""
+            }
+          ],
+          "id": "mpdrpoc2ze5g",
+          "notas": "Mamoud"
+        },
+        {
+          "notas": "",
+          "id": "mpdrptbolm9d",
+          "foto": null,
+          "medidas": [
+            {
+              "id": "mpei0opsodqz",
+              "cl": 67,
+              "obs": "Medida + 67\nMercedes",
+              "nombre": "Estándar",
+              "tipo": "taco",
+              "ta": 240
+            }
+          ],
+          "nombre": "Bamboo"
+        },
+        {
+          "medidas": [
+            {
+              "id": "mpei2ilrpsd5",
+              "cl": 0,
+              "obs": "Medida x2 +50cm\nMercedes",
+              "nombre": "Estándar",
+              "ta": 0,
+              "tipo": "taco"
+            }
+          ],
+          "foto": null,
+          "nombre": "Berlin",
+          "notas": "",
+          "id": "mpdrpx0raxvr"
+        },
+        {
+          "id": "mpdrqbrshzf6",
+          "notas": "",
+          "nombre": "Viena",
+          "medidas": [
+            {
+              "nombre": "Estándar",
+              "obs": "Mamoud",
+              "ta": 195,
+              "tipo": "taco",
+              "id": "mpehyvps3rat",
+              "cl": 5
+            }
+          ],
+          "foto": null
+        },
+        {
+          "notas": "",
+          "id": "mpdrqqxg5e22",
+          "foto": null,
+          "medidas": [
+            {
+              "tipo": "taco",
+              "ta": 240,
+              "obs": "Medida + 67\nMercedes",
+              "nombre": "Estándar",
+              "cl": 67,
+              "id": "mpei1m3t8bg0"
+            }
+          ],
+          "nombre": "Oporto(lisboa)"
+        },
+        {
+          "notas": "Mamoud",
+          "id": "mpdrvir81kdy",
+          "medidas": [
+            {
+              "id": "mpei018ze9gc",
+              "cl": 12,
+              "obs": "",
+              "nombre": "Estándar",
+              "tipo": "taco",
+              "ta": 200
+            }
+          ],
+          "foto": null,
+          "nombre": "Roma"
+        },
+        {
+          "id": "mpehwuw0xnbp",
+          "notas": "",
+          "nombre": "Empapadores",
+          "foto": null,
+          "medidas": [
+            {
+              "ta": 68,
+              "tipo": "taco",
+              "nombre": "Microfibra",
+              "obs": "Misma medida corte que ancho taco paris",
+              "cl": 0,
+              "id": "mpehxqmc0l1q"
+            },
+            {
+              "cl": 5,
+              "id": "mpehybr9x0n0",
+              "tipo": "taco",
+              "ta": 85,
+              "obs": "",
+              "nombre": "Paris"
+            }
+          ]
+        },
+        {
+          "id": "mpei5fzj5bw5",
+          "notas": "",
+          "nombre": "Fundas Almohadas",
+          "foto": null,
+          "medidas": [
+            {
+              "cl": 9,
+              "id": "mpei5s6uwn1b",
+              "tipo": "taco",
+              "ta": 87,
+              "nombre": "Estandar Paris",
+              "obs": ""
+            },
+            {
+              "ta": 87,
+              "tipo": "taco",
+              "nombre": "Estandar Bamboo",
+              "obs": "",
+              "cl": 9,
+              "id": "mpei634ghvrs"
+            },
+            {
+              "cl": 0,
+              "id": "mpei8ch8ymfu",
+              "tipo": "taco",
+              "ta": 0,
+              "nombre": "Nantes/Puntitos Visco",
+              "obs": "3D 43cm | Nantes/puntitos la mitad del taco | corte +10cm"
+            }
+          ]
+        }
+      ],
+      "nombre": "Paco Pastor"
+    },
+    {
+      "notas": "",
+      "id": "mpd5syauqwhx",
+      "nombre": "Don Almohadón",
+      "telas": [
+        {
+          "nombre": "Piedra",
+          "medidas": [
+            {
+              "cl": 9,
+              "id": "mpdrjbinlxvt",
+              "tipo": "taco",
+              "ta": 46,
+              "nombre": "Almohada abierta",
+              "obs": "+9 cm medida"
+            }
+          ],
+          "foto": null,
+          "id": "mpdrigca1b8m",
+          "notas": ""
+        },
+        {
+          "id": "mpdrkamr3j6f",
+          "notas": "",
+          "nombre": "Misori",
+          "medidas": [],
+          "foto": null
+        },
+        {
+          "notas": "",
+          "id": "mpdrki6ofv7z",
+          "medidas": [],
+          "foto": null,
+          "nombre": "Aloe 2012"
+        },
+        {
+          "foto": null,
+          "medidas": [
+            {
+              "tipo": "taco",
+              "ta": 69,
+              "obs": "Cara a cara",
+              "nombre": "Ribete 60*40",
+              "cl": 50,
+              "id": "mpehj55naulf"
+            },
+            {
+              "obs": "+10cm cara a cara",
+              "nombre": "Ribete estándar",
+              "ta": 43,
+              "tipo": "taco",
+              "id": "mpehjunsoqat",
+              "cl": 10
+            }
+          ],
+          "nombre": "Gofrada",
+          "notas": "",
+          "id": "mpdrkr8ewy0g"
+        },
+        {
+          "id": "mpdrkyrojsvp",
+          "notas": "",
+          "nombre": "Aloe Piedras Blanco",
+          "foto": null,
+          "medidas": []
+        },
+        {
+          "id": "mpdrnujqtjcw",
+          "notas": "",
+          "nombre": "Fusion Home",
+          "medidas": [],
+          "foto": null
+        },
+        {
+          "id": "mpehaz5xg0jr",
+          "notas": "",
+          "nombre": "Reposapiés",
+          "medidas": [
+            {
+              "cl": 115,
+              "id": "mpehcfx2f2ow",
+              "tipo": "taco",
+              "ta": 70,
+              "obs": "En cada corte salen 3 unidades(6orejas)",
+              "nombre": "Orejas"
+            },
+            {
+              "id": "mpehcq4cjpjz",
+              "cl": 129,
+              "nombre": "Cuadrado",
+              "obs": "",
+              "tipo": "taco",
+              "ta": 70
+            }
+          ],
+          "foto": null
+        },
+        {
+          "notas": "",
+          "id": "mpehd4sjqbes",
+          "medidas": [
+            {
+              "id": "mpehdo9berl4",
+              "cl": 75,
+              "obs": "",
+              "nombre": "Cruz",
+              "ta": 75,
+              "tipo": "taco"
+            },
+            {
+              "obs": "",
+              "nombre": "Cuadrado",
+              "ta": 54,
+              "tipo": "taco",
+              "id": "mpehe54mes1l",
+              "cl": 54
+            }
+          ],
+          "foto": null,
+          "nombre": "Funda cojiin asiento"
+        },
+        {
+          "nombre": "Cutí",
+          "medidas": [
+            {
+              "tipo": "taco",
+              "ta": 50,
+              "nombre": "70*45 solapa",
+              "obs": "",
+              "cl": 166,
+              "id": "mpehezw9dmtb"
+            },
+            {
+              "obs": "",
+              "nombre": "80*40 solapa",
+              "tipo": "taco",
+              "ta": 44,
+              "id": "mpehfir8zh95",
+              "cl": 186
+            },
+            {
+              "cl": 133,
+              "id": "mpehg49p6aji",
+              "ta": 69,
+              "tipo": "taco",
+              "nombre": "60*60",
+              "obs": "Raya en horizontal!!!!"
+            },
+            {
+              "cl": 68,
+              "id": "mpehh2p3fyc6",
+              "tipo": "taco",
+              "ta": 95,
+              "obs": "Ralla en horizontal!!!!!!",
+              "nombre": "60*40"
+            }
+          ],
+          "foto": null,
+          "id": "mpeheghtqdyk",
+          "notas": ""
+        },
+        {
+          "id": "mpehhpbn31f2",
+          "notas": "",
+          "nombre": "Sacos TST",
+          "foto": null,
+          "medidas": [
+            {
+              "id": "mpehi0przv0h",
+              "cl": 216,
+              "nombre": "80*100",
+              "obs": "",
+              "tipo": "taco",
+              "ta": 85
+            },
+            {
+              "ta": 100,
+              "tipo": "taco",
+              "nombre": "Estándar",
+              "obs": "",
+              "cl": 109,
+              "id": "mpehig1r0for"
+            },
+            {
+              "ta": 100,
+              "tipo": "taco",
+              "obs": "",
+              "nombre": "Almohada abierta 80*100",
+              "cl": 162,
+              "id": "mpehlff4535s"
+            }
+          ]
+        },
+        {
+          "foto": null,
+          "medidas": [
+            {
+              "tipo": "taco",
+              "ta": 58,
+              "nombre": "Estandar",
+              "obs": "",
+              "cl": 60,
+              "id": "mpehnksj0fo0"
+            }
+          ],
+          "nombre": "Cuna fibra",
+          "notas": "",
+          "id": "mpehna4l8is1"
+        },
+        {
+          "id": "mpehntxr88dg",
+          "notas": "",
+          "nombre": "Velour",
+          "medidas": [
+            {
+              "cl": 0,
+              "id": "mpehoa0c33s4",
+              "tipo": "taco",
+              "ta": 0,
+              "obs": "CV50-75\nCV60-88\nCV67-88\n\nEn caso de quedarse corto sumar +7 en el corte",
+              "nombre": "Cervicales"
+            },
+            {
+              "cl": 94,
+              "id": "mpehq5j9yvbs",
+              "tipo": "taco",
+              "ta": 66,
+              "obs": "Terminado 62*62",
+              "nombre": "60*40 cuna"
+            },
+            {
+              "obs": "Terminado 42*42",
+              "nombre": "40*40",
+              "ta": 44,
+              "tipo": "taco",
+              "id": "mpehqmux5337",
+              "cl": 86
+            }
+          ],
+          "foto": null
+        },
+        {
+          "nombre": "3D Blanco Scan Quilt",
+          "medidas": [
+            {
+              "cl": 77,
+              "id": "mpehrmhhylbl",
+              "ta": 110,
+              "tipo": "taco",
+              "nombre": "50*70",
+              "obs": ""
+            }
+          ],
+          "foto": null,
+          "id": "mpehrct4jsge",
+          "notas": ""
+        },
+        {
+          "id": "mpehryygxnx5",
+          "notas": "",
+          "nombre": "Akorde",
+          "foto": null,
+          "medidas": [
+            {
+              "obs": "",
+              "nombre": "45*45",
+              "tipo": "taco",
+              "ta": 52,
+              "id": "mpehsdjmkgwy",
+              "cl": 104
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "telas": [
+        {
+          "medidas": [],
+          "foto": null,
+          "nombre": "Panal Bamboo",
+          "notas": "",
+          "id": "mpdrp5l24gbi"
+        },
+        {
+          "nombre": "Almohada Niño Paris",
+          "foto": null,
+          "medidas": [
+            {
+              "id": "mpeb9qbagjve",
+              "cl": 63,
+              "nombre": "60*40",
+              "obs": "",
+              "tipo": "taco",
+              "ta": 86
+            },
+            {
+              "obs": "",
+              "nombre": "70*37*6",
+              "tipo": "taco",
+              "ta": 79,
+              "id": "mpebastef93x",
+              "cl": 75
+            }
+          ],
+          "id": "mpeb99edy2as",
+          "notas": ""
+        }
+      ],
+      "nombre": "Mommy",
+      "id": "mpd5t2avs6et",
+      "notas": ""
+    },
+    {
+      "id": "mpd5t663cmd9",
+      "telas": [
+        {
+          "nombre": "Paris-Orejas Oval Gris",
+          "foto": null,
+          "medidas": [
+            {
+              "id": "mpeb7e4amx57",
+              "cl": 88,
+              "obs": "",
+              "nombre": "CV60 Lomo Paris",
+              "tipo": "taco",
+              "ta": 59.5
+            },
+            {
+              "ta": 35,
+              "tipo": "taco",
+              "obs": "",
+              "nombre": "Orejas(rejilla negro-blanco)",
+              "cl": 95,
+              "id": "mpeb83hwgf88"
+            }
+          ],
+          "id": "mpeb66abr4sl",
+          "notas": ""
+        }
+      ],
+      "nombre": "Valentia",
+      "notas": ""
+    },
+    {
+      "notas": "",
+      "nombre": "Urpiano",
+      "telas": [
+        {
+          "foto": null,
+          "medidas": [
+            {
+              "tipo": "taco",
+              "ta": 0,
+              "obs": "No cortar taco. Sumar +8 corte",
+              "nombre": "Estandar",
+              "cl": 8,
+              "id": "mpehtr6e5x1l"
+            }
+          ],
+          "nombre": "Aloe beige",
+          "notas": "",
+          "id": "mpeht102pmlq"
+        },
+        {
+          "notas": "",
+          "id": "mpehu8p4ebr0",
+          "foto": null,
+          "medidas": [
+            {
+              "id": "mpehus0cnk9g",
+              "cl": 5,
+              "nombre": "Estándar",
+              "obs": "+5 medida",
+              "ta": 80,
+              "tipo": "taco"
+            }
+          ],
+          "nombre": "Tencel"
+        },
+        {
+          "medidas": [
+            {
+              "id": "mpehvpmdcu3x",
+              "cl": 6,
+              "obs": "Cara a cara +6 medida",
+              "nombre": "Estándar",
+              "tipo": "taco",
+              "ta": 40
+            }
+          ],
+          "foto": null,
+          "nombre": "Cara a cara",
+          "notas": "",
+          "id": "mpehv395v0yt"
+        }
+      ],
+      "id": "mpd5tm0r9nlt"
+    },
+    {
+      "telas": [],
+      "id": "mpd5tq6h89tr",
+      "nombre": "Agustín",
+      "notas": ""
+    },
+    {
+      "id": "mpu1af6dud4b",
+      "nombre": "P",
+      "notas": "",
+      "telas": []
+    },
+    {
+      "id": "mpu1gfibm3k8",
+      "nombre": "P2",
+      "notas": "",
+      "telas": []
+    }
+  ],
+  "fichajes": {
+    "2026-05-08": {
+      "nota": "",
+      "extra": 0,
+      "norm": 6
+    },
+    "2026-04-15": {
+      "norm": 0,
+      "nota": "",
+      "extra": 1
+    },
+    "2026-05-22": {
+      "extra": 0,
+      "nota": "",
+      "norm": 6
+    },
+    "2026-05-27": {
+      "norm": 6,
+      "extra": 0,
+      "nota": ""
+    },
+    "2026-03-05": {
+      "norm": 0,
+      "nota": "",
+      "extra": 2
+    },
+    "2026-05-13": {
+      "norm": 6,
+      "extra": 0,
+      "nota": ""
+    },
+    "2026-05-15": {
+      "extra": 0,
+      "nota": "",
+      "norm": 6
+    },
+    "2026-04-09": {
+      "extra": 1,
+      "nota": "",
+      "norm": 0
+    },
+    "2026-03-09": {
+      "nota": "",
+      "extra": 0.5,
+      "norm": 0
+    },
+    "2026-05-19": {
+      "nota": "",
+      "extra": 0,
+      "norm": 6
+    },
+    "2026-05-12": {
+      "norm": 6,
+      "extra": 0,
+      "nota": ""
+    },
+    "2026-05-28": {
+      "nota": "Valencia",
+      "extra": 1,
+      "norm": 6
+    },
+    "2026-05-18": {
+      "extra": 1,
+      "nota": "Retraso Valencia",
+      "norm": 6
+    },
+    "2026-04-29": {
+      "nota": "",
+      "extra": 2,
+      "norm": 0
+    },
+    "2026-05-29": {
+      "norm": 6,
+      "nota": "",
+      "extra": 0
+    },
+    "2026-05-14": {
+      "norm": 6,
+      "nota": "",
+      "extra": 0
+    },
+    "2026-05-26": {
+      "norm": 6,
+      "extra": 0,
+      "nota": ""
+    },
+    "2026-05-05": {
+      "nota": "",
+      "extra": 1,
+      "norm": 6
+    },
+    "2026-03-04": {
+      "extra": 2,
+      "nota": "",
+      "norm": 0
+    },
+    "2026-04-21": {
+      "extra": 2,
+      "nota": "",
+      "norm": 0
+    },
+    "2026-01-23": {
+      "nota": "",
+      "extra": 0.5,
+      "norm": 0
+    },
+    "2026-05-21": {
+      "extra": 1,
+      "nota": "Mamoud",
+      "norm": 6
+    },
+    "2026-02-06": {
+      "norm": 0,
+      "extra": 0.5,
+      "nota": ""
+    },
+    "2026-03-11": {
+      "extra": 2.5,
+      "nota": "",
+      "norm": 0
+    },
+    "2026-05-07": {
+      "nota": "",
+      "extra": 0,
+      "norm": 6
+    },
+    "2026-04-13": {
+      "extra": 1.5,
+      "nota": "",
+      "norm": 0
+    },
+    "2026-05-25": {
+      "norm": 6,
+      "nota": "",
+      "extra": 0
+    },
+    "2026-04-27": {
+      "norm": 0,
+      "nota": "",
+      "extra": 2
+    },
+    "2026-04-23": {
+      "extra": 2,
+      "nota": "",
+      "norm": 0
+    },
+    "2026-05-20": {
+      "nota": "",
+      "extra": 0,
+      "norm": 6
+    },
+    "2026-05-04": {
+      "extra": 2,
+      "nota": "",
+      "norm": 6
+    },
+    "2026-04-14": {
+      "norm": 0,
+      "nota": "",
+      "extra": 2
+    },
+    "2026-02-19": {
+      "norm": 0,
+      "nota": "",
+      "extra": 0.5
+    },
+    "2026-05-06": {
+      "norm": 6,
+      "nota": "",
+      "extra": 0
+    },
+    "2026-04-20": {
+      "extra": 2,
+      "nota": "",
+      "norm": 0
+    },
+    "2026-03-24": {
+      "nota": "",
+      "extra": 0.5,
+      "norm": 0
+    },
+    "2026-04-22": {
+      "extra": 2,
+      "nota": "",
+      "norm": 0
+    },
+    "2026-04-28": {
+      "extra": 2,
+      "nota": "",
+      "norm": 0
+    },
+    "2026-05-11": {
+      "norm": 6,
+      "nota": "",
+      "extra": 0
+    }
+  },
+  "jornada": 6,
+  "notas": [
+    {
+      "done": false,
+      "txt": "Haz 100 de 150 Lisboa",
+      "hora": "09:11",
+      "id": "mpp5mgwq0127",
+      "fecha": "2026-05-28"
+    },
+    {
+      "done": true,
+      "fecha": "2026-05-27",
+      "id": "mpnq66gzy0xh",
+      "hora": "09:10",
+      "txt": "Etiquetas naranjas y algodón"
+    },
+    {
+      "done": false,
+      "id": "mpmfjd9ynaco",
+      "fecha": "2026-05-26",
+      "txt": "50 135*1.90 paris",
+      "hora": "11:25"
+    },
+    {
+      "fecha": "2026-05-25",
+      "id": "mplb2oymarke",
+      "hora": "16:32",
+      "txt": "Añadir 150und tamaños habituales Paris Paco",
+      "done": false
+    },
+    {
+      "id": "mpkz751tv5d1",
+      "fecha": "2026-05-25",
+      "txt": "Pegatinas 160 berlin",
+      "hora": "11:00",
+      "done": true
+    },
+    {
+      "txt": "Llevar rollo mercedes cremallera",
+      "hora": "17:54",
+      "id": "mpjykd2rt1ws",
+      "fecha": "2026-05-24",
+      "done": true
+    },
+    {
+      "fecha": "2026-05-24",
+      "id": "mpjyk3xhbsh2",
+      "hora": "17:54",
+      "txt": "Muy buenas. Necesito una medida especial urgente: Paris 180x210",
+      "done": true
+    },
+    {
+      "fecha": "2026-05-20",
+      "id": "mpedug7iqx25",
+      "hora": "20:15",
+      "txt": "Paco: cortar 135 paris primero(3cajas)",
+      "done": true
+    },
+    {
+      "done": true,
+      "id": "mpedu1xmf0cr",
+      "fecha": "2026-05-20",
+      "txt": "Mercedes: pegatinas 180 y 160(50), cajas colectivas",
+      "hora": "20:15"
+    }
+  ]
+}
