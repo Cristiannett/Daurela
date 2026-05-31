@@ -2042,7 +2042,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311711', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311715', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2137,7 +2137,7 @@ initWeather();
 
 // TIPOS DE DIA
 var tipoDiaActual = 'normal';
-function setTipoDia(tipo) {
+window.setTipoDia = function setTipoDia(tipo) {
   tipoDiaActual = tipo;
   document.querySelectorAll('.tipo-dia-btn').forEach(function(b) { b.classList.remove('activo'); });
   var btn = document.getElementById('tdias-' + tipo);
@@ -2161,7 +2161,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-function compartirFichajeWhatsApp() {
+window.compartirFichajeWhatsApp = function compartirFichajeWhatsApp() {
   var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   var fichajes = window.loadFichajes ? window.loadFichajes() : {};
   var diasMes = new Date(window.fichAnio, window.fichMes + 1, 0).getDate();
@@ -2283,11 +2283,7 @@ function setBadge(id, count, esVerde) {
   }
 }
 
-var _origGo = window.go;
-window.go = function(id, addHistory) {
-  _origGo && _origGo(id, addHistory);
-  if (id === 's-cli') setTimeout(actualizarBadges, 100);
-};
+
 
 setTimeout(actualizarBadges, 800);
 
@@ -2391,14 +2387,17 @@ window.addEventListener('load', function() {
   }, 1000);
 });
 
-// Arreglar barra de notas - mostrar/ocultar con go
-var _goOrig2 = window.go;
-window.go = function(id, addHistory) {
-  _goOrig2 && _goOrig2(id, addHistory);
-  var bar = document.getElementById('nota-input-bar-global');
-  if (bar) bar.style.display = id === 's-notas' ? 'flex' : 'none';
-  if (id === 's-notas' && window.renderNotas) window.renderNotas();
-};
+// go unificado - se instala después de que todo cargue
+document.addEventListener('DOMContentLoaded', function() {
+  var _goBase = window.go;
+  window.go = function(id, addHistory) {
+    _goBase && _goBase(id, addHistory);
+    if (id === 's-cli') setTimeout(actualizarBadges, 100);
+    var bar = document.getElementById('nota-input-bar-global');
+    if (bar) bar.style.display = id === 's-notas' ? 'flex' : 'none';
+    if (id === 's-notas' && window.renderNotas) setTimeout(function(){ window.renderNotas(); }, 50);
+  };
+});
 
 
 // MERGE DE DATOS FIREBASE
