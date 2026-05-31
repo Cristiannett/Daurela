@@ -239,7 +239,67 @@ body.font-xl{font-size:22px}
 .calc-linea-hdr{display:grid;grid-template-columns:1fr 80px 80px 36px;gap:8px;margin-bottom:8px}
 .calc-linea-hdr span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3)}
 
+
+.mes-dia.vacaciones .dia-num{color:#0a84ff}
+.mes-dia.festivo .dia-num{color:#ff453a}
+.mes-dia.libre .dia-num{color:#bf5af2}
+.dia-dot.vacaciones{background:#0a84ff}
+.dia-dot.festivo{background:#ff453a}
+.dia-dot.libre{background:#bf5af2}
+.tipo-dia-selector{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tipo-dia-btn{flex:1;min-width:0;padding:8px 4px;border-radius:var(--rad-sm);font-size:12px;font-weight:500;border:1px solid var(--border2);background:var(--bg3);color:var(--txt2);cursor:pointer;text-align:center;font-family:inherit}
+.tipo-dia-btn.activo{font-weight:700}
+.tipo-dia-btn.t-normal.activo{background:rgba(52,199,89,0.15);color:#34c759;border-color:#34c759}
+.tipo-dia-btn.t-vacaciones.activo{background:rgba(10,132,255,0.15);color:#0a84ff;border-color:#0a84ff}
+.tipo-dia-btn.t-festivo.activo{background:rgba(255,69,58,0.15);color:#ff453a;border-color:#ff453a}
+.tipo-dia-btn.t-libre.activo{background:rgba(191,90,242,0.15);color:#bf5af2;border-color:#bf5af2}
+.pedido-item{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;background:var(--bg)}
+.pedido-item:active{background:var(--bg2)}
+.pedido-info{flex:1;min-width:0}
+.pedido-nombre{font-size:15px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pedido-meta{font-size:12px;color:var(--txt2);margin-top:2px}
+
+.home-btn{position:relative}
+.badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ff453a;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg);z-index:2;pointer-events:none}
+.badge.verde{background:#30d158}
 </style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6fFNWuxNGoJ0KCEBRLL7HDPWhkGeiJQU",
+    authDomain: "daurela-5d59c.firebaseapp.com",
+    projectId: "daurela-5d59c",
+    storageBucket: "daurela-5d59c.firebasestorage.app",
+    messagingSenderId: "1052691773640",
+    appId: "1:1052691773640:web:60522adf6830f58cac4dfd"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db_fire = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+  window._fireAuth = auth;
+  window._fireDB = db_fire;
+  window._fireProvider = provider;
+  window._fireFns = { signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot };
+  onAuthStateChanged(auth, user => {
+    if(user){
+      window._fireUser = user;
+      const btn = document.getElementById('auth-btn');
+      if(btn) btn.innerHTML = '<img src="'+user.photoURL+'" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border2)" alt="">';
+      const status = document.getElementById('auth-status');
+      if(status){ status.textContent = user.displayName; status.style.display = 'block'; }
+      window.initFirestore && window.initFirestore();
+    } else {
+      window._fireUser = null;
+      const btn = document.getElementById('auth-btn');
+      if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      const status = document.getElementById('auth-status');
+      if(status) status.style.display = 'none';
+    }
+  });
+</script>
 </head>
 <body>
 <div id="splash">
@@ -250,7 +310,7 @@ body.font-xl{font-size:22px}
 <div id="app">
 
 <div id="toast" class="toast"></div>
-<div id="storage-warn" style="display:none;position:fixed;top:0;left:0;right:0;z-index:150;background:rgba(255,159,10,0.15);border-bottom:1px solid rgba(255,159,10,0.3);padding:10px 16px;align-items:center;gap:10px">
+<div id="storage-warn" style="display:none;position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:16px;right:16px;z-index:150;background:rgba(255,159,10,0.15);border:1px solid rgba(255,159,10,0.3);border-radius:12px;padding:10px 14px;align-items:center;gap:10px">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" flex-shrink="0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   <span style="font-size:13px;color:#ff9f0a;flex:1" id="storage-pct"></span>
   <button onclick="go('s-backup')" style="background:rgba(255,159,10,0.2);border:1px solid rgba(255,159,10,0.3);color:#ff9f0a;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">Backup</button>
@@ -290,6 +350,7 @@ body.font-xl{font-size:22px}
       <span>Buscar</span>
     </div>
     <div class="home-btn" onclick="go('s-calc')">
+      <span class="badge verde" id="badge-calc" style="display:none"></span>
       <div class="home-icon" style="background:linear-gradient(135deg,#30d158,#1a7a32)">
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><rect x="7" y="5" width="10" height="4" rx="1"/><circle cx="8" cy="13" r="1" fill="white"/><circle cx="12" cy="13" r="1" fill="white"/><circle cx="16" cy="13" r="1" fill="white"/><circle cx="8" cy="17" r="1" fill="white"/><circle cx="12" cy="17" r="1" fill="white"/><circle cx="16" cy="17" r="1" fill="white"/></svg>
       </div>
@@ -302,6 +363,7 @@ body.font-xl{font-size:22px}
       <span>Fichaje</span>
     </div>
     <div class="home-btn" onclick="go('s-notas')">
+      <span class="badge" id="badge-notas" style="display:none"></span>
       <div class="home-icon" style="background:linear-gradient(135deg,#ffd60a,#b8890a)">
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       </div>
@@ -524,6 +586,7 @@ body.font-xl{font-size:22px}
 </div>
 
 
+<div id="s-pedidos" class="screen"><div class="topbar"><button class="btn-icon" onclick="go('s-calc')" aria-label="Volver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button><h1>Pedidos guardados</h1></div><div id="lst-pedidos"></div></div>
 <!-- CALCULADORA DE PEDIDOS -->
 <div id="s-calc" class="screen">
   <div class="topbar">
@@ -574,6 +637,8 @@ body.font-xl{font-size:22px}
           <span style="font-size:14px;color:var(--txt2)" id="calc-sobra-val">—</span>
         </div>
       </div>
+      <button class="btn-primary" onclick="guardarPedido()" style="margin-top:0">Guardar pedido</button>
+      <button class="btn-secondary" onclick="verPedidosGuardados()">Ver pedidos guardados</button>
       <button class="btn-secondary" onclick="limpiarCalc()">Limpiar todo</button>
     </div>
 
@@ -621,6 +686,13 @@ body.font-xl{font-size:22px}
   <div id="fich-form-wrap" style="display:none">
     <div class="fich-form">
       <div class="fich-form-title" id="fich-form-titulo">Apuntar horas</div>
+      <div class="tipo-dia-selector">
+        <button class="tipo-dia-btn t-normal activo" id="tdias-normal" onclick="setTipoDia('normal')">Normal</button>
+        <button class="tipo-dia-btn t-vacaciones" id="tdias-vacaciones" onclick="setTipoDia('vacaciones')">Vacaciones</button>
+        <button class="tipo-dia-btn t-festivo" id="tdias-festivo" onclick="setTipoDia('festivo')">Festivo</button>
+        <button class="tipo-dia-btn t-libre" id="tdias-libre" onclick="setTipoDia('libre')">Libre</button>
+      </div>
+      <div id="fich-horas-wrap">
       <div class="horas-row">
         <div class="fg" style="margin-bottom:0">
           <label>Horas normales</label>
@@ -630,6 +702,7 @@ body.font-xl{font-size:22px}
           <label>Horas extra</label>
           <input id="fich-extra" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
         </div>
+      </div>
       </div>
       <div class="fg" style="margin-bottom:12px">
         <label>Notas (opcional)</label>
@@ -667,6 +740,7 @@ body.font-xl{font-size:22px}
     <div class="sec-hdr" style="margin:0 -16px 14px">Exportar fichaje</div>
     <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Exporta el resumen del mes actual en formato texto para copiarlo o enviarlo.</p>
     <button class="btn-secondary" onclick="exportarFichajeMes()" style="margin-top:0">Exportar resumen del mes</button>
+    <button class="btn-secondary" onclick="compartirFichajeWhatsApp()">Enviar por WhatsApp</button>
     <div id="fich-export-txt" style="display:none;margin-top:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px;font-size:13px;color:var(--txt2);line-height:1.8;white-space:pre-wrap;font-family:monospace"></div>
   </div>
 </div>
@@ -722,10 +796,11 @@ function persist(){
     const mb=(total/1024/1024).toFixed(1);
     const pct=total/(5*1024*1024)*100;
     if(pct>80){
-      document.getElementById('storage-warn').style.display='flex';
+      var sw=document.getElementById('storage-warn');
       document.getElementById('storage-pct').textContent=mb+' MB usados de ~5 MB';
-    } else {
-      document.getElementById('storage-warn').style.display='none';
+      sw.style.display='flex';
+      clearTimeout(window._storageWarnTimer);
+      window._storageWarnTimer=setTimeout(function(){sw.style.display='none';},5000);
     }
   }catch(e){
     if(e.name==='QuotaExceededError'){
@@ -1957,7 +2032,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311649', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311707', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2046,5 +2121,254 @@ initEasterEgg();
 actualizarFab();
 initWeather();
 </script>
+
+<script>
+// ── EXTENSIONES DAURELA ───────────────────────────────────
+
+// TIPOS DE DIA
+var tipoDiaActual = 'normal';
+function setTipoDia(tipo) {
+  tipoDiaActual = tipo;
+  document.querySelectorAll('.tipo-dia-btn').forEach(function(b) { b.classList.remove('activo'); });
+  var btn = document.getElementById('tdias-' + tipo);
+  if (btn) btn.classList.add('activo');
+  var wrap = document.getElementById('fich-horas-wrap');
+  if (wrap) wrap.style.display = tipo === 'normal' ? 'block' : 'none';
+}
+
+// Parchar guardarFichaje para incluir tipo
+var _origGuardarFichaje = null;
+document.addEventListener('DOMContentLoaded', function() {
+  // Parchar seleccionarDia
+  if (window.seleccionarDia) {
+    var _origSelDia = window.seleccionarDia;
+    window.seleccionarDia = function(key, dia) {
+      _origSelDia(key, dia);
+      var fichajes = window.loadFichajes ? window.loadFichajes() : {};
+      var reg = fichajes[key];
+      setTipoDia(reg ? (reg.tipo || 'normal') : 'normal');
+    };
+  }
+});
+
+function compartirFichajeWhatsApp() {
+  var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var fichajes = window.loadFichajes ? window.loadFichajes() : {};
+  var diasMes = new Date(window.fichAnio, window.fichMes + 1, 0).getDate();
+  var txt = '*' + meses[window.fichMes] + ' ' + window.fichAnio + '*
+------------------------
+';
+  var totalNorm = 0, totalExtra = 0;
+  for (var d = 1; d <= diasMes; d++) {
+    var key = window.fichAnio + '-' + String(window.fichMes + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    var reg = fichajes[key];
+    if (reg) {
+      var tipo = reg.tipo || 'normal';
+      if (tipo !== 'normal') {
+        var etiquetas = {vacaciones: 'Vacaciones', festivo: 'Festivo', libre: 'Libre'};
+        txt += 'Dia ' + String(d).padStart(2, ' ') + ': ' + (etiquetas[tipo] || tipo);
+        if (reg.nota) txt += ' (' + reg.nota + ')';
+      } else {
+        txt += 'Dia ' + String(d).padStart(2, ' ') + ': ' + reg.norm + 'h normales';
+        if (reg.extra > 0) txt += ' + ' + reg.extra + 'h extras';
+        if (reg.nota) txt += ' (' + reg.nota + ')';
+        totalNorm += reg.norm || 0;
+        totalExtra += reg.extra || 0;
+      }
+      txt += '
+';
+    }
+  }
+  txt += '------------------------
+Total normales: *' + totalNorm + 'h*
+Total extras: *' + totalExtra + 'h*
+TOTAL: *' + (totalNorm + totalExtra) + 'h*';
+  window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+}
+
+// PEDIDOS
+function loadPedidos() { try { var d = localStorage.getItem('pedidos_v1'); return d ? JSON.parse(d) : []; } catch(e) { return []; } }
+function savePedidos(arr) { localStorage.setItem('pedidos_v1', JSON.stringify(arr)); }
+
+function guardarPedido() {
+  var lineas = window.calcLineas ? window.calcLineas.filter(function(l) { return parseFloat(l.talla) > 0 && parseInt(l.uds) > 0; }) : [];
+  if (!lineas.length) { window.toast && window.toast('Anade al menos una linea'); return; }
+  var nombre = prompt('Nombre del pedido:');
+  if (!nombre || !nombre.trim()) return;
+  var pedido = {
+    id: window.uid ? window.uid() : Date.now().toString(36),
+    nombre: nombre.trim(),
+    fecha: new Date().toISOString().slice(0, 10),
+    margen: parseFloat(document.getElementById('calc-margen').value) || 0,
+    pieza: parseFloat(document.getElementById('calc-pieza').value) || 0,
+    lineas: JSON.parse(JSON.stringify(lineas))
+  };
+  var pedidos = loadPedidos();
+  pedidos.unshift(pedido);
+  savePedidos(pedidos);
+  window.toast && window.toast('Pedido guardado');
+}
+
+function verPedidosGuardados() { renderPedidos(); window.go && window.go('s-pedidos'); }
+
+function renderPedidos() {
+  var pedidos = loadPedidos();
+  var el = document.getElementById('lst-pedidos');
+  if (!el) return;
+  if (!pedidos.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin pedidos guardados.<br>Calcula un pedido y pulsa <strong>Guardar pedido</strong></p></div>';
+    return;
+  }
+  var html = '';
+  pedidos.forEach(function(p) {
+    html += '<div class="pedido-item">'
+      + '<div class="pedido-info" onclick="cargarPedido('' + p.id + '')">'
+      + '<div class="pedido-nombre">' + (p.nombre || '') + '</div>'
+      + '<div class="pedido-meta">' + p.fecha + ' &middot; ' + p.lineas.length + ' tallas</div>'
+      + '</div>'
+      + '<button class="btn-del-direct" onclick="eliminarPedido('' + p.id + '')">'
+      + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>'
+      + '</button></div>';
+  });
+  el.innerHTML = html;
+}
+
+function cargarPedido(id) {
+  var p = loadPedidos().find(function(x) { return x.id === id; });
+  if (!p) return;
+  document.getElementById('calc-margen').value = p.margen;
+  document.getElementById('calc-pieza').value = p.pieza;
+  window.calcLineas = JSON.parse(JSON.stringify(p.lineas));
+  window.renderLineas && window.renderLineas();
+  window.calcular && window.calcular();
+  window.go && window.go('s-calc');
+  window.toast && window.toast('Pedido cargado: ' + p.nombre);
+}
+
+function eliminarPedido(id) {
+  if (!confirm('Eliminar este pedido?')) return;
+  savePedidos(loadPedidos().filter(function(x) { return x.id !== id; }));
+  renderPedidos();
+  window.toast && window.toast('Pedido eliminado');
+}
+
+// BADGES
+function actualizarBadges() {
+  var notas = window.loadNotas ? window.loadNotas() : [];
+  var pendientes = notas.filter(function(n) { return !n.done; }).length;
+  setBadge('badge-notas', pendientes, false);
+  var pedidos = loadPedidos().length;
+  setBadge('badge-calc', pedidos, true);
+}
+
+function setBadge(id, count, esVerde) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (count > 0) {
+    el.textContent = count > 99 ? '99+' : count;
+    el.style.display = 'flex';
+    if (esVerde) el.classList.add('verde');
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+var _origGo = window.go;
+window.go = function(id, addHistory) {
+  _origGo && _origGo(id, addHistory);
+  if (id === 's-cli') setTimeout(actualizarBadges, 100);
+};
+
+setTimeout(actualizarBadges, 800);
+
+// MERGE DE DATOS FIREBASE
+function mergeData(remoto) {
+  var cambios = false;
+  if (remoto.clientes && Array.isArray(remoto.clientes)) {
+    var idsLocales = {};
+    window.db.clientes.forEach(function(cl) { idsLocales[cl.id] = cl; });
+    remoto.clientes.forEach(function(cRemoto) {
+      if (!idsLocales[cRemoto.id]) {
+        window.db.clientes.push(cRemoto);
+        cambios = true;
+      } else {
+        var cLocal = idsLocales[cRemoto.id];
+        if (cRemoto.telas) {
+          var idsTelaLocal = {};
+          (cLocal.telas||[]).forEach(function(t){idsTelaLocal[t.id]=t;});
+          cRemoto.telas.forEach(function(tRemota) {
+            if (!idsTelaLocal[tRemota.id]) {
+              cLocal.telas = cLocal.telas||[];
+              cLocal.telas.push(tRemota);
+              cambios = true;
+            } else {
+              var tLocal = idsTelaLocal[tRemota.id];
+              if (tRemota.medidas) {
+                var idsMedLocal = {};
+                (tLocal.medidas||[]).forEach(function(m){idsMedLocal[m.id]=true;});
+                tRemota.medidas.forEach(function(mRemota) {
+                  if (!idsMedLocal[mRemota.id]) {
+                    tLocal.medidas = tLocal.medidas||[];
+                    tLocal.medidas.push(mRemota);
+                    cambios = true;
+                  }
+                });
+              }
+            }
+          });
+        }
+      }
+    });
+  }
+  if (remoto.notas && Array.isArray(remoto.notas) && window.loadNotas) {
+    var notasLocales = window.loadNotas();
+    var idsN = {};
+    notasLocales.forEach(function(n){idsN[n.id]=true;});
+    var nc = false;
+    remoto.notas.forEach(function(n){if(!idsN[n.id]){notasLocales.push(n);nc=true;cambios=true;}});
+    if (nc && window.saveNotas) window.saveNotas(notasLocales);
+  }
+  if (remoto.fichajes && window.loadFichajes) {
+    var fl = window.loadFichajes();
+    var fc = false;
+    Object.keys(remoto.fichajes).forEach(function(k){if(!fl[k]){fl[k]=remoto.fichajes[k];fc=true;cambios=true;}});
+    if (fc && window.saveFichajes) window.saveFichajes(fl);
+  }
+  if (remoto.pedidos && Array.isArray(remoto.pedidos)) {
+    var pl = loadPedidos();
+    var pc = {};
+    pl.forEach(function(p){pc[p.id]=true;});
+    var pChanged = false;
+    remoto.pedidos.forEach(function(p){if(!pc[p.id]){pl.push(p);pChanged=true;cambios=true;}});
+    if (pChanged) savePedidos(pl);
+  }
+  return cambios;
+}
+
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    if (!window._fireUser || !window._fireFns || !window._fireDB) return;
+    var uid = window._fireUser.uid;
+    var docRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
+    window._fireFns.onSnapshot(docRef, function(snap) {
+      if (snap.exists()) {
+        var remoto = snap.data();
+        var ts = remoto.ts || remoto.timestamp || 0;
+        if (ts > 0 && ts !== (window._lastSave||0)) {
+          var cambios = mergeData(remoto);
+          if (cambios) {
+            window.persist && window.persist();
+            window.renderCli && window.renderCli();
+            window.renderFichaje && window.renderFichaje();
+            actualizarBadges();
+          }
+        }
+      }
+    });
+  }, 2000);
+});
+
+</script>
+
 </body>
 </html>
