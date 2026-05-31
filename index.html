@@ -2042,7 +2042,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311715', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311720', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2072,6 +2072,8 @@ try{window.duplicarDesdeForm=duplicarDesdeForm;}catch(e){}
 try{window.duplicarMed=duplicarMed;}catch(e){}
 try{window.editarNota=editarNota;}catch(e){}
 try{window.eliminarFichaje=eliminarFichaje;}catch(e){}
+try{window.renderNotas=renderNotas;}catch(e){}
+try{window.loginGoogle=loginGoogle;}catch(e){}
 try{window.eliminarNota=eliminarNota;}catch(e){}
 try{window.exportar=exportar;}catch(e){}
 try{window.exportarCSV=exportarCSV;}catch(e){}
@@ -2388,16 +2390,26 @@ window.addEventListener('load', function() {
 });
 
 // go unificado - se instala después de que todo cargue
-document.addEventListener('DOMContentLoaded', function() {
+// Instalar override de go cuando los módulos estén listos
+setTimeout(function() {
   var _goBase = window.go;
+  if (!_goBase) { console.error('go no encontrado'); return; }
   window.go = function(id, addHistory) {
-    _goBase && _goBase(id, addHistory);
+    _goBase(id, addHistory);
     if (id === 's-cli') setTimeout(actualizarBadges, 100);
     var bar = document.getElementById('nota-input-bar-global');
     if (bar) bar.style.display = id === 's-notas' ? 'flex' : 'none';
     if (id === 's-notas' && window.renderNotas) setTimeout(function(){ window.renderNotas(); }, 50);
   };
-});
+  // Añadir renderNotas al window
+  try { window.renderNotas = renderNotas; } catch(e) {}
+  // Mostrar barra de notas si ya estamos en notas
+  var active = document.querySelector('.screen.active');
+  if (active && active.id === 's-notas') {
+    var bar = document.getElementById('nota-input-bar-global');
+    if (bar) bar.style.display = 'flex';
+  }
+}, 300);
 
 
 // MERGE DE DATOS FIREBASE
