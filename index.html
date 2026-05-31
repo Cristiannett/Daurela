@@ -124,6 +124,19 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);color:var(--txt);border:1px solid var(--border2);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* BADGES */
+.home-btn{position:relative}
+.badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ff453a;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg);z-index:2;pointer-events:none}
+.badge.verde{background:var(--taco-txt)}
+
+/* PEDIDOS GUARDADOS */
+.pedido-item{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;cursor:pointer;background:var(--bg)}
+.pedido-item:active{background:var(--bg2)}
+.pedido-info{flex:1;min-width:0}
+.pedido-nombre{font-size:15px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pedido-meta{font-size:12px;color:var(--txt2);margin-top:2px}
+
+
 /* GRID CLIENTES */
 .cli-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px}
 .cli-card{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -290,18 +303,21 @@ body.font-xl{font-size:22px}
       <span>Buscar</span>
     </div>
     <div class="home-btn" onclick="go('s-calc')">
+      <span class="badge verde" id="badge-calc" style="display:none"></span>
       <div class="home-icon" style="background:linear-gradient(135deg,#30d158,#1a7a32)">
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><rect x="7" y="5" width="10" height="4" rx="1"/><circle cx="8" cy="13" r="1" fill="white"/><circle cx="12" cy="13" r="1" fill="white"/><circle cx="16" cy="13" r="1" fill="white"/><circle cx="8" cy="17" r="1" fill="white"/><circle cx="12" cy="17" r="1" fill="white"/><circle cx="16" cy="17" r="1" fill="white"/></svg>
       </div>
       <span>Calculadora</span>
     </div>
     <div class="home-btn" onclick="go('s-fichaje')">
+      <span class="badge" id="badge-fichaje" style="display:none"></span>
       <div class="home-icon" style="background:linear-gradient(135deg,#ff9f0a,#c85a00)">
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
       <span>Fichaje</span>
     </div>
     <div class="home-btn" onclick="go('s-notas')">
+      <span class="badge" id="badge-notas" style="display:none"></span>
       <div class="home-icon" style="background:linear-gradient(135deg,#ffd60a,#b8890a)">
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       </div>
@@ -524,6 +540,17 @@ body.font-xl{font-size:22px}
 </div>
 
 
+
+<!-- PEDIDOS GUARDADOS -->
+<div id="s-pedidos" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-calc')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Pedidos guardados</h1>
+  </div>
+  <div id="lst-pedidos"></div>
+</div>
 <!-- CALCULADORA DE PEDIDOS -->
 <div id="s-calc" class="screen">
   <div class="topbar">
@@ -574,6 +601,8 @@ body.font-xl{font-size:22px}
           <span style="font-size:14px;color:var(--txt2)" id="calc-sobra-val">—</span>
         </div>
       </div>
+      <button class="btn-primary" onclick="guardarPedido()" style="margin-top:0">Guardar pedido</button>
+      <button class="btn-secondary" onclick="verPedidosGuardados()">Ver pedidos guardados</button>
       <button class="btn-secondary" onclick="limpiarCalc()">Limpiar todo</button>
     </div>
 
@@ -761,6 +790,7 @@ function go(id, addHistory){
   el.scrollTop=0;
   if(addHistory) history.pushState({screen:id}, '', '');
   actualizarFab();
+  if(id==='s-cli')actualizarBadges();
   if(id==='s-notas'){
     renderNotas();
     document.querySelector('.nota-input-bar').style.display='flex';
@@ -1068,7 +1098,7 @@ function reorder(srcId,targetId){
 // ── BACKUP ───────────────────────────────────────────────
 function exportar(){
   const fecha=new Date().toISOString().slice(0,10);
-  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
+  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas(),pedidos:loadPedidos()};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='daurela-backup-'+fecha+'.json';
@@ -1111,7 +1141,8 @@ function importar(e){
       if(data.fichajes)saveFichajes(data.fichajes);
       if(data.jornada){localStorage.setItem('fich_jornada',data.jornada);cargarConfigFichaje();}
       if(data.notas)saveNotas(data.notas);
-      renderCli();renderFichaje();renderNotas();
+      if(data.pedidos)savePedidos(data.pedidos);
+      renderCli();renderFichaje();
       msg.style.display='block';msg.style.color='green';msg.textContent='Restaurado correctamente ('+db.clientes.length+' clientes)';
       setTimeout(()=>msg.style.display='none',4000);toast('Datos restaurados');
     }catch(err){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Error: el archivo no es valido.';}
@@ -1387,7 +1418,7 @@ async function exportarGitHub(){
 
   const fecha=new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
   const filename='backups/daurela-backup-'+fecha+'.json';
-  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
+  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas(),pedidos:loadPedidos()};
 
   // Codificar en base64 de forma segura para Unicode
   const jsonStr=JSON.stringify(backup,null,2);
@@ -1962,9 +1993,84 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311524', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311530', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
+}
+
+
+// ── PEDIDOS GUARDADOS ────────────────────────────────────
+function loadPedidos(){try{const d=localStorage.getItem('pedidos_v1');return d?JSON.parse(d):[];}catch(e){return[];}}
+function savePedidos(arr){localStorage.setItem('pedidos_v1',JSON.stringify(arr));}
+
+function guardarPedido(){
+  const margen=parseFloat(document.getElementById('calc-margen').value)||0;
+  const pieza=parseFloat(document.getElementById('calc-pieza').value)||0;
+  const lineas=calcLineas.filter(l=>parseFloat(l.talla)>0&&parseInt(l.uds)>0);
+  if(!lineas.length){toast('Anade al menos una linea');return;}
+  const nombre=prompt('Nombre del pedido:');
+  if(!nombre||!nombre.trim())return;
+  const pedido={id:uid(),nombre:nombre.trim(),fecha:new Date().toISOString().slice(0,10),margen,pieza,lineas:JSON.parse(JSON.stringify(lineas))};
+  const pedidos=loadPedidos();pedidos.unshift(pedido);savePedidos(pedidos);
+  toast('Pedido guardado');actualizarBadges();
+}
+
+function verPedidosGuardados(){renderPedidos();go('s-pedidos');}
+
+function renderPedidos(){
+  const pedidos=loadPedidos();
+  const el=document.getElementById('lst-pedidos');
+  if(!pedidos.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg><p>Sin pedidos guardados.<br>Calcula un pedido y pulsa<br><strong>Guardar pedido</strong></p></div>';return;}
+  el.innerHTML=pedidos.map(p=>`
+    <div class="pedido-item">
+      <div class="li-icon" style="background:var(--bg3)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg></div>
+      <div class="pedido-info" onclick="cargarPedido('${p.id}')">
+        <div class="pedido-nombre">${esc(p.nombre)}</div>
+        <div class="pedido-meta">${p.fecha} &middot; ${p.lineas.length} talla${p.lineas.length!==1?'s':''} &middot; Margen ${p.margen}cm &middot; Pieza ${p.pieza}m</div>
+      </div>
+      <button class="btn-del-direct" onclick="eliminarPedido('${p.id}')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function cargarPedido(id){
+  const p=loadPedidos().find(p=>p.id===id);if(!p)return;
+  document.getElementById('calc-margen').value=p.margen;
+  document.getElementById('calc-pieza').value=p.pieza;
+  calcLineas=JSON.parse(JSON.stringify(p.lineas));
+  renderLineas();calcular();go('s-calc');
+  toast('Pedido cargado: '+p.nombre);
+}
+
+function eliminarPedido(id){
+  if(!confirm('Eliminar este pedido?'))return;
+  savePedidos(loadPedidos().filter(p=>p.id!==id));
+  renderPedidos();actualizarBadges();toast('Pedido eliminado');
+}
+
+// ── BADGES ───────────────────────────────────────────────
+function actualizarBadges(){
+  const notas=loadNotas().filter(n=>!n.done).length;
+  setBadge('badge-notas',notas,false);
+  const pedidos=loadPedidos().length;
+  setBadge('badge-calc',pedidos,true);
+  const hoy=new Date();
+  const diaSemana=hoy.getDay()===0?6:hoy.getDay()-1;
+  let sinFichar=0;
+  const fichajes=loadFichajes();
+  for(let i=0;i<diaSemana;i++){
+    const d=new Date(hoy);d.setDate(hoy.getDate()-diaSemana+i);
+    const key=d.toISOString().slice(0,10);
+    if(!fichajes[key])sinFichar++;
+  }
+  setBadge('badge-fichaje',sinFichar,false);
+}
+
+function setBadge(id,count,esVerde){
+  const el=document.getElementById(id);if(!el)return;
+  if(count>0){el.textContent=count>99?'99+':count;el.style.display='flex';if(esVerde)el.classList.add('verde');}
+  else{el.style.display='none';}
 }
 
 // ── INIT ─────────────────────────────────────────────────
@@ -1979,6 +2085,7 @@ cargarConfigFichaje();
 cargarFont();
 initEasterEgg();
 actualizarFab();
+actualizarBadges();
 initWeather();
 </script>
 </body>
