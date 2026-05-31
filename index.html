@@ -304,12 +304,12 @@ body.font-xl{font-size:22px}
 <div id="app">
 
 <div id="toast" class="toast"></div>
-<div id="sync-indicator" style="display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:16px;z-index:200;font-size:11px;color:var(--txt3);display:none;align-items:center;gap:4px">
-  <div style="width:6px;height:6px;border-radius:50%;background:#30d158;animation:pulse 1.5s infinite"></div>
+<div id="sync-indicator" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:16px;z-index:200;font-size:11px;color:var(--txt3);display:none;align-items:center;gap:4px">
+  <div id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:#30d158;animation:pulse 1.5s infinite"></div>
   <span id="sync-txt">Sincronizando...</span>
 </div>
-<div id="storage-warn" style="display:none;position:fixed;top:0;left:0;right:0;z-index:150;background:rgba(255,159,10,0.15);border-bottom:1px solid rgba(255,159,10,0.3);padding:10px 16px;align-items:center;gap:10px">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" flex-shrink="0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+<div id="storage-warn" style="display:none;position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:16px;right:16px;z-index:150;background:rgba(255,159,10,0.15);border:1px solid rgba(255,159,10,0.3);border-radius:12px;padding:10px 14px;align-items:center;gap:10px">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   <span style="font-size:13px;color:#ff9f0a;flex:1" id="storage-pct"></span>
   <button onclick="go('s-backup')" style="background:rgba(255,159,10,0.2);border:1px solid rgba(255,159,10,0.3);color:#ff9f0a;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit">Backup</button>
 </div>
@@ -804,10 +804,11 @@ function persist(){
     const mb=(total/1024/1024).toFixed(1);
     const pct=total/(5*1024*1024)*100;
     if(pct>80){
-      document.getElementById('storage-warn').style.display='flex';
+      const sw=document.getElementById('storage-warn');
       document.getElementById('storage-pct').textContent=mb+' MB usados de ~5 MB';
-    } else {
-      document.getElementById('storage-warn').style.display='none';
+      sw.style.display='flex';
+      clearTimeout(window._storageWarnTimer);
+      window._storageWarnTimer=setTimeout(()=>sw.style.display='none', 5000);
     }
   }catch(e){
     if(e.name==='QuotaExceededError'){
@@ -2046,7 +2047,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311547', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311601', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2167,7 +2168,7 @@ window.initFirestore = function(){
 }
 
 async function syncFirestore(){
-  if(!window._fireUser) return;
+  if(!window._fireUser || !window._fireFns || !window._fireDB) return;
   const uid = window._fireUser.uid;
   try{
     showSyncIndicator('Sincronizando...');
@@ -2181,25 +2182,34 @@ async function syncFirestore(){
       timestamp: Date.now()
     };
     window._lastSave = data.timestamp;
-    await window._fireFns.setDoc(
-      window._fireFns.doc(window._fireDB, 'usuarios', uid),
-      data
-    );
+    const docRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
+    await window._fireFns.setDoc(docRef, data);
     showSyncIndicator('Guardado');
   }catch(e){
     console.error('Sync error:', e);
-    showSyncIndicator('Error sync');
+    // Si es error de permisos, probablemente no está autenticado
+    if(e.code === 'permission-denied'){
+      showSyncIndicator('Inicia sesion');
+    } else {
+      showSyncIndicator('Error sync');
+    }
   }
 }
 
 function showSyncIndicator(txt){
   const el = document.getElementById('sync-indicator');
   const txtEl = document.getElementById('sync-txt');
+  const dot = document.getElementById('sync-dot');
   if(!el || !txtEl) return;
   txtEl.textContent = txt;
   el.style.display = 'flex';
+  if(dot){
+    if(txt === 'Guardado') dot.style.background = '#30d158';
+    else if(txt.includes('Error') || txt.includes('sesion')) dot.style.background = '#ff453a';
+    else dot.style.background = '#ff9f0a';
+  }
   clearTimeout(window._syncTimer);
-  window._syncTimer = setTimeout(() => el.style.display = 'none', 2000);
+  window._syncTimer = setTimeout(() => el.style.display = 'none', 2500);
 }
 
 // Auto-sync cada vez que se guarda algo
