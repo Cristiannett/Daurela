@@ -310,6 +310,10 @@ body.font-xl{font-size:22px}
 <div id="app">
 
 <div id="toast" class="toast"></div>
+<div id="sync-indicator" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:16px;z-index:200;font-size:11px;color:var(--txt3);display:none;align-items:center;gap:4px">
+  <div id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:#30d158;animation:pulse 1.5s infinite"></div>
+  <span id="sync-txt">Sincronizando...</span>
+</div>
 <div id="storage-warn" style="display:none;position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:16px;right:16px;z-index:150;background:rgba(255,159,10,0.15);border:1px solid rgba(255,159,10,0.3);border-radius:12px;padding:10px 14px;align-items:center;gap:10px">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" flex-shrink="0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   <span style="font-size:13px;color:#ff9f0a;flex:1" id="storage-pct"></span>
@@ -320,6 +324,10 @@ body.font-xl{font-size:22px}
 <div id="s-cli" class="screen active">
   <div class="topbar" style="border-bottom:none">
     <h1><span class="app-name" id="logo-daurela" oncontextmenu="return false">Daurela</span></h1>
+    <span id="auth-status" style="font-size:12px;color:var(--txt3);display:none;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    <button class="btn-icon" id="auth-btn" onclick="loginGoogle()" aria-label="Cuenta Google">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
     <button class="btn-icon" onclick="go('s-backup')" aria-label="Backup">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     </button>
@@ -761,14 +769,16 @@ body.font-xl{font-size:22px}
     <button class="filtro-btn" id="filtro-pendientes" onclick="setFiltroNotas('pendientes')">Pendientes</button>
     <button class="filtro-btn" id="filtro-completadas" onclick="setFiltroNotas('completadas')">Completadas</button>
   </div>
-  <div id="lst-notas" style="padding-bottom:80px"></div>
-  <div class="nota-input-bar">
-    <input id="nota-nueva-txt" type="text" placeholder="Añadir nota... ej: Llevar cajas a Paco" autocomplete="off"
-      onkeydown="if(event.key==='Enter')agregarNota()">
-    <button onclick="agregarNota()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    </button>
-  </div>
+  <div id="lst-notas" style="padding-bottom:120px"></div>
+    <div id="lst-notas-placeholder"></div>
+</div>
+<!-- NOTA INPUT BAR GLOBAL -->
+<div class="nota-input-bar" id="nota-input-bar-global" style="display:none">
+  <input id="nota-nueva-txt" type="text" placeholder="Añadir nota..." autocomplete="off"
+    onkeydown="if(event.key==='Enter')agregarNota()">
+  <button onclick="agregarNota()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
 </div>
 <!-- FAB GLOBAL -->
 <button class="fab" id="fab-global" style="display:none" onclick="fabGlobalClick()" aria-label="Añadir">
@@ -2032,7 +2042,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311707', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311711', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2280,6 +2290,116 @@ window.go = function(id, addHistory) {
 };
 
 setTimeout(actualizarBadges, 800);
+
+// FIREBASE FUNCIONES
+var _syncDebounce = null;
+var _lastSave = 0;
+var _syncTimer = null;
+
+function showSyncIndicator(txt) {
+  var el = document.getElementById('sync-indicator');
+  var txtEl = document.getElementById('sync-txt');
+  var dot = document.getElementById('sync-dot');
+  if (!el || !txtEl) return;
+  txtEl.textContent = txt;
+  el.style.display = 'flex';
+  if (dot) {
+    if (txt === 'Guardado') dot.style.background = '#30d158';
+    else if (txt.indexOf('Error') !== -1 || txt.indexOf('sesion') !== -1) dot.style.background = '#ff453a';
+    else dot.style.background = '#ff9f0a';
+  }
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(function() { el.style.display = 'none'; }, 2500);
+}
+
+function syncFirestore() {
+  if (!window._fireUser || !window._fireFns || !window._fireDB) return;
+  var uid = window._fireUser.uid;
+  showSyncIndicator('Sincronizando...');
+  var cliLimpios = JSON.parse(JSON.stringify((window.db.clientes||[]).map(function(cli) {
+    return {
+      id: cli.id||'', nombre: cli.nombre||'', notas: cli.notas||'',
+      telas: (cli.telas||[]).map(function(t) {
+        return {
+          id: t.id||'', nombre: t.nombre||'', notas: t.notas||'',
+          medidas: (t.medidas||[]).map(function(m) {
+            return {id:m.id||'',nombre:m.nombre||'',tipo:m.tipo||'taco',ta:Number(m.ta)||0,cl:Number(m.cl)||0,obs:m.obs||''};
+          })
+        };
+      })
+    };
+  })));
+  var fichajesRaw = window.loadFichajes ? window.loadFichajes() : {};
+  var fichajesLimpios = {};
+  Object.keys(fichajesRaw).forEach(function(k) {
+    fichajesLimpios[k] = {norm:Number(fichajesRaw[k].norm)||0,extra:Number(fichajesRaw[k].extra)||0,nota:fichajesRaw[k].nota||'',tipo:fichajesRaw[k].tipo||'normal'};
+  });
+  var data = {
+    v: 2, ts: Date.now(),
+    clientes: cliLimpios,
+    fichajes: fichajesLimpios,
+    jornada: Number(window.getJornada ? window.getJornada() : 6),
+    notas: (window.loadNotas ? window.loadNotas() : []).map(function(n) {
+      return {id:String(n.id||''),txt:String(n.txt||''),done:Boolean(n.done),fecha:String(n.fecha||''),hora:String(n.hora||'')};
+    }),
+    pedidos: loadPedidos().map(function(p) {
+      return {id:String(p.id||''),nombre:String(p.nombre||''),fecha:String(p.fecha||''),margen:Number(p.margen)||0,pieza:Number(p.pieza)||0,
+        lineas:(p.lineas||[]).map(function(l){return {id:String(l.id||''),nombre:String(l.nombre||''),talla:String(l.talla||''),uds:String(l.uds||'')};})};
+    })
+  };
+  _lastSave = data.ts;
+  var docRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
+  window._fireFns.setDoc(docRef, data)
+    .then(function() { showSyncIndicator('Guardado'); })
+    .catch(function(e) {
+      var msg = e.code || e.message || 'error';
+      showSyncIndicator('Error sync');
+      console.error('Sync error:', msg);
+    });
+}
+
+function loginGoogle() {
+  if (window._fireUser) {
+    if (confirm('Cerrar sesion de ' + window._fireUser.displayName + '?')) {
+      window._fireFns.signOut(window._fireAuth)
+        .then(function() { window.toast && window.toast('Sesion cerrada'); });
+    }
+    return;
+  }
+  window._fireFns.signInWithPopup(window._fireAuth, window._fireProvider)
+    .then(function() { window.toast && window.toast('Sesion iniciada'); })
+    .catch(function(e) { window.toast && window.toast('Error al iniciar sesion'); });
+}
+
+// Conectar persist con Firebase
+var _origPersist = null;
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    if (window.persist && !_origPersist) {
+      _origPersist = window.persist;
+      window.persist = function() {
+        _origPersist();
+        clearTimeout(_syncDebounce);
+        _syncDebounce = setTimeout(syncFirestore, 1500);
+      };
+    }
+    window.initFirestore = function() {
+      if (!window._fireUser || !window._fireFns || !window._fireDB) return;
+      window.syncFirestore = syncFirestore;
+    };
+    if (window._fireUser) window.initFirestore();
+  }, 1000);
+});
+
+// Arreglar barra de notas - mostrar/ocultar con go
+var _goOrig2 = window.go;
+window.go = function(id, addHistory) {
+  _goOrig2 && _goOrig2(id, addHistory);
+  var bar = document.getElementById('nota-input-bar-global');
+  if (bar) bar.style.display = id === 's-notas' ? 'flex' : 'none';
+  if (id === 's-notas' && window.renderNotas) window.renderNotas();
+};
+
 
 // MERGE DE DATOS FIREBASE
 function mergeData(remoto) {
