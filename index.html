@@ -2047,7 +2047,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311616', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311621', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2149,22 +2149,117 @@ window.initFirestore = function(){
   if(fireUnsubscribe) fireUnsubscribe();
   fireUnsubscribe = window._fireFns.onSnapshot(docRef, snap => {
     if(snap.exists()){
-      const data = snap.data();
-      const ts = data.ts || data.timestamp || 0;
-      if(ts > (window._lastSave || 0)){
-        if(data.clientes) db.clientes = data.clientes;
-        if(data.fichajes) saveFichajes(data.fichajes);
-        if(data.notas) saveNotas(data.notas);
-        if(data.pedidos) savePedidos(data.pedidos);
-        if(data.jornada) localStorage.setItem('fich_jornada', data.jornada);
-        persist();
-        renderCli();
-        renderFichaje();
-        actualizarBadges();
-        showSyncIndicator('Sincronizado');
+      const remoto = snap.data();
+      const tsRemoto = remoto.ts || remoto.timestamp || 0;
+      const tsLocal = window._lastSave || 0;
+
+      // Solo hacer merge si los datos remotos son de otra sesión
+      if(tsRemoto > 0 && tsRemoto !== tsLocal){
+        const merged = mergeData(remoto);
+        if(merged){
+          persist();
+          renderCli();
+          renderFichaje();
+          actualizarBadges();
+          showSyncIndicator('Sincronizado');
+          // Subir el merge a Firebase
+          clearTimeout(window._syncDebounce);
+          window._syncDebounce = setTimeout(()=>syncFirestore(), 2000);
+        }
       }
     }
   });
+}
+
+
+// ── MERGE DE DATOS ───────────────────────────────────────
+function mergeData(remoto){
+  let cambios = false;
+
+  // CLIENTES: combinar por ID — si existe en remoto pero no en local, añadir
+  if(remoto.clientes && Array.isArray(remoto.clientes)){
+    const idsLocales = new Set(db.clientes.map(c => c.id));
+    remoto.clientes.forEach(cRemoto => {
+      if(!idsLocales.has(cRemoto.id)){
+        // Cliente nuevo en remoto, añadir a local
+        db.clientes.push(cRemoto);
+        cambios = true;
+      } else {
+        // Cliente existe en ambos — mergear telas
+        const cLocal = db.clientes.find(c => c.id === cRemoto.id);
+        if(cLocal && cRemoto.telas){
+          const idsTelaLocal = new Set((cLocal.telas || []).map(t => t.id));
+          cRemoto.telas.forEach(tRemota => {
+            if(!idsTelaLocal.has(tRemota.id)){
+              // Tela nueva en remoto
+              cLocal.telas = cLocal.telas || [];
+              cLocal.telas.push(tRemota);
+              cambios = true;
+            } else {
+              // Tela existe en ambos — mergear medidas
+              const tLocal = cLocal.telas.find(t => t.id === tRemota.id);
+              if(tLocal && tRemota.medidas){
+                const idsMedLocal = new Set((tLocal.medidas || []).map(m => m.id));
+                tRemota.medidas.forEach(mRemota => {
+                  if(!idsMedLocal.has(mRemota.id)){
+                    tLocal.medidas = tLocal.medidas || [];
+                    tLocal.medidas.push(mRemota);
+                    cambios = true;
+                  }
+                });
+              }
+            }
+          });
+        }
+      }
+    });
+  }
+
+  // NOTAS: combinar por ID
+  if(remoto.notas && Array.isArray(remoto.notas)){
+    const notasLocales = loadNotas();
+    const idsLocal = new Set(notasLocales.map(n => n.id));
+    let notasCambios = false;
+    remoto.notas.forEach(nRemota => {
+      if(!idsLocal.has(nRemota.id)){
+        notasLocales.push(nRemota);
+        notasCambios = true;
+        cambios = true;
+      }
+    });
+    if(notasCambios) saveNotas(notasLocales);
+  }
+
+  // FICHAJES: combinar por fecha — local tiene prioridad
+  if(remoto.fichajes){
+    const fichajesLocales = loadFichajes();
+    let fCambios = false;
+    Object.keys(remoto.fichajes).forEach(fecha => {
+      if(!fichajesLocales[fecha]){
+        fichajesLocales[fecha] = remoto.fichajes[fecha];
+        fCambios = true;
+        cambios = true;
+      }
+    });
+    if(fCambios) saveFichajes(fichajesLocales);
+  }
+
+  // PEDIDOS: combinar por ID
+  if(remoto.pedidos && Array.isArray(remoto.pedidos)){
+    const pedidosLocales = loadPedidos();
+    const idsLocal = new Set(pedidosLocales.map(p => p.id));
+    let pCambios = false;
+    remoto.pedidos.forEach(pRemoto => {
+      if(!idsLocal.has(pRemoto.id)){
+        pedidosLocales.push(pRemoto);
+        pCambios = true;
+        cambios = true;
+      }
+    });
+    if(pCambios) savePedidos(pedidosLocales);
+  }
+
+  return cambios;
 }
 
 async function syncFirestore(){
