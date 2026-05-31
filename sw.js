@@ -1,4 +1,4 @@
-const CACHE = 'daurela-202605311616';
+const CACHE = 'daurela-202605311621';
 const ASSETS = ['/Daurela/'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
