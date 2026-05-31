@@ -2047,7 +2047,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311612', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311614', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2172,6 +2172,12 @@ async function syncFirestore(){
   const uid = window._fireUser.uid;
   try{
     showSyncIndicator('Sincronizando...');
+    // Test minimo primero
+    const testRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
+    await window._fireFns.setDoc(testRef, {test: true, ts: Date.now()});
+    showSyncIndicator('Test OK');
+    toast('Test OK - Firebase funciona');
+    return;
     // Limpiar datos para Firestore — quitar fotos (base64 demasiado grande)
     // y cualquier valor undefined que Firestore no acepta
     const clientesSinFotos = db.clientes.map(cli => ({
