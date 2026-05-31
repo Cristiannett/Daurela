@@ -124,6 +124,22 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',
 .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg3);color:var(--txt);border:1px solid var(--border2);padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* TIPOS DE DIA FICHAJE */
+.mes-dia.vacaciones .dia-num{color:#0a84ff}
+.mes-dia.festivo .dia-num{color:#ff453a}
+.mes-dia.libre .dia-num{color:#bf5af2}
+.dia-dot.vacaciones{background:#0a84ff}
+.dia-dot.festivo{background:#ff453a}
+.dia-dot.libre{background:#bf5af2}
+.tipo-dia-selector{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tipo-dia-btn{flex:1;min-width:0;padding:8px 4px;border-radius:var(--rad-sm);font-size:12px;font-weight:500;border:1px solid var(--border2);background:var(--bg3);color:var(--txt2);cursor:pointer;text-align:center;font-family:inherit;transition:all 0.15s}
+.tipo-dia-btn.activo{font-weight:700}
+.tipo-dia-btn.t-normal.activo{background:rgba(52,199,89,0.15);color:#34c759;border-color:#34c759}
+.tipo-dia-btn.t-vacaciones.activo{background:rgba(10,132,255,0.15);color:#0a84ff;border-color:#0a84ff}
+.tipo-dia-btn.t-festivo.activo{background:rgba(255,69,58,0.15);color:#ff453a;border-color:#ff453a}
+.tipo-dia-btn.t-libre.activo{background:rgba(191,90,242,0.15);color:#bf5af2;border-color:#bf5af2}
+
+
 /* BADGES */
 .home-btn{position:relative}
 .badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ff453a;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg);z-index:2;pointer-events:none}
@@ -698,14 +714,22 @@ body.font-xl{font-size:22px}
   <div id="fich-form-wrap" style="display:none">
     <div class="fich-form">
       <div class="fich-form-title" id="fich-form-titulo">Apuntar horas</div>
-      <div class="horas-row">
-        <div class="fg" style="margin-bottom:0">
-          <label>Horas normales</label>
-          <input id="fich-norm" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
-        </div>
-        <div class="fg" style="margin-bottom:0">
-          <label>Horas extra</label>
-          <input id="fich-extra" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
+      <div class="tipo-dia-selector">
+        <button class="tipo-dia-btn t-normal activo" id="tdias-normal" onclick="setTipoDia('normal')">💼 Normal</button>
+        <button class="tipo-dia-btn t-vacaciones" id="tdias-vacaciones" onclick="setTipoDia('vacaciones')">🏖️ Vacaciones</button>
+        <button class="tipo-dia-btn t-festivo" id="tdias-festivo" onclick="setTipoDia('festivo')">🎉 Festivo</button>
+        <button class="tipo-dia-btn t-libre" id="tdias-libre" onclick="setTipoDia('libre')">😴 Libre</button>
+      </div>
+      <div id="fich-horas-wrap">
+        <div class="horas-row">
+          <div class="fg" style="margin-bottom:0">
+            <label>Horas normales</label>
+            <input id="fich-norm" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label>Horas extra</label>
+            <input id="fich-extra" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0">
+          </div>
         </div>
       </div>
       <div class="fg" style="margin-bottom:12px">
@@ -743,7 +767,10 @@ body.font-xl{font-size:22px}
     <div class="divider"></div>
     <div class="sec-hdr" style="margin:0 -16px 14px">Exportar fichaje</div>
     <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Exporta el resumen del mes actual en formato texto para copiarlo o enviarlo.</p>
-    <button class="btn-secondary" onclick="exportarFichajeMes()" style="margin-top:0">Exportar resumen del mes</button>
+    <button class="btn-secondary" onclick="exportarFichajeMes()" style="margin-top:0">Copiar resumen del mes</button>
+    <button class="btn-secondary" onclick="compartirFichajeWhatsApp()" style="margin-top:8px">
+      Enviar por WhatsApp
+    </button>
     <div id="fich-export-txt" style="display:none;margin-top:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px;font-size:13px;color:var(--txt2);line-height:1.8;white-space:pre-wrap;font-family:monospace"></div>
   </div>
 </div>
@@ -1916,11 +1943,17 @@ function renderFichaje(){
     let clases='mes-dia'+(esHoy?' hoy':'')+(reg?' con-horas':'')+(seleccionado?' hoy':'');
     let dot='';
     if(reg){
-      totalNorm+=reg.norm||0;
-      totalExtra+=reg.extra||0;
-      dot=`<div class="dia-dot${(reg.extra>0)?' extra':''}"></div>`;
+      const tipo=reg.tipo||'normal';
+      if(tipo==='normal'){
+        totalNorm+=reg.norm||0;
+        totalExtra+=reg.extra||0;
+        dot=`<div class="dia-dot${(reg.extra>0)?' extra':''}"></div>`;
+      } else {
+        dot=`<div class="dia-dot ${tipo}"></div>`;
+      }
     }
-    html+=`<div class="${clases}" onclick="seleccionarDia('${key}',${d})">
+    const clasesTipo=reg&&reg.tipo&&reg.tipo!=='normal'?' '+reg.tipo:'';
+    html+=`<div class="${clases+clasesTipo}" onclick="seleccionarDia('${key}',${d})">
       <span class="dia-num">${d}</span>${dot}
     </div>`;
   }
@@ -1944,10 +1977,13 @@ function seleccionarDia(key, dia){
   const reg=fichajes[key]||{norm:'',extra:'',nota:''};
   const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('fich-form-titulo').textContent='Dia '+dia+' de '+meses[fichMes];
+  const tipo = reg.tipo || 'normal';
+  setTipoDia(tipo);
   document.getElementById('fich-norm').value=reg.norm||'';
   document.getElementById('fich-extra').value=reg.extra||'';
   document.getElementById('fich-nota').value=reg.nota||'';
   document.getElementById('btn-del-fich').style.display=fichajes[key]?'block':'none';
+  if(!reg) setTipoDia('normal');
   document.getElementById('fich-form-wrap').style.display='block';
   document.getElementById('fich-form-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
   renderFichaje();
@@ -1956,18 +1992,19 @@ function seleccionarDia(key, dia){
 function guardarFichaje(){
   if(!fichDiaSeleccionado)return;
   const jornada=getJornada();
-  let norm=parseFloat(document.getElementById('fich-norm').value)||0;
-  let extra=parseFloat(document.getElementById('fich-extra').value)||0;
-  const nota=document.getElementById('fich-nota').value.trim();
+  const tipo = tipoDiaActual || 'normal';
+  let norm = tipo === 'normal' ? (parseFloat(document.getElementById('fich-norm').value)||0) : 0;
+  let extra = tipo === 'normal' ? (parseFloat(document.getElementById('fich-extra').value)||0) : 0;
+  const nota = document.getElementById('fich-nota').value.trim();
 
-  // Auto-calcular extras si solo ponen horas normales y superan la jornada
-  if(norm>jornada&&extra===0){
-    extra=parseFloat((norm-jornada).toFixed(2));
-    norm=jornada;
+  // Auto-calcular extras si superan la jornada
+  if(tipo === 'normal' && norm > jornada && extra === 0){
+    extra = parseFloat((norm-jornada).toFixed(2));
+    norm = jornada;
   }
 
-  const fichajes=loadFichajes();
-  fichajes[fichDiaSeleccionado]={norm,extra,nota};
+  const fichajes = loadFichajes();
+  fichajes[fichDiaSeleccionado] = {tipo, norm, extra, nota};
   saveFichajes(fichajes);
   document.getElementById('fich-form-wrap').style.display='none';
   fichDiaSeleccionado=null;
@@ -1997,12 +2034,18 @@ function exportarFichajeMes(){
     const key=fichAnio+'-'+String(fichMes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     const reg=fichajes[key];
     if(reg){
-      txt+=`Dia ${String(d).padStart(2,' ')}: ${reg.norm}h normales`;
-      if(reg.extra>0) txt+=` + ${reg.extra}h extras`;
-      if(reg.nota) txt+=` (${reg.nota})`;
+      if(reg.tipo && reg.tipo!=='normal'){
+        const emojis={vacaciones:'🏖️',festivo:'🎉',libre:'😴'};
+        txt+=`Dia ${String(d).padStart(2,' ')}: ${emojis[reg.tipo]||''} ${reg.tipo.charAt(0).toUpperCase()+reg.tipo.slice(1)}`;
+        if(reg.nota) txt+=` (${reg.nota})`;
+      } else {
+        txt+=`Dia ${String(d).padStart(2,' ')}: ${reg.norm}h normales`;
+        if(reg.extra>0) txt+=` + ${reg.extra}h extras`;
+        if(reg.nota) txt+=` (${reg.nota})`;
+        totalNorm+=reg.norm||0;
+        totalExtra+=reg.extra||0;
+      }
       txt+='\n';
-      totalNorm+=reg.norm||0;
-      totalExtra+=reg.extra||0;
     }
   }
   txt+='━━━━━━━━━━━━━━━━━━━━━━━━\n';
@@ -2047,7 +2090,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311621', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311625', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2354,6 +2397,60 @@ function showSyncIndicator(txt){
 
 // Auto-sync cada vez que se guarda algo
 const _origPersist = window.persist;
+
+
+// ── TIPO DE DIA ──────────────────────────────────────────
+let tipoDiaActual = 'normal';
+
+function setTipoDia(tipo){
+  tipoDiaActual = tipo;
+  document.querySelectorAll('.tipo-dia-btn').forEach(b => b.classList.remove('activo'));
+  const btn = document.getElementById('tdias-'+tipo);
+  if(btn) btn.classList.add('activo');
+  // Mostrar/ocultar campos de horas
+  const wrap = document.getElementById('fich-horas-wrap');
+  if(wrap) wrap.style.display = tipo === 'normal' ? 'block' : 'none';
+}
+
+// ── WHATSAPP FICHAJE ─────────────────────────────────────
+function compartirFichajeWhatsApp(){
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const fichajes=loadFichajes();
+  const diasMes=new Date(fichAnio,fichMes+1,0).getDate();
+  let txt='*'+meses[fichMes]+' '+fichAnio+'*
+';
+  txt+='━━━━━━━━━━━━━━━━━━━━━━━━
+';
+  let totalNorm=0,totalExtra=0;
+  for(let d=1;d<=diasMes;d++){
+    const key=fichAnio+'-'+String(fichMes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const reg=fichajes[key];
+    if(reg){
+      if(reg.tipo && reg.tipo !== 'normal'){
+        const emojis={vacaciones:'🏖️',festivo:'🎉',libre:'😴'};
+        txt+=`Día ${String(d).padStart(2,' ')}: ${emojis[reg.tipo]||''} ${reg.tipo.charAt(0).toUpperCase()+reg.tipo.slice(1)}`;
+        if(reg.nota) txt+=` (${reg.nota})`;
+      } else {
+        txt+=`Día ${String(d).padStart(2,' ')}: ${reg.norm}h normales`;
+        if(reg.extra>0) txt+=` + ${reg.extra}h extras`;
+        if(reg.nota) txt+=` (${reg.nota})`;
+        totalNorm+=reg.norm||0;
+        totalExtra+=reg.extra||0;
+      }
+      txt+='
+';
+    }
+  }
+  txt+='━━━━━━━━━━━━━━━━━━━━━━━━
+';
+  txt+=`Total normales: *${totalNorm}h*
+`;
+  txt+=`Total extras:   *${totalExtra}h*
+`;
+  txt+=`TOTAL:          *${totalNorm+totalExtra}h*`;
+  const url='https://wa.me/?text='+encodeURIComponent(txt);
+  window.open(url,'_blank');
+}
 
 // ── INIT ─────────────────────────────────────────────────
 load();
