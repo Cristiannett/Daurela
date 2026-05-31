@@ -190,7 +190,7 @@ body.font-xl{font-size:22px}
 .nota-meta{font-size:12px;color:var(--txt3);margin-top:3px}
 .nota-actions{display:flex;gap:4px;flex-shrink:0}
 .nota-fecha-hdr{padding:8px 16px 5px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--txt3);background:var(--bg2);border-bottom:1px solid var(--border)}
-.nota-input-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;z-index:10}
+.nota-input-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;z-index:10;display:none}
 .nota-input-bar input{flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none}
 .nota-input-bar input:focus{border-color:var(--border3)}
 .nota-input-bar button{background:var(--accent);color:var(--accent-txt);border:none;border-radius:var(--rad);padding:0 18px;font-size:15px;font-weight:600;cursor:pointer;flex-shrink:0}
@@ -761,7 +761,12 @@ function go(id, addHistory){
   el.scrollTop=0;
   if(addHistory) history.pushState({screen:id}, '', '');
   actualizarFab();
-  if(id==='s-notas') renderNotas();
+  if(id==='s-notas'){
+    renderNotas();
+    document.querySelector('.nota-input-bar').style.display='flex';
+  } else {
+    document.querySelector('.nota-input-bar').style.display='none';
+  }
 }
 
 function cancelForm(type){
@@ -1957,7 +1962,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605241723', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311524', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
