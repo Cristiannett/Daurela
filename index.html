@@ -1610,7 +1610,7 @@ let filtroNotas = 'todas';
 let editandoNota = null;
 
 function loadNotas(){ try{ const d=localStorage.getItem('notas_v1'); return d?JSON.parse(d):[]; }catch(e){return [];} }
-function saveNotas(arr){ localStorage.setItem('notas_v1', JSON.stringify(arr)); }
+function saveNotas(arr){ localStorage.setItem('notas_v1', JSON.stringify(arr)); clearTimeout(_syncDebounce); _syncDebounce=setTimeout(syncFirestore,1500); }
 
 function setFiltroNotas(f){
   filtroNotas=f;
@@ -1864,7 +1864,7 @@ let fichDiaSeleccionado = null;
 
 function getFichajeKey(){ return 'fichaje_v1'; }
 function loadFichajes(){ try{ const d=localStorage.getItem(getFichajeKey()); return d?JSON.parse(d):{}; }catch(e){return {};} }
-function saveFichajes(data){ localStorage.setItem(getFichajeKey(), JSON.stringify(data)); }
+function saveFichajes(data){ localStorage.setItem(getFichajeKey(), JSON.stringify(data)); clearTimeout(_syncDebounce); _syncDebounce=setTimeout(syncFirestore,1500); }
 function getJornada(){ return parseFloat(localStorage.getItem('fich_jornada'))||6; }
 function guardarConfigFichaje(){
   const v=parseFloat(document.getElementById('fich-jornada').value)||6;
@@ -2039,7 +2039,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311833', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311920', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
