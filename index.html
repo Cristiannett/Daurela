@@ -2047,7 +2047,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311614', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311616', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2150,8 +2150,8 @@ window.initFirestore = function(){
   fireUnsubscribe = window._fireFns.onSnapshot(docRef, snap => {
     if(snap.exists()){
       const data = snap.data();
-      // Solo actualizar si los datos son más nuevos
-      if(data.timestamp && data.timestamp > (window._lastSave || 0)){
+      const ts = data.ts || data.timestamp || 0;
+      if(ts > (window._lastSave || 0)){
         if(data.clientes) db.clientes = data.clientes;
         if(data.fichajes) saveFichajes(data.fichajes);
         if(data.notas) saveNotas(data.notas);
@@ -2172,58 +2172,62 @@ async function syncFirestore(){
   const uid = window._fireUser.uid;
   try{
     showSyncIndicator('Sincronizando...');
-    // Test minimo primero
-    const testRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
-    await window._fireFns.setDoc(testRef, {test: true, ts: Date.now()});
-    showSyncIndicator('Test OK');
-    toast('Test OK - Firebase funciona');
-    return;
-    // Limpiar datos para Firestore — quitar fotos (base64 demasiado grande)
-    // y cualquier valor undefined que Firestore no acepta
-    const clientesSinFotos = db.clientes.map(cli => ({
-      ...cli,
-      telas: cli.telas.map(t => ({
+    // Eliminar fotos (base64) y limpiar undefined usando JSON round-trip
+    const cliLimpios = JSON.parse(JSON.stringify(db.clientes.map(cli => ({
+      id: cli.id || '',
+      nombre: cli.nombre || '',
+      notas: cli.notas || '',
+      telas: (cli.telas || []).map(t => ({
         id: t.id || '',
         nombre: t.nombre || '',
         notas: t.notas || '',
-        foto: null, // fotos solo en local, no en Firestore
         medidas: (t.medidas || []).map(m => ({
           id: m.id || '',
           nombre: m.nombre || '',
           tipo: m.tipo || 'taco',
-          ta: m.ta || 0,
-          cl: m.cl || 0,
+          ta: Number(m.ta) || 0,
+          cl: Number(m.cl) || 0,
           obs: m.obs || ''
         }))
       }))
-    }));
+    }))));
+
+    const fichajesRaw = loadFichajes() || {};
+    const fichajesLimpios = {};
+    Object.keys(fichajesRaw).forEach(k => {
+      fichajesLimpios[k] = {
+        norm: Number(fichajesRaw[k].norm) || 0,
+        extra: Number(fichajesRaw[k].extra) || 0,
+        nota: fichajesRaw[k].nota || ''
+      };
+    });
 
     const data = {
-      version: 2,
-      clientes: clientesSinFotos,
-      fichajes: loadFichajes() || {},
-      jornada: getJornada() || 6,
+      v: 2,
+      ts: Date.now(),
+      clientes: cliLimpios,
+      fichajes: fichajesLimpios,
+      jornada: Number(getJornada()) || 6,
       notas: (loadNotas() || []).map(n => ({
-        id: n.id || '',
-        txt: n.txt || '',
-        done: n.done || false,
-        fecha: n.fecha || '',
-        hora: n.hora || ''
+        id: String(n.id || ''),
+        txt: String(n.txt || ''),
+        done: Boolean(n.done),
+        fecha: String(n.fecha || ''),
+        hora: String(n.hora || '')
       })),
       pedidos: (loadPedidos() || []).map(p => ({
-        id: p.id || '',
-        nombre: p.nombre || '',
-        fecha: p.fecha || '',
-        margen: p.margen || 0,
-        pieza: p.pieza || 0,
+        id: String(p.id || ''),
+        nombre: String(p.nombre || ''),
+        fecha: String(p.fecha || ''),
+        margen: Number(p.margen) || 0,
+        pieza: Number(p.pieza) || 0,
         lineas: (p.lineas || []).map(l => ({
-          id: l.id || '',
-          nombre: l.nombre || '',
-          talla: l.talla || '',
-          uds: l.uds || ''
+          id: String(l.id || ''),
+          nombre: String(l.nombre || ''),
+          talla: String(l.talla || ''),
+          uds: String(l.uds || '')
         }))
-      })),
-      timestamp: Date.now()
+      }))
     };
     window._lastSave = data.timestamp;
     const docRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
