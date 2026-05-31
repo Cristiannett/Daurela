@@ -240,6 +240,7 @@ body.font-xl{font-size:22px}
 .calc-linea-hdr span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3)}
 
 
+/* TIPOS DE DIA */
 .mes-dia.vacaciones .dia-num{color:#0a84ff}
 .mes-dia.festivo .dia-num{color:#ff453a}
 .mes-dia.libre .dia-num{color:#bf5af2}
@@ -247,58 +248,53 @@ body.font-xl{font-size:22px}
 .dia-dot.festivo{background:#ff453a}
 .dia-dot.libre{background:#bf5af2}
 .tipo-dia-selector{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.tipo-dia-btn{flex:1;min-width:0;padding:8px 4px;border-radius:var(--rad-sm);font-size:12px;font-weight:500;border:1px solid var(--border2);background:var(--bg3);color:var(--txt2);cursor:pointer;text-align:center;font-family:inherit}
+.tipo-dia-btn{flex:1;min-width:0;padding:8px 4px;border-radius:var(--rad-sm);font-size:12px;font-weight:500;border:1px solid var(--border2);background:var(--bg3);color:var(--txt2);cursor:pointer;text-align:center;font-family:inherit;transition:all 0.15s}
 .tipo-dia-btn.activo{font-weight:700}
 .tipo-dia-btn.t-normal.activo{background:rgba(52,199,89,0.15);color:#34c759;border-color:#34c759}
 .tipo-dia-btn.t-vacaciones.activo{background:rgba(10,132,255,0.15);color:#0a84ff;border-color:#0a84ff}
 .tipo-dia-btn.t-festivo.activo{background:rgba(255,69,58,0.15);color:#ff453a;border-color:#ff453a}
 .tipo-dia-btn.t-libre.activo{background:rgba(191,90,242,0.15);color:#bf5af2;border-color:#bf5af2}
-.pedido-item{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;background:var(--bg)}
-.pedido-item:active{background:var(--bg2)}
-.pedido-info{flex:1;min-width:0}
-.pedido-nombre{font-size:15px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pedido-meta{font-size:12px;color:var(--txt2);margin-top:2px}
-
+/* BADGES */
 .home-btn{position:relative}
 .badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ff453a;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg);z-index:2;pointer-events:none}
 .badge.verde{background:#30d158}
 </style>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  const firebaseConfig = {
-    apiKey: "AIzaSyD6fFNWuxNGoJ0KCEBRLL7HDPWhkGeiJQU",
-    authDomain: "daurela-5d59c.firebaseapp.com",
-    projectId: "daurela-5d59c",
-    storageBucket: "daurela-5d59c.firebasestorage.app",
-    messagingSenderId: "1052691773640",
-    appId: "1:1052691773640:web:60522adf6830f58cac4dfd"
-  };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db_fire = getFirestore(app);
-  const provider = new GoogleAuthProvider();
-  window._fireAuth = auth;
-  window._fireDB = db_fire;
-  window._fireProvider = provider;
-  window._fireFns = { signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot };
-  onAuthStateChanged(auth, user => {
-    if(user){
-      window._fireUser = user;
-      const btn = document.getElementById('auth-btn');
-      if(btn) btn.innerHTML = '<img src="'+user.photoURL+'" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border2)" alt="">';
-      const status = document.getElementById('auth-status');
-      if(status){ status.textContent = user.displayName; status.style.display = 'block'; }
-      window.initFirestore && window.initFirestore();
-    } else {
-      window._fireUser = null;
-      const btn = document.getElementById('auth-btn');
-      if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-      const status = document.getElementById('auth-status');
-      if(status) status.style.display = 'none';
-    }
-  });
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyD6fFNWuxNGoJ0KCEBRLL7HDPWhkGeiJQU",
+  authDomain: "daurela-5d59c.firebaseapp.com",
+  projectId: "daurela-5d59c",
+  storageBucket: "daurela-5d59c.firebasestorage.app",
+  messagingSenderId: "1052691773640",
+  appId: "1:1052691773640:web:60522adf6830f58cac4dfd"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db_fire = getFirestore(app);
+const provider = new GoogleAuthProvider();
+window._fireAuth = auth;
+window._fireDB = db_fire;
+window._fireProvider = provider;
+window._fireFns = { signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, onSnapshot };
+onAuthStateChanged(auth, function(user) {
+  if(user){
+    window._fireUser = user;
+    var btn = document.getElementById('auth-btn');
+    if(btn) btn.innerHTML = '<img src="'+user.photoURL+'" style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,0.2)" alt="">';
+    var status = document.getElementById('auth-status');
+    if(status){ status.textContent = user.displayName; status.style.display = 'block'; }
+    window.initFirestore && window.initFirestore();
+  } else {
+    window._fireUser = null;
+    var btn = document.getElementById('auth-btn');
+    if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+    var status = document.getElementById('auth-status');
+    if(status) status.style.display = 'none';
+  }
+});
 </script>
 </head>
 <body>
@@ -310,10 +306,7 @@ body.font-xl{font-size:22px}
 <div id="app">
 
 <div id="toast" class="toast"></div>
-<div id="sync-indicator" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:16px;z-index:200;font-size:11px;color:var(--txt3);display:none;align-items:center;gap:4px">
-  <div id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:#30d158;animation:pulse 1.5s infinite"></div>
-  <span id="sync-txt">Sincronizando...</span>
-</div>
+<div id="sync-indicator" style="position:fixed;top:calc(env(safe-area-inset-top,0px)+8px);right:16px;z-index:200;font-size:11px;color:var(--txt3);display:none;align-items:center;gap:4px"><div id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:#30d158"></div><span id="sync-txt">Sincronizando...</span></div>
 <div id="storage-warn" style="display:none;position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:16px;right:16px;z-index:150;background:rgba(255,159,10,0.15);border:1px solid rgba(255,159,10,0.3);border-radius:12px;padding:10px 14px;align-items:center;gap:10px">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" flex-shrink="0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   <span style="font-size:13px;color:#ff9f0a;flex:1" id="storage-pct"></span>
@@ -419,7 +412,7 @@ body.font-xl{font-size:22px}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
     <h1 id="ttl-telas"></h1>
-    <button class="btn-icon" onclick="openFormCli(curCli)" aria-label="Editar">
+    <button class="btn-icon" onclick="openFormCli(window.curCli)" aria-label="Editar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     </button>
   </div>
@@ -433,7 +426,7 @@ body.font-xl{font-size:22px}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
     <h1 id="ttl-meds"></h1>
-    <button class="btn-icon" onclick="openFormTela(curTela)" aria-label="Editar tela">
+    <button class="btn-icon" onclick="openFormTela(window.curTela)" aria-label="Editar tela">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     </button>
   </div>
@@ -451,7 +444,7 @@ body.font-xl{font-size:22px}
     <button class="btn-icon" onclick="duplicarMed()" aria-label="Duplicar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
     </button>
-    <button class="btn-icon" onclick="openFormMed(curMed)" aria-label="Editar">
+    <button class="btn-icon" onclick="openFormMed(window.curMed)" aria-label="Editar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     </button>
   </div>
@@ -594,7 +587,15 @@ body.font-xl{font-size:22px}
 </div>
 
 
-<div id="s-pedidos" class="screen"><div class="topbar"><button class="btn-icon" onclick="go('s-calc')" aria-label="Volver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button><h1>Pedidos guardados</h1></div><div id="lst-pedidos"></div></div>
+<div id="s-pedidos" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-calc')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Pedidos guardados</h1>
+  </div>
+  <div id="lst-pedidos"></div>
+</div>
 <!-- CALCULADORA DE PEDIDOS -->
 <div id="s-calc" class="screen">
   <div class="topbar">
@@ -770,16 +771,8 @@ body.font-xl{font-size:22px}
     <button class="filtro-btn" id="filtro-completadas" onclick="setFiltroNotas('completadas')">Completadas</button>
   </div>
   <div id="lst-notas" style="padding-bottom:120px"></div>
-    <div id="lst-notas-placeholder"></div>
 </div>
-<!-- NOTA INPUT BAR GLOBAL -->
-<div class="nota-input-bar" id="nota-input-bar-global" style="display:none">
-  <input id="nota-nueva-txt" type="text" placeholder="Añadir nota..." autocomplete="off"
-    onkeydown="if(event.key==='Enter')agregarNota()">
-  <button onclick="agregarNota()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>
-</div>
+<div id="nota-input-bar-global" style="position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:none;gap:8px;z-index:90"><input id="nota-nueva-txt" type="text" placeholder="Añadir nota..." autocomplete="off" onkeydown="if(event.key==='Enter')agregarNota()" style="flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none"><button onclick="agregarNota()" style="background:var(--accent);color:var(--accent-txt);border:none;border-radius:var(--rad);padding:0 18px;font-size:15px;font-weight:600;cursor:pointer;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div>
 <!-- FAB GLOBAL -->
 <button class="fab" id="fab-global" style="display:none" onclick="fabGlobalClick()" aria-label="Añadir">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
@@ -800,17 +793,19 @@ function persist(){
   try{
     const data=JSON.stringify(db);
     localStorage.setItem(KEY,data);
+    clearTimeout(_syncDebounce);
+    _syncDebounce=setTimeout(syncFirestore, 1500);
     // Comprobar uso aproximado
     let total=0;
     for(let k in localStorage) if(localStorage.hasOwnProperty(k)) total+=localStorage[k].length*2;
     const mb=(total/1024/1024).toFixed(1);
     const pct=total/(5*1024*1024)*100;
     if(pct>80){
-      var sw=document.getElementById('storage-warn');
+      const sw=document.getElementById('storage-warn');
       document.getElementById('storage-pct').textContent=mb+' MB usados de ~5 MB';
       sw.style.display='flex';
       clearTimeout(window._storageWarnTimer);
-      window._storageWarnTimer=setTimeout(function(){sw.style.display='none';},5000);
+      window._storageWarnTimer=setTimeout(()=>sw.style.display='none',5000);
     }
   }catch(e){
     if(e.name==='QuotaExceededError'){
@@ -841,11 +836,15 @@ function go(id, addHistory){
     s.classList.remove('active','slide-in','slide-back');
   });
   const el=document.getElementById(id);
+  if(!el){console.error('Pantalla no encontrada:',id);return;}
   el.classList.add('active');
   el.classList.add(isBack?'slide-back':'slide-in');
   el.scrollTop=0;
   if(addHistory) history.pushState({screen:id}, '', '');
   actualizarFab();
+  if(id==='s-cli') actualizarBadges();
+  const bar=document.getElementById('nota-input-bar-global');
+  if(bar) bar.style.display=id==='s-notas'?'flex':'none';
   if(id==='s-notas') renderNotas();
 }
 
@@ -924,7 +923,7 @@ function renderCli(){
   +'</div>';
 }
 
-function openCli(id){curCli=db.clientes.find(c=>c.id===id);document.getElementById('ttl-telas').textContent=curCli.nombre;renderTelas();}
+function openCli(id){curCli=db.clientes.find(c=>c.id===id);window.curCli=curCli;document.getElementById('ttl-telas').textContent=curCli.nombre;renderTelas();}
 
 function openFormCli(c){
   editingCli=c;prevScreenCli=c?'s-telas':'s-clientes-list';
@@ -966,7 +965,7 @@ function renderTelas(){
 }
 
 function openTela(id){
-  curTela=curCli.telas.find(t=>t.id===id);
+  curTela=curCli.telas.find(t=>t.id===id);window.curTela=curTela;
   document.getElementById('ttl-meds').textContent=curTela.nombre;
   document.getElementById('bc-meds').textContent=curCli.nombre+' > '+curTela.nombre;
   renderMeds();go('s-meds');
@@ -1034,7 +1033,7 @@ function renderMeds(){
 }
 
 function openMed(id){
-  curMed=curTela.medidas.find(m=>m.id===id);
+  curMed=curTela.medidas.find(m=>m.id===id);window.curMed=curMed;
   document.getElementById('ttl-det').textContent=curMed.nombre;
   renderDet();go('s-det');
 }
@@ -1911,11 +1910,12 @@ function renderFichaje(){
     let clases='mes-dia'+(esHoy?' hoy':'')+(reg?' con-horas':'')+(seleccionado?' hoy':'');
     let dot='';
     if(reg){
-      totalNorm+=reg.norm||0;
-      totalExtra+=reg.extra||0;
-      dot=`<div class="dia-dot${(reg.extra>0)?' extra':''}"></div>`;
+      const tipoDia=reg.tipo||'normal';
+      if(tipoDia==='normal'){totalNorm+=reg.norm||0;totalExtra+=reg.extra||0;dot=`<div class="dia-dot${(reg.extra>0)?' extra':''}"></div>`;}
+      else{dot=`<div class="dia-dot ${tipoDia}"></div>`;}
     }
-    html+=`<div class="${clases}" onclick="seleccionarDia('${key}',${d})">
+    const clasesTipo=reg&&reg.tipo&&reg.tipo!=='normal'?' '+reg.tipo:'';
+    html+=`<div class="${clases+clasesTipo}" onclick="seleccionarDia('${key}',${d})">
       <span class="dia-num">${d}</span>${dot}
     </div>`;
   }
@@ -1939,10 +1939,12 @@ function seleccionarDia(key, dia){
   const reg=fichajes[key]||{norm:'',extra:'',nota:''};
   const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('fich-form-titulo').textContent='Dia '+dia+' de '+meses[fichMes];
+  setTipoDia(reg.tipo||'normal');
   document.getElementById('fich-norm').value=reg.norm||'';
   document.getElementById('fich-extra').value=reg.extra||'';
   document.getElementById('fich-nota').value=reg.nota||'';
   document.getElementById('btn-del-fich').style.display=fichajes[key]?'block':'none';
+  if(!reg) setTipoDia('normal');
   document.getElementById('fich-form-wrap').style.display='block';
   document.getElementById('fich-form-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
   renderFichaje();
@@ -1951,18 +1953,13 @@ function seleccionarDia(key, dia){
 function guardarFichaje(){
   if(!fichDiaSeleccionado)return;
   const jornada=getJornada();
-  let norm=parseFloat(document.getElementById('fich-norm').value)||0;
-  let extra=parseFloat(document.getElementById('fich-extra').value)||0;
+  const tipo=tipoDiaActual||'normal';
+  let norm=tipo==='normal'?(parseFloat(document.getElementById('fich-norm').value)||0):0;
+  let extra=tipo==='normal'?(parseFloat(document.getElementById('fich-extra').value)||0):0;
   const nota=document.getElementById('fich-nota').value.trim();
-
-  // Auto-calcular extras si solo ponen horas normales y superan la jornada
-  if(norm>jornada&&extra===0){
-    extra=parseFloat((norm-jornada).toFixed(2));
-    norm=jornada;
-  }
-
+  if(tipo==='normal'&&norm>jornada&&extra===0){extra=parseFloat((norm-jornada).toFixed(2));norm=jornada;}
   const fichajes=loadFichajes();
-  fichajes[fichDiaSeleccionado]={norm,extra,nota};
+  fichajes[fichDiaSeleccionado]={tipo,norm,extra,nota};
   saveFichajes(fichajes);
   document.getElementById('fich-form-wrap').style.display='none';
   fichDiaSeleccionado=null;
@@ -2042,19 +2039,265 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311720', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202605311833', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
 
-// Exponer al window
+
+// ── FIREBASE ─────────────────────────────────────────────
+let _syncDebounce = null;
+let _lastSave = 0;
+let _syncTimer = null;
+
+function showSyncIndicator(txt) {
+  const el = document.getElementById('sync-indicator');
+  const txtEl = document.getElementById('sync-txt');
+  const dot = document.getElementById('sync-dot');
+  if (!el || !txtEl) return;
+  txtEl.textContent = txt;
+  el.style.display = 'flex';
+  if (dot) {
+    dot.style.background = txt === 'Guardado' ? '#30d158' : txt.includes('Error') ? '#ff453a' : '#ff9f0a';
+  }
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => el.style.display = 'none', 2500);
+}
+
+function syncFirestore() {
+  if (!window._fireUser || !window._fireFns || !window._fireDB) return;
+  const uid = window._fireUser.uid;
+  showSyncIndicator('Sincronizando...');
+  const cliLimpios = db.clientes.map(cli => ({
+    id: cli.id||'', nombre: cli.nombre||'', notas: cli.notas||'',
+    telas: (cli.telas||[]).map(t => ({
+      id: t.id||'', nombre: t.nombre||'', notas: t.notas||'',
+      medidas: (t.medidas||[]).map(m => ({
+        id:m.id||'',nombre:m.nombre||'',tipo:m.tipo||'taco',
+        ta:Number(m.ta)||0,cl:Number(m.cl)||0,obs:m.obs||''
+      }))
+    }))
+  }));
+  const fichajesRaw = loadFichajes();
+  const fichajesLimpios = {};
+  Object.keys(fichajesRaw).forEach(k => {
+    fichajesLimpios[k] = {norm:Number(fichajesRaw[k].norm)||0,extra:Number(fichajesRaw[k].extra)||0,nota:fichajesRaw[k].nota||'',tipo:fichajesRaw[k].tipo||'normal'};
+  });
+  const data = {
+    v:2, ts:Date.now(),
+    clientes: cliLimpios,
+    fichajes: fichajesLimpios,
+    jornada: Number(getJornada()),
+    notas: loadNotas().map(n => ({id:String(n.id||''),txt:String(n.txt||''),done:Boolean(n.done),fecha:String(n.fecha||''),hora:String(n.hora||'')})),
+    pedidos: loadPedidos().map(p => ({id:String(p.id||''),nombre:String(p.nombre||''),fecha:String(p.fecha||''),margen:Number(p.margen)||0,pieza:Number(p.pieza)||0,lineas:(p.lineas||[]).map(l=>({id:String(l.id||''),nombre:String(l.nombre||''),talla:String(l.talla||''),uds:String(l.uds||'')}))  }))
+  };
+  _lastSave = data.ts;
+  window._fireFns.setDoc(window._fireFns.doc(window._fireDB,'usuarios',uid), data)
+    .then(() => showSyncIndicator('Guardado'))
+    .catch(e => { showSyncIndicator('Error sync'); console.error('Sync:', e.code||e.message); });
+}
+
+function loginGoogle() {
+  if (window._fireUser) {
+    if (confirm('Cerrar sesion de '+window._fireUser.displayName+'?')) {
+      window._fireFns.signOut(window._fireAuth).then(() => toast('Sesion cerrada'));
+    }
+    return;
+  }
+  window._fireFns.signInWithPopup(window._fireAuth, window._fireProvider)
+    .then(() => toast('Sesion iniciada'))
+    .catch(() => toast('Error al iniciar sesion'));
+}
+
+function initFirestore() {
+  if (!window._fireUser || !window._fireFns || !window._fireDB) return;
+  const uid = window._fireUser.uid;
+  window._fireFns.onSnapshot(window._fireFns.doc(window._fireDB,'usuarios',uid), snap => {
+    if (!snap.exists()) return;
+    const remoto = snap.data();
+    const ts = remoto.ts || remoto.timestamp || 0;
+    if (ts > 0 && ts !== _lastSave) {
+      mergeData(remoto);
+    }
+  });
+}
+
+function mergeData(remoto) {
+  let cambios = false;
+  if (remoto.clientes && Array.isArray(remoto.clientes)) {
+    const idsLoc = {};
+    db.clientes.forEach(cl => idsLoc[cl.id] = cl);
+    remoto.clientes.forEach(cR => {
+      if (!idsLoc[cR.id]) { db.clientes.push(cR); cambios = true; }
+      else {
+        const cL = idsLoc[cR.id];
+        if (cR.telas) {
+          const idsTL = {};
+          (cL.telas||[]).forEach(t => idsTL[t.id] = t);
+          cR.telas.forEach(tR => {
+            if (!idsTL[tR.id]) { cL.telas = cL.telas||[]; cL.telas.push(tR); cambios = true; }
+            else if (tR.medidas) {
+              const tL = idsTL[tR.id];
+              const idsML = {};
+              (tL.medidas||[]).forEach(m => idsML[m.id] = true);
+              tR.medidas.forEach(mR => { if (!idsML[mR.id]) { tL.medidas = tL.medidas||[]; tL.medidas.push(mR); cambios = true; } });
+            }
+          });
+        }
+      }
+    });
+  }
+  if (remoto.notas && Array.isArray(remoto.notas)) {
+    const nl = loadNotas(); const idsN = {}; nl.forEach(n => idsN[n.id] = true);
+    let nc = false;
+    remoto.notas.forEach(n => { if (!idsN[n.id]) { nl.push(n); nc = true; cambios = true; } });
+    if (nc) saveNotas(nl);
+  }
+  if (remoto.fichajes) {
+    const fl = loadFichajes(); let fc = false;
+    Object.keys(remoto.fichajes).forEach(k => { if (!fl[k]) { fl[k] = remoto.fichajes[k]; fc = true; cambios = true; } });
+    if (fc) saveFichajes(fl);
+  }
+  if (remoto.pedidos && Array.isArray(remoto.pedidos)) {
+    const pl = loadPedidos(); const idsP = {}; pl.forEach(p => idsP[p.id] = true);
+    let pc = false;
+    remoto.pedidos.forEach(p => { if (!idsP[p.id]) { pl.push(p); pc = true; cambios = true; } });
+    if (pc) savePedidos(pl);
+  }
+  if (cambios) { persist(); renderCli(); renderFichaje(); actualizarBadges(); }
+}
+
+// ── PEDIDOS ───────────────────────────────────────────────
+function loadPedidos() { try { const d = localStorage.getItem('pedidos_v1'); return d ? JSON.parse(d) : []; } catch(e) { return []; } }
+function savePedidos(arr) { localStorage.setItem('pedidos_v1', JSON.stringify(arr)); }
+
+function guardarPedido() {
+  const lineas = calcLineas.filter(l => parseFloat(l.talla) > 0 && parseInt(l.uds) > 0);
+  if (!lineas.length) { toast('Anade al menos una linea'); return; }
+  const nombre = prompt('Nombre del pedido:');
+  if (!nombre || !nombre.trim()) return;
+  const pedido = { id:uid(), nombre:nombre.trim(), fecha:new Date().toISOString().slice(0,10),
+    margen:parseFloat(document.getElementById('calc-margen').value)||0,
+    pieza:parseFloat(document.getElementById('calc-pieza').value)||0,
+    lineas:JSON.parse(JSON.stringify(lineas)) };
+  const pedidos = loadPedidos(); pedidos.unshift(pedido); savePedidos(pedidos);
+  toast('Pedido guardado'); actualizarBadges();
+}
+
+function verPedidosGuardados() { renderPedidos(); go('s-pedidos'); }
+
+function renderPedidos() {
+  const pedidos = loadPedidos();
+  const el = document.getElementById('lst-pedidos');
+  if (!el) return;
+  if (!pedidos.length) { el.innerHTML = '<div class="empty-state"><p>Sin pedidos guardados.<br>Calcula un pedido y pulsa <strong>Guardar pedido</strong></p></div>'; return; }
+  el.innerHTML = pedidos.map(p => `
+    <div style="display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;background:var(--bg)">
+      <div style="flex:1;min-width:0;cursor:pointer" onclick="cargarPedido('${p.id}')">
+        <div style="font-size:15px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.nombre)}</div>
+        <div style="font-size:12px;color:var(--txt2);margin-top:2px">${p.fecha} &middot; ${p.lineas.length} tallas</div>
+      </div>
+      <button class="btn-del-direct" onclick="eliminarPedido('${p.id}')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function cargarPedido(id) {
+  const p = loadPedidos().find(p => p.id === id);
+  if (!p) return;
+  document.getElementById('calc-margen').value = p.margen;
+  document.getElementById('calc-pieza').value = p.pieza;
+  calcLineas = JSON.parse(JSON.stringify(p.lineas));
+  renderLineas(); calcular(); go('s-calc');
+  toast('Pedido cargado: '+p.nombre);
+}
+
+function eliminarPedido(id) {
+  if (!confirm('Eliminar este pedido?')) return;
+  savePedidos(loadPedidos().filter(p => p.id !== id));
+  renderPedidos(); actualizarBadges(); toast('Pedido eliminado');
+}
+
+// ── TIPOS DE DIA ──────────────────────────────────────────
+let tipoDiaActual = 'normal';
+
+function setTipoDia(tipo) {
+  tipoDiaActual = tipo;
+  document.querySelectorAll('.tipo-dia-btn').forEach(b => b.classList.remove('activo'));
+  const btn = document.getElementById('tdias-'+tipo);
+  if (btn) btn.classList.add('activo');
+  const wrap = document.getElementById('fich-horas-wrap');
+  if (wrap) wrap.style.display = tipo === 'normal' ? 'block' : 'none';
+}
+
+function compartirFichajeWhatsApp() {
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const fichajes = loadFichajes();
+  const diasMes = new Date(fichAnio, fichMes+1, 0).getDate();
+  let txt = '*'+meses[fichMes]+' '+fichAnio+'*\n------------------------\n';
+  let totalNorm = 0, totalExtra = 0;
+  for (let d = 1; d <= diasMes; d++) {
+    const key = fichAnio+'-'+String(fichMes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const reg = fichajes[key];
+    if (reg) {
+      const tipo = reg.tipo||'normal';
+      if (tipo !== 'normal') {
+        const et = {vacaciones:'Vacaciones',festivo:'Festivo',libre:'Libre'};
+        txt += 'Dia '+String(d).padStart(2,' ')+': '+(et[tipo]||tipo);
+        if (reg.nota) txt += ' ('+reg.nota+')';
+      } else {
+        txt += 'Dia '+String(d).padStart(2,' ')+': '+reg.norm+'h normales';
+        if (reg.extra > 0) txt += ' + '+reg.extra+'h extras';
+        if (reg.nota) txt += ' ('+reg.nota+')';
+        totalNorm += reg.norm||0; totalExtra += reg.extra||0;
+      }
+      txt += '\n';
+    }
+  }
+  txt += '------------------------\nTotal normales: *'+totalNorm+'h*\nTotal extras: *'+totalExtra+'h*\nTOTAL: *'+(totalNorm+totalExtra)+'h*';
+  window.open('https://wa.me/?text='+encodeURIComponent(txt), '_blank');
+}
+
+// ── BADGES ────────────────────────────────────────────────
+function actualizarBadges() {
+  const notas = loadNotas().filter(n => !n.done).length;
+  setBadge('badge-notas', notas, false);
+  const pedidos = loadPedidos().length;
+  setBadge('badge-calc', pedidos, true);
+}
+
+function setBadge(id, count, esVerde) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (count > 0) { el.textContent = count > 99 ? '99+' : count; el.style.display = 'flex'; if (esVerde) el.classList.add('verde'); }
+  else el.style.display = 'none';
+}
+
+// ── BARRA NOTAS ───────────────────────────────────────────
+function actualizarBarraNotas(id) {
+  const bar = document.getElementById('nota-input-bar-global');
+  if (!bar) return;
+  bar.style.display = id === 's-notas' ? 'flex' : 'none';
+}
+
+// ── WINDOW EXPORTS ──────────────────────────────────────
+// Variables de estado globales
+window.curCli = null;
+window.curTela = null;
+window.curMed = null;
+
+try{window.actualizarFab=actualizarFab;}catch(e){}
 try{window.addLinea=addLinea;}catch(e){}
 try{window.agregarNota=agregarNota;}catch(e){}
 try{window.calcLineaField=calcLineaField;}catch(e){}
 try{window.calcular=calcular;}catch(e){}
 try{window.cambiarMes=cambiarMes;}catch(e){}
 try{window.cancelForm=cancelForm;}catch(e){}
+try{window.cargarConfigFichaje=cargarConfigFichaje;}catch(e){}
+try{window.cargarFont=cargarFont;}catch(e){}
 try{window.cargarMasCli=cargarMasCli;}catch(e){}
+try{window.cargarToken=cargarToken;}catch(e){}
 try{window.dDrop=dDrop;}catch(e){}
 try{window.dDropCli=dDropCli;}catch(e){}
 try{window.dDropTela=dDropTela;}catch(e){}
@@ -2067,13 +2310,12 @@ try{window.dStartCli=dStartCli;}catch(e){}
 try{window.dStartTela=dStartTela;}catch(e){}
 try{window.delCli=delCli;}catch(e){}
 try{window.delMed=delMed;}catch(e){}
+try{window.delMedDirecto=delMedDirecto;}catch(e){}
 try{window.delTela=delTela;}catch(e){}
 try{window.duplicarDesdeForm=duplicarDesdeForm;}catch(e){}
 try{window.duplicarMed=duplicarMed;}catch(e){}
 try{window.editarNota=editarNota;}catch(e){}
 try{window.eliminarFichaje=eliminarFichaje;}catch(e){}
-try{window.renderNotas=renderNotas;}catch(e){}
-try{window.loginGoogle=loginGoogle;}catch(e){}
 try{window.eliminarNota=eliminarNota;}catch(e){}
 try{window.exportar=exportar;}catch(e){}
 try{window.exportarCSV=exportarCSV;}catch(e){}
@@ -2086,9 +2328,16 @@ try{window.guardarConfigFichaje=guardarConfigFichaje;}catch(e){}
 try{window.guardarFichaje=guardarFichaje;}catch(e){}
 try{window.guardarToken=guardarToken;}catch(e){}
 try{window.importar=importar;}catch(e){}
+try{window.initCalc=initCalc;}catch(e){}
+try{window.initEasterEgg=initEasterEgg;}catch(e){}
+try{window.initWeather=initWeather;}catch(e){}
+try{window.lanzarConfeti=lanzarConfeti;}catch(e){}
 try{window.limpiarCalc=limpiarCalc;}catch(e){}
 try{window.limpiarCompletadas=limpiarCompletadas;}catch(e){}
+try{window.load=load;}catch(e){}
+try{window.loadFichajes=loadFichajes;}catch(e){}
 try{window.loadFoto=loadFoto;}catch(e){}
+try{window.loadNotas=loadNotas;}catch(e){}
 try{window.markDirty=markDirty;}catch(e){}
 try{window.openCli=openCli;}catch(e){}
 try{window.openFormCli=openFormCli;}catch(e){}
@@ -2096,12 +2345,24 @@ try{window.openFormMed=openFormMed;}catch(e){}
 try{window.openFormTela=openFormTela;}catch(e){}
 try{window.openMed=openMed;}catch(e){}
 try{window.openTela=openTela;}catch(e){}
+try{window.persist=persist;}catch(e){}
 try{window.quitarFoto=quitarFoto;}catch(e){}
 try{window.removeLinea=removeLinea;}catch(e){}
 try{window.renderCli=renderCli;}catch(e){}
+try{window.renderDet=renderDet;}catch(e){}
+try{window.renderFichaje=renderFichaje;}catch(e){}
+try{window.renderLineas=renderLineas;}catch(e){}
+try{window.renderMeds=renderMeds;}catch(e){}
+try{window.renderNotas=renderNotas;}catch(e){}
 try{window.renderSearch=renderSearch;}catch(e){}
+try{window.renderTelas=renderTelas;}catch(e){}
+try{window.reorder=reorder;}catch(e){}
+try{window.reorderCli=reorderCli;}catch(e){}
+try{window.reorderTela=reorderTela;}catch(e){}
 try{window.saveCli=saveCli;}catch(e){}
+try{window.saveFichajes=saveFichajes;}catch(e){}
 try{window.saveMed=saveMed;}catch(e){}
+try{window.saveNotas=saveNotas;}catch(e){}
 try{window.saveTela=saveTela;}catch(e){}
 try{window.seleccionarDia=seleccionarDia;}catch(e){}
 try{window.setFiltroNotas=setFiltroNotas;}catch(e){}
@@ -2115,10 +2376,24 @@ try{window.tMoveTela=tMoveTela;}catch(e){}
 try{window.tStart=tStart;}catch(e){}
 try{window.tStartCli=tStartCli;}catch(e){}
 try{window.tStartTela=tStartTela;}catch(e){}
+try{window.toast=toast;}catch(e){}
 try{window.toggleNota=toggleNota;}catch(e){}
 try{window.toggleOrden=toggleOrden;}catch(e){}
 try{window.toggleToken=toggleToken;}catch(e){}
+try{window.uid=uid;}catch(e){}
 
+try{window.loginGoogle=loginGoogle;}catch(e){}
+try{window.syncFirestore=syncFirestore;}catch(e){}
+try{window.initFirestore=initFirestore;}catch(e){}
+try{window.showSyncIndicator=showSyncIndicator;}catch(e){}
+try{window.guardarPedido=guardarPedido;}catch(e){}
+try{window.verPedidosGuardados=verPedidosGuardados;}catch(e){}
+try{window.cargarPedido=cargarPedido;}catch(e){}
+try{window.eliminarPedido=eliminarPedido;}catch(e){}
+try{window.renderPedidos=renderPedidos;}catch(e){}
+try{window.setTipoDia=setTipoDia;}catch(e){}
+try{window.compartirFichajeWhatsApp=compartirFichajeWhatsApp;}catch(e){}
+try{window.actualizarBadges=actualizarBadges;}catch(e){}
 // ── INIT ─────────────────────────────────────────────────
 load();
 renderCli();
@@ -2132,374 +2407,8 @@ cargarFont();
 initEasterEgg();
 actualizarFab();
 initWeather();
+actualizarBadges();
+window.initFirestore = initFirestore;
 </script>
-
-<script>
-// ── EXTENSIONES DAURELA ───────────────────────────────────
-
-// TIPOS DE DIA
-var tipoDiaActual = 'normal';
-window.setTipoDia = function setTipoDia(tipo) {
-  tipoDiaActual = tipo;
-  document.querySelectorAll('.tipo-dia-btn').forEach(function(b) { b.classList.remove('activo'); });
-  var btn = document.getElementById('tdias-' + tipo);
-  if (btn) btn.classList.add('activo');
-  var wrap = document.getElementById('fich-horas-wrap');
-  if (wrap) wrap.style.display = tipo === 'normal' ? 'block' : 'none';
-}
-
-// Parchar guardarFichaje para incluir tipo
-var _origGuardarFichaje = null;
-document.addEventListener('DOMContentLoaded', function() {
-  // Parchar seleccionarDia
-  if (window.seleccionarDia) {
-    var _origSelDia = window.seleccionarDia;
-    window.seleccionarDia = function(key, dia) {
-      _origSelDia(key, dia);
-      var fichajes = window.loadFichajes ? window.loadFichajes() : {};
-      var reg = fichajes[key];
-      setTipoDia(reg ? (reg.tipo || 'normal') : 'normal');
-    };
-  }
-});
-
-window.compartirFichajeWhatsApp = function compartirFichajeWhatsApp() {
-  var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  var fichajes = window.loadFichajes ? window.loadFichajes() : {};
-  var diasMes = new Date(window.fichAnio, window.fichMes + 1, 0).getDate();
-  var txt = '*' + meses[window.fichMes] + ' ' + window.fichAnio + '*
-------------------------
-';
-  var totalNorm = 0, totalExtra = 0;
-  for (var d = 1; d <= diasMes; d++) {
-    var key = window.fichAnio + '-' + String(window.fichMes + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-    var reg = fichajes[key];
-    if (reg) {
-      var tipo = reg.tipo || 'normal';
-      if (tipo !== 'normal') {
-        var etiquetas = {vacaciones: 'Vacaciones', festivo: 'Festivo', libre: 'Libre'};
-        txt += 'Dia ' + String(d).padStart(2, ' ') + ': ' + (etiquetas[tipo] || tipo);
-        if (reg.nota) txt += ' (' + reg.nota + ')';
-      } else {
-        txt += 'Dia ' + String(d).padStart(2, ' ') + ': ' + reg.norm + 'h normales';
-        if (reg.extra > 0) txt += ' + ' + reg.extra + 'h extras';
-        if (reg.nota) txt += ' (' + reg.nota + ')';
-        totalNorm += reg.norm || 0;
-        totalExtra += reg.extra || 0;
-      }
-      txt += '
-';
-    }
-  }
-  txt += '------------------------
-Total normales: *' + totalNorm + 'h*
-Total extras: *' + totalExtra + 'h*
-TOTAL: *' + (totalNorm + totalExtra) + 'h*';
-  window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
-}
-
-// PEDIDOS
-function loadPedidos() { try { var d = localStorage.getItem('pedidos_v1'); return d ? JSON.parse(d) : []; } catch(e) { return []; } }
-function savePedidos(arr) { localStorage.setItem('pedidos_v1', JSON.stringify(arr)); }
-
-function guardarPedido() {
-  var lineas = window.calcLineas ? window.calcLineas.filter(function(l) { return parseFloat(l.talla) > 0 && parseInt(l.uds) > 0; }) : [];
-  if (!lineas.length) { window.toast && window.toast('Anade al menos una linea'); return; }
-  var nombre = prompt('Nombre del pedido:');
-  if (!nombre || !nombre.trim()) return;
-  var pedido = {
-    id: window.uid ? window.uid() : Date.now().toString(36),
-    nombre: nombre.trim(),
-    fecha: new Date().toISOString().slice(0, 10),
-    margen: parseFloat(document.getElementById('calc-margen').value) || 0,
-    pieza: parseFloat(document.getElementById('calc-pieza').value) || 0,
-    lineas: JSON.parse(JSON.stringify(lineas))
-  };
-  var pedidos = loadPedidos();
-  pedidos.unshift(pedido);
-  savePedidos(pedidos);
-  window.toast && window.toast('Pedido guardado');
-}
-
-function verPedidosGuardados() { renderPedidos(); window.go && window.go('s-pedidos'); }
-
-function renderPedidos() {
-  var pedidos = loadPedidos();
-  var el = document.getElementById('lst-pedidos');
-  if (!el) return;
-  if (!pedidos.length) {
-    el.innerHTML = '<div class="empty-state"><p>Sin pedidos guardados.<br>Calcula un pedido y pulsa <strong>Guardar pedido</strong></p></div>';
-    return;
-  }
-  var html = '';
-  pedidos.forEach(function(p) {
-    html += '<div class="pedido-item">'
-      + '<div class="pedido-info" onclick="cargarPedido('' + p.id + '')">'
-      + '<div class="pedido-nombre">' + (p.nombre || '') + '</div>'
-      + '<div class="pedido-meta">' + p.fecha + ' &middot; ' + p.lineas.length + ' tallas</div>'
-      + '</div>'
-      + '<button class="btn-del-direct" onclick="eliminarPedido('' + p.id + '')">'
-      + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>'
-      + '</button></div>';
-  });
-  el.innerHTML = html;
-}
-
-function cargarPedido(id) {
-  var p = loadPedidos().find(function(x) { return x.id === id; });
-  if (!p) return;
-  document.getElementById('calc-margen').value = p.margen;
-  document.getElementById('calc-pieza').value = p.pieza;
-  window.calcLineas = JSON.parse(JSON.stringify(p.lineas));
-  window.renderLineas && window.renderLineas();
-  window.calcular && window.calcular();
-  window.go && window.go('s-calc');
-  window.toast && window.toast('Pedido cargado: ' + p.nombre);
-}
-
-function eliminarPedido(id) {
-  if (!confirm('Eliminar este pedido?')) return;
-  savePedidos(loadPedidos().filter(function(x) { return x.id !== id; }));
-  renderPedidos();
-  window.toast && window.toast('Pedido eliminado');
-}
-
-// BADGES
-function actualizarBadges() {
-  var notas = window.loadNotas ? window.loadNotas() : [];
-  var pendientes = notas.filter(function(n) { return !n.done; }).length;
-  setBadge('badge-notas', pendientes, false);
-  var pedidos = loadPedidos().length;
-  setBadge('badge-calc', pedidos, true);
-}
-
-function setBadge(id, count, esVerde) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  if (count > 0) {
-    el.textContent = count > 99 ? '99+' : count;
-    el.style.display = 'flex';
-    if (esVerde) el.classList.add('verde');
-  } else {
-    el.style.display = 'none';
-  }
-}
-
-
-
-setTimeout(actualizarBadges, 800);
-
-// FIREBASE FUNCIONES
-var _syncDebounce = null;
-var _lastSave = 0;
-var _syncTimer = null;
-
-function showSyncIndicator(txt) {
-  var el = document.getElementById('sync-indicator');
-  var txtEl = document.getElementById('sync-txt');
-  var dot = document.getElementById('sync-dot');
-  if (!el || !txtEl) return;
-  txtEl.textContent = txt;
-  el.style.display = 'flex';
-  if (dot) {
-    if (txt === 'Guardado') dot.style.background = '#30d158';
-    else if (txt.indexOf('Error') !== -1 || txt.indexOf('sesion') !== -1) dot.style.background = '#ff453a';
-    else dot.style.background = '#ff9f0a';
-  }
-  clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(function() { el.style.display = 'none'; }, 2500);
-}
-
-function syncFirestore() {
-  if (!window._fireUser || !window._fireFns || !window._fireDB) return;
-  var uid = window._fireUser.uid;
-  showSyncIndicator('Sincronizando...');
-  var cliLimpios = JSON.parse(JSON.stringify((window.db.clientes||[]).map(function(cli) {
-    return {
-      id: cli.id||'', nombre: cli.nombre||'', notas: cli.notas||'',
-      telas: (cli.telas||[]).map(function(t) {
-        return {
-          id: t.id||'', nombre: t.nombre||'', notas: t.notas||'',
-          medidas: (t.medidas||[]).map(function(m) {
-            return {id:m.id||'',nombre:m.nombre||'',tipo:m.tipo||'taco',ta:Number(m.ta)||0,cl:Number(m.cl)||0,obs:m.obs||''};
-          })
-        };
-      })
-    };
-  })));
-  var fichajesRaw = window.loadFichajes ? window.loadFichajes() : {};
-  var fichajesLimpios = {};
-  Object.keys(fichajesRaw).forEach(function(k) {
-    fichajesLimpios[k] = {norm:Number(fichajesRaw[k].norm)||0,extra:Number(fichajesRaw[k].extra)||0,nota:fichajesRaw[k].nota||'',tipo:fichajesRaw[k].tipo||'normal'};
-  });
-  var data = {
-    v: 2, ts: Date.now(),
-    clientes: cliLimpios,
-    fichajes: fichajesLimpios,
-    jornada: Number(window.getJornada ? window.getJornada() : 6),
-    notas: (window.loadNotas ? window.loadNotas() : []).map(function(n) {
-      return {id:String(n.id||''),txt:String(n.txt||''),done:Boolean(n.done),fecha:String(n.fecha||''),hora:String(n.hora||'')};
-    }),
-    pedidos: loadPedidos().map(function(p) {
-      return {id:String(p.id||''),nombre:String(p.nombre||''),fecha:String(p.fecha||''),margen:Number(p.margen)||0,pieza:Number(p.pieza)||0,
-        lineas:(p.lineas||[]).map(function(l){return {id:String(l.id||''),nombre:String(l.nombre||''),talla:String(l.talla||''),uds:String(l.uds||'')};})};
-    })
-  };
-  _lastSave = data.ts;
-  var docRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
-  window._fireFns.setDoc(docRef, data)
-    .then(function() { showSyncIndicator('Guardado'); })
-    .catch(function(e) {
-      var msg = e.code || e.message || 'error';
-      showSyncIndicator('Error sync');
-      console.error('Sync error:', msg);
-    });
-}
-
-function loginGoogle() {
-  if (window._fireUser) {
-    if (confirm('Cerrar sesion de ' + window._fireUser.displayName + '?')) {
-      window._fireFns.signOut(window._fireAuth)
-        .then(function() { window.toast && window.toast('Sesion cerrada'); });
-    }
-    return;
-  }
-  window._fireFns.signInWithPopup(window._fireAuth, window._fireProvider)
-    .then(function() { window.toast && window.toast('Sesion iniciada'); })
-    .catch(function(e) { window.toast && window.toast('Error al iniciar sesion'); });
-}
-
-// Conectar persist con Firebase
-var _origPersist = null;
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    if (window.persist && !_origPersist) {
-      _origPersist = window.persist;
-      window.persist = function() {
-        _origPersist();
-        clearTimeout(_syncDebounce);
-        _syncDebounce = setTimeout(syncFirestore, 1500);
-      };
-    }
-    window.initFirestore = function() {
-      if (!window._fireUser || !window._fireFns || !window._fireDB) return;
-      window.syncFirestore = syncFirestore;
-    };
-    if (window._fireUser) window.initFirestore();
-  }, 1000);
-});
-
-// go unificado - se instala después de que todo cargue
-// Instalar override de go cuando los módulos estén listos
-setTimeout(function() {
-  var _goBase = window.go;
-  if (!_goBase) { console.error('go no encontrado'); return; }
-  window.go = function(id, addHistory) {
-    _goBase(id, addHistory);
-    if (id === 's-cli') setTimeout(actualizarBadges, 100);
-    var bar = document.getElementById('nota-input-bar-global');
-    if (bar) bar.style.display = id === 's-notas' ? 'flex' : 'none';
-    if (id === 's-notas' && window.renderNotas) setTimeout(function(){ window.renderNotas(); }, 50);
-  };
-  // Añadir renderNotas al window
-  try { window.renderNotas = renderNotas; } catch(e) {}
-  // Mostrar barra de notas si ya estamos en notas
-  var active = document.querySelector('.screen.active');
-  if (active && active.id === 's-notas') {
-    var bar = document.getElementById('nota-input-bar-global');
-    if (bar) bar.style.display = 'flex';
-  }
-}, 300);
-
-
-// MERGE DE DATOS FIREBASE
-function mergeData(remoto) {
-  var cambios = false;
-  if (remoto.clientes && Array.isArray(remoto.clientes)) {
-    var idsLocales = {};
-    window.db.clientes.forEach(function(cl) { idsLocales[cl.id] = cl; });
-    remoto.clientes.forEach(function(cRemoto) {
-      if (!idsLocales[cRemoto.id]) {
-        window.db.clientes.push(cRemoto);
-        cambios = true;
-      } else {
-        var cLocal = idsLocales[cRemoto.id];
-        if (cRemoto.telas) {
-          var idsTelaLocal = {};
-          (cLocal.telas||[]).forEach(function(t){idsTelaLocal[t.id]=t;});
-          cRemoto.telas.forEach(function(tRemota) {
-            if (!idsTelaLocal[tRemota.id]) {
-              cLocal.telas = cLocal.telas||[];
-              cLocal.telas.push(tRemota);
-              cambios = true;
-            } else {
-              var tLocal = idsTelaLocal[tRemota.id];
-              if (tRemota.medidas) {
-                var idsMedLocal = {};
-                (tLocal.medidas||[]).forEach(function(m){idsMedLocal[m.id]=true;});
-                tRemota.medidas.forEach(function(mRemota) {
-                  if (!idsMedLocal[mRemota.id]) {
-                    tLocal.medidas = tLocal.medidas||[];
-                    tLocal.medidas.push(mRemota);
-                    cambios = true;
-                  }
-                });
-              }
-            }
-          });
-        }
-      }
-    });
-  }
-  if (remoto.notas && Array.isArray(remoto.notas) && window.loadNotas) {
-    var notasLocales = window.loadNotas();
-    var idsN = {};
-    notasLocales.forEach(function(n){idsN[n.id]=true;});
-    var nc = false;
-    remoto.notas.forEach(function(n){if(!idsN[n.id]){notasLocales.push(n);nc=true;cambios=true;}});
-    if (nc && window.saveNotas) window.saveNotas(notasLocales);
-  }
-  if (remoto.fichajes && window.loadFichajes) {
-    var fl = window.loadFichajes();
-    var fc = false;
-    Object.keys(remoto.fichajes).forEach(function(k){if(!fl[k]){fl[k]=remoto.fichajes[k];fc=true;cambios=true;}});
-    if (fc && window.saveFichajes) window.saveFichajes(fl);
-  }
-  if (remoto.pedidos && Array.isArray(remoto.pedidos)) {
-    var pl = loadPedidos();
-    var pc = {};
-    pl.forEach(function(p){pc[p.id]=true;});
-    var pChanged = false;
-    remoto.pedidos.forEach(function(p){if(!pc[p.id]){pl.push(p);pChanged=true;cambios=true;}});
-    if (pChanged) savePedidos(pl);
-  }
-  return cambios;
-}
-
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    if (!window._fireUser || !window._fireFns || !window._fireDB) return;
-    var uid = window._fireUser.uid;
-    var docRef = window._fireFns.doc(window._fireDB, 'usuarios', uid);
-    window._fireFns.onSnapshot(docRef, function(snap) {
-      if (snap.exists()) {
-        var remoto = snap.data();
-        var ts = remoto.ts || remoto.timestamp || 0;
-        if (ts > 0 && ts !== (window._lastSave||0)) {
-          var cambios = mergeData(remoto);
-          if (cambios) {
-            window.persist && window.persist();
-            window.renderCli && window.renderCli();
-            window.renderFichaje && window.renderFichaje();
-            actualizarBadges();
-          }
-        }
-      }
-    });
-  }, 2000);
-});
-
-</script>
-
 </body>
 </html>
