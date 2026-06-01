@@ -633,6 +633,7 @@ onAuthStateChanged(auth, function(user) {
   <div id="alm-formulario"></div>
   <div style="padding:0 16px 16px">
     <button class="btn-primary" onclick="guardarInventario()" style="margin-top:0">Guardar inventario</button>
+    <button class="btn-secondary" onclick="compartirInventarioWhatsApp()">Enviar por WhatsApp</button>
   </div>
 </div>
 <div id="s-almacen-historial" class="screen">
@@ -655,6 +656,9 @@ onAuthStateChanged(auth, function(user) {
     </button>
   </div>
   <div id="alm-detalle-body"></div>
+  <div style="padding:0 16px 24px">
+    <button class="btn-secondary" onclick="compartirInventarioWhatsApp()">Enviar por WhatsApp</button>
+  </div>
 </div>
 <!-- CALCULADORA DE PEDIDOS -->
 <div id="s-calc" class="screen">
@@ -2101,7 +2105,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202606011956', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202606012005', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2151,7 +2155,16 @@ function syncFirestore() {
     fichajes: fichajesLimpios,
     jornada: Number(getJornada()),
     notas: loadNotas().map(n => ({id:String(n.id||''),txt:String(n.txt||''),done:Boolean(n.done),fecha:String(n.fecha||''),hora:String(n.hora||'')})),
-    pedidos: loadPedidos().map(p => ({id:String(p.id||''),nombre:String(p.nombre||''),fecha:String(p.fecha||''),margen:Number(p.margen)||0,pieza:Number(p.pieza)||0,lineas:(p.lineas||[]).map(l=>({id:String(l.id||''),nombre:String(l.nombre||''),talla:String(l.talla||''),uds:String(l.uds||'')}))  }))
+    pedidos: loadPedidos().map(p => ({id:String(p.id||''),nombre:String(p.nombre||''),fecha:String(p.fecha||''),margen:Number(p.margen)||0,pieza:Number(p.pieza)||0,lineas:(p.lineas||[]).map(l=>({id:String(l.id||''),nombre:String(l.nombre||''),talla:String(l.talla||''),uds:String(l.uds||'')}))  })),
+    inventarios: (loadInventarios()||[]).map(inv => ({
+      mesKey: String(inv.mesKey||''),
+      titulo: String(inv.titulo||''),
+      zonas: Object.fromEntries(Object.keys(inv.zonas||{}).map(k => [k, {
+        telas: ((inv.zonas[k]||{}).telas||[]).map(t => ({
+          nombre: String(t.nombre||''), metros: String(t.metros||'')
+        }))
+      }]))
+    }))
   };
   _lastSave = data.ts;
   window._fireFns.setDoc(window._fireFns.doc(window._fireDB,'usuarios',uid), data)
@@ -2219,6 +2232,16 @@ function mergeData(remoto) {
     const fl = loadFichajes(); let fc = false;
     Object.keys(remoto.fichajes).forEach(k => { if (!fl[k]) { fl[k] = remoto.fichajes[k]; fc = true; cambios = true; } });
     if (fc) saveFichajes(fl);
+  }
+  if (remoto.inventarios && Array.isArray(remoto.inventarios)) {
+    const invLocales = loadInventarios();
+    const idsInvLocal = {};
+    invLocales.forEach(function(i){ idsInvLocal[i.mesKey] = true; });
+    let invCambios = false;
+    remoto.inventarios.forEach(function(inv){
+      if (!idsInvLocal[inv.mesKey]) { invLocales.push(inv); invCambios = true; }
+    });
+    if (invCambios) saveInventarios(invLocales);
   }
   if (remoto.pedidos && Array.isArray(remoto.pedidos)) {
     const pl = loadPedidos(); const idsP = {}; pl.forEach(p => idsP[p.id] = true);
@@ -2459,6 +2482,7 @@ try{window.almUpdateTela=almUpdateTela;}catch(e){}
 try{window.almDelTela=almDelTela;}catch(e){}
 try{window.verDetalleInventario=verDetalleInventario;}catch(e){}
 try{window.eliminarInventario=eliminarInventario;}catch(e){}
+try{window.compartirInventarioWhatsApp=compartirInventarioWhatsApp;}catch(e){}
 try{window.renderPedidos=renderPedidos;}catch(e){}
 try{window.setTipoDia=setTipoDia;}catch(e){}
 try{window.compartirFichajeWhatsApp=compartirFichajeWhatsApp;}catch(e){}
@@ -2703,6 +2727,44 @@ function eliminarInventario() {
   toast('Inventario eliminado');
   go('s-almacen-historial');
   renderHistorialAlmacen();
+}
+
+function compartirInventarioWhatsApp() {
+  const mesKey = almDetalleKey || (almInventarioActual && almInventarioActual.mesKey);
+  const inventarios = loadInventarios();
+  const inv = inventarios.find(function(i){ return i.mesKey === mesKey; }) || almInventarioActual;
+  if (!inv) { toast('Sin inventario'); return; }
+  const NL = String.fromCharCode(10);
+  const sep = '========================';
+  const lines = [];
+  lines.push('*Inventario Almacen - ' + inv.titulo + '*');
+  lines.push(sep);
+  let totalGeneral = 0;
+  ALM_ZONAS.forEach(function(zona) {
+    const zonaLines = [];
+    zona.niveles.forEach(function(nivel) {
+      const key = zona.id + '_' + nivel;
+      const telas = (inv.zonas[key] && inv.zonas[key].telas) || [];
+      const tf = telas.filter(function(t){ return t.nombre || t.metros; });
+      if (!tf.length) return;
+      zonaLines.push(nivel + ':');
+      tf.forEach(function(t) {
+        const metros = parseFloat(t.metros)||0;
+        totalGeneral += metros;
+        zonaLines.push('  - ' + (t.nombre||'Sin nombre') + ': ' + metros + 'm');
+      });
+    });
+    if (!zonaLines.length) return;
+    lines.push('');
+    lines.push('*' + zona.nombre + '*');
+    zonaLines.forEach(function(l){ lines.push(l); });
+  });
+  lines.push('');
+  lines.push(sep);
+  lines.push('*Total: ' + totalGeneral.toFixed(1) + ' m*');
+  const txt = lines.join(NL);
+  const url = 'https://wa.me/?text=' + encodeURIComponent(txt);
+  window.open(url, '_blank');
 }
 
 // ── INIT ─────────────────────────────────────────────────
