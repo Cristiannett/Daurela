@@ -2105,7 +2105,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202606012005', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202606012008', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2502,6 +2502,8 @@ function loadInventarios() {
 }
 function saveInventarios(arr) {
   localStorage.setItem(ALM_KEY, JSON.stringify(arr));
+  clearTimeout(_syncDebounce);
+  _syncDebounce = setTimeout(syncFirestore, 1500);
 }
 function initAlmacen() {
   const inventarios = loadInventarios();
