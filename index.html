@@ -262,12 +262,14 @@ body.font-xl{font-size:22px}
 .alm-zona{margin:0 16px 16px}
 .alm-zona-titulo{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--txt3);margin-bottom:8px;padding-top:4px}
 .alm-estanteria{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;margin-bottom:8px}
+.alm-nivel-bloque{border-bottom:1px solid var(--border)}
+.alm-nivel-bloque:last-child{border-bottom:none}
+.alm-nivel-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+.alm-nivel-lbl{font-size:13px;font-weight:600;color:var(--txt2)}
+.alm-telas-lista{padding:0 14px 10px}
+.alm-tela-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .alm-nivel{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);gap:10px}
 .alm-nivel:last-child{border-bottom:none}
-.alm-nivel-lbl{font-size:13px;color:var(--txt2);width:60px;flex-shrink:0}
-.alm-nivel-fields{display:flex;gap:8px;flex:1}
-.alm-nivel-fields input{flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none}
-.alm-nivel-fields input::placeholder{color:var(--txt3);font-size:13px}
 .alm-mes-item{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;cursor:pointer;background:var(--bg)}
 .alm-mes-item:active{background:var(--bg2)}
 </style>
@@ -633,7 +635,6 @@ onAuthStateChanged(auth, function(user) {
     <button class="btn-primary" onclick="guardarInventario()" style="margin-top:0">Guardar inventario</button>
   </div>
 </div>
-
 <div id="s-almacen-historial" class="screen">
   <div class="topbar">
     <button class="btn-icon" onclick="go('s-almacen')" aria-label="Volver">
@@ -643,7 +644,6 @@ onAuthStateChanged(auth, function(user) {
   </div>
   <div id="alm-historial-lista"></div>
 </div>
-
 <div id="s-almacen-detalle" class="screen">
   <div class="topbar">
     <button class="btn-icon" onclick="go('s-almacen-historial')" aria-label="Volver">
@@ -2101,7 +2101,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202606011933', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202606011956', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2454,7 +2454,9 @@ try{window.cargarPedido=cargarPedido;}catch(e){}
 try{window.eliminarPedido=eliminarPedido;}catch(e){}
 try{window.nuevoInventario=nuevoInventario;}catch(e){}
 try{window.guardarInventario=guardarInventario;}catch(e){}
-try{window.almSetField=almSetField;}catch(e){}
+try{window.almAddTela=almAddTela;}catch(e){}
+try{window.almUpdateTela=almUpdateTela;}catch(e){}
+try{window.almDelTela=almDelTela;}catch(e){}
 try{window.verDetalleInventario=verDetalleInventario;}catch(e){}
 try{window.eliminarInventario=eliminarInventario;}catch(e){}
 try{window.renderPedidos=renderPedidos;}catch(e){}
@@ -2494,58 +2496,214 @@ function renderFormularioAlmacen() {
   if (!el || !almInventarioActual) return;
   el.innerHTML = '';
   ALM_ZONAS.forEach(function(zona) {
-    const divZona = document.createElement('div');
-    divZona.className = 'alm-zona';
-    const divTitulo = document.createElement('div');
-    divTitulo.className = 'alm-zona-titulo';
-    divTitulo.textContent = zona.nombre;
-    divZona.appendChild(divTitulo);
-    const divEst = document.createElement('div');
-    divEst.className = 'alm-estanteria';
+    const zonaDiv = document.createElement('div');
+    zonaDiv.className = 'alm-zona';
+    const tituloDiv = document.createElement('div');
+    tituloDiv.className = 'alm-zona-titulo';
+    tituloDiv.textContent = zona.nombre;
+    zonaDiv.appendChild(tituloDiv);
+    const estanteria = document.createElement('div');
+    estanteria.className = 'alm-estanteria';
     zona.niveles.forEach(function(nivel) {
       const key = zona.id + '_' + nivel;
-      const val = almInventarioActual.zonas[key] || {};
-      const divNivel = document.createElement('div');
-      divNivel.className = 'alm-nivel';
-      const divLbl = document.createElement('div');
-      divLbl.className = 'alm-nivel-lbl';
-      divLbl.textContent = nivel;
-      divNivel.appendChild(divLbl);
-      const divFields = document.createElement('div');
-      divFields.className = 'alm-nivel-fields';
-      const inpNombre = document.createElement('input');
-      inpNombre.type = 'text';
-      inpNombre.placeholder = 'Nombre tela';
-      inpNombre.value = val.nombre || '';
-      inpNombre.addEventListener('input', function() { almSetVal(key, 'nombre', this.value); });
-      const inpMetros = document.createElement('input');
-      inpMetros.type = 'number';
-      inpMetros.placeholder = 'Metros';
-      inpMetros.value = val.metros || '';
-      inpMetros.style.maxWidth = '90px';
-      inpMetros.inputMode = 'decimal';
-      inpMetros.step = '0.5';
-      inpMetros.addEventListener('input', function() { almSetVal(key, 'metros', this.value); });
-      divFields.appendChild(inpNombre);
-      divFields.appendChild(inpMetros);
-      divNivel.appendChild(divFields);
-      divEst.appendChild(divNivel);
+      const telas = (almInventarioActual.zonas[key] && almInventarioActual.zonas[key].telas) || [];
+      const bloque = document.createElement('div');
+      bloque.className = 'alm-nivel-bloque';
+      const header = document.createElement('div');
+      header.className = 'alm-nivel-header';
+      const lbl = document.createElement('span');
+      lbl.className = 'alm-nivel-lbl';
+      lbl.textContent = nivel;
+      const btnAdd = document.createElement('button');
+      btnAdd.className = 'btn-sm';
+      btnAdd.textContent = '+ Aniadir';
+      btnAdd.style.cssText = 'margin:0;padding:4px 10px;font-size:12px';
+      btnAdd.onclick = (function(k){ return function(){ almAddTela(k); }; })(key);
+      header.appendChild(lbl);
+      header.appendChild(btnAdd);
+      bloque.appendChild(header);
+      if (telas.length) {
+        const lista = document.createElement('div');
+        lista.className = 'alm-telas-lista';
+        telas.forEach(function(t, idx) {
+          const row = document.createElement('div');
+          row.className = 'alm-tela-row';
+          const inNombre = document.createElement('input');
+          inNombre.type = 'text';
+          inNombre.placeholder = 'Nombre tela';
+          inNombre.value = t.nombre || '';
+          inNombre.style.cssText = 'flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none';
+          inNombre.oninput = (function(k,i){ return function(){ almUpdateTela(k,i,'nombre',this.value); }; })(key,idx);
+          const inMetros = document.createElement('input');
+          inMetros.type = 'number';
+          inMetros.placeholder = 'm';
+          inMetros.value = t.metros || '';
+          inMetros.setAttribute('inputmode','decimal');
+          inMetros.style.cssText = 'width:70px;padding:8px 6px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none;text-align:center';
+          inMetros.oninput = (function(k,i){ return function(){ almUpdateTela(k,i,'metros',this.value); }; })(key,idx);
+          const btnDel = document.createElement('button');
+          btnDel.style.cssText = 'background:none;border:none;color:var(--txt3);cursor:pointer;padding:4px;flex-shrink:0';
+          btnDel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+          btnDel.onclick = (function(k,i){ return function(){ almDelTela(k,i); }; })(key,idx);
+          row.appendChild(inNombre);
+          row.appendChild(inMetros);
+          row.appendChild(btnDel);
+          lista.appendChild(row);
+        });
+        bloque.appendChild(lista);
+      } else {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:8px 14px;font-size:13px;color:var(--txt3)';
+        empty.textContent = 'Sin telas';
+        bloque.appendChild(empty);
+      }
+      estanteria.appendChild(bloque);
     });
-    divZona.appendChild(divEst);
-    el.appendChild(divZona);
+    zonaDiv.appendChild(estanteria);
+    el.appendChild(zonaDiv);
   });
 }
-
-function almSetVal(key, field, value) {
-  if (!almInventarioActual.zonas[key]) almInventarioActual.zonas[key] = {};
-  almInventarioActual.zonas[key][field] = value;
+function almAddTela(key) {
+  if (!almInventarioActual.zonas[key]) almInventarioActual.zonas[key] = { telas:[] };
+  if (!almInventarioActual.zonas[key].telas) almInventarioActual.zonas[key].telas = [];
+  almInventarioActual.zonas[key].telas.push({ nombre:'', metros:'' });
+  renderFormularioAlmacen();
 }
-function almSetField(key, field, value) {}
-function nuevoInventario() {}
-function guardarInventario() { toast('Guardado'); }
-function renderHistorialAlmacen() {}
-function verDetalleInventario(mesKey) {}
-function eliminarInventario() {}
+function almUpdateTela(key, idx, field, value) {
+  if (!almInventarioActual.zonas[key] || !almInventarioActual.zonas[key].telas) return;
+  almInventarioActual.zonas[key].telas[idx][field] = value;
+}
+function almDelTela(key, idx) {
+  if (!almInventarioActual.zonas[key] || !almInventarioActual.zonas[key].telas) return;
+  almInventarioActual.zonas[key].telas.splice(idx, 1);
+  renderFormularioAlmacen();
+}
+function nuevoInventario() {
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const hoy = new Date();
+  const mesInput = prompt('Mes y anio:', meses[hoy.getMonth()]+' '+hoy.getFullYear());
+  if (!mesInput || !mesInput.trim()) return;
+  const partes = mesInput.trim().split(' ');
+  const mesNom = partes[0];
+  const anio = partes[1] || hoy.getFullYear();
+  const mesIdx = meses.findIndex(function(m){ return m.toLowerCase() === mesNom.toLowerCase(); });
+  if (mesIdx === -1) { toast('Mes no valido'); return; }
+  const mesKey2 = anio+'-'+String(mesIdx+1).padStart(2,'0');
+  almInventarioActual = { mesKey:mesKey2, titulo:mesNom+' '+anio, zonas:{} };
+  const tituloEl = document.getElementById('alm-mes-titulo');
+  if(tituloEl) tituloEl.textContent = 'Inventario - '+mesNom+' '+anio;
+  renderFormularioAlmacen();
+}
+function guardarInventario() {
+  if (!almInventarioActual) return;
+  const inventarios = loadInventarios();
+  const idx2 = inventarios.findIndex(function(i){ return i.mesKey === almInventarioActual.mesKey; });
+  if (idx2 !== -1) inventarios[idx2] = almInventarioActual;
+  else inventarios.unshift(almInventarioActual);
+  saveInventarios(inventarios);
+  toast('Inventario guardado');
+}
+function renderHistorialAlmacen() {
+  const inventarios = loadInventarios();
+  const el = document.getElementById('alm-historial-lista');
+  if (!el) return;
+  if (!inventarios.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin inventarios.</p></div>';
+    return;
+  }
+  el.innerHTML = '';
+  inventarios.forEach(function(inv) {
+    let total = 0;
+    Object.values(inv.zonas||{}).forEach(function(z){
+      (z.telas||[]).forEach(function(t){ total += parseFloat(t.metros)||0; });
+    });
+    const row = document.createElement('div');
+    row.className = 'alm-mes-item';
+    row.onclick = (function(mk){ return function(){ verDetalleInventario(mk); }; })(inv.mesKey);
+    const info = document.createElement('div');
+    info.style.flex = '1';
+    const nombre = document.createElement('div');
+    nombre.style.cssText = 'font-size:15px;font-weight:500;color:var(--txt)';
+    nombre.textContent = inv.titulo;
+    const sub = document.createElement('div');
+    sub.style.cssText = 'font-size:13px;color:var(--txt2);margin-top:2px';
+    sub.textContent = total.toFixed(1) + ' m totales';
+    info.appendChild(nombre);
+    info.appendChild(sub);
+    const chev = document.createElement('div');
+    chev.className = 'chevron';
+    chev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
+    row.appendChild(info);
+    row.appendChild(chev);
+    el.appendChild(row);
+  });
+}
+let almDetalleKey = null;
+function verDetalleInventario(mesKey) {
+  almDetalleKey = mesKey;
+  const inventarios = loadInventarios();
+  const inv = inventarios.find(function(i){ return i.mesKey === mesKey; });
+  if (!inv) return;
+  document.getElementById('alm-detalle-titulo').textContent = inv.titulo;
+  const body = document.getElementById('alm-detalle-body');
+  body.innerHTML = '';
+  let totalGeneral = 0;
+  ALM_ZONAS.forEach(function(zona) {
+    let tieneEntradas = false;
+    const zonaDiv = document.createElement('div');
+    zonaDiv.className = 'alm-zona';
+    const zonaTitle = document.createElement('div');
+    zonaTitle.className = 'alm-zona-titulo';
+    zonaTitle.textContent = zona.nombre;
+    zonaDiv.appendChild(zonaTitle);
+    const estanteria = document.createElement('div');
+    estanteria.className = 'alm-estanteria';
+    zona.niveles.forEach(function(nivel) {
+      const key = zona.id+'_'+nivel;
+      const telas = (inv.zonas[key] && inv.zonas[key].telas) || [];
+      const tf = telas.filter(function(t){ return t.nombre || t.metros; });
+      if (!tf.length) return;
+      tieneEntradas = true;
+      const nivelLbl = document.createElement('div');
+      nivelLbl.style.cssText = 'padding:6px 14px 2px;font-size:12px;font-weight:600;color:var(--txt3);text-transform:uppercase';
+      nivelLbl.textContent = nivel;
+      estanteria.appendChild(nivelLbl);
+      tf.forEach(function(t) {
+        const metros = parseFloat(t.metros)||0;
+        totalGeneral += metros;
+        const row = document.createElement('div');
+        row.className = 'alm-nivel';
+        const nombre = document.createElement('div');
+        nombre.style.cssText = 'flex:1;font-size:14px;color:var(--txt)';
+        nombre.textContent = t.nombre || 'Sin nombre';
+        const metrosDiv = document.createElement('div');
+        metrosDiv.style.cssText = 'font-size:15px;font-weight:600;color:var(--txt)';
+        metrosDiv.textContent = metros + 'm';
+        row.appendChild(nombre);
+        row.appendChild(metrosDiv);
+        estanteria.appendChild(row);
+      });
+    });
+    if (!tieneEntradas) return;
+    zonaDiv.appendChild(estanteria);
+    body.appendChild(zonaDiv);
+  });
+  const totalBox = document.createElement('div');
+  totalBox.style.cssText = 'margin:0 16px 24px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px 16px';
+  const totalRow = document.createElement('div');
+  totalRow.style.cssText = 'display:flex;justify-content:space-between;font-size:15px;font-weight:700';
+  totalRow.innerHTML = '<span>Total metros</span><span>' + totalGeneral.toFixed(1) + ' m</span>';
+  totalBox.appendChild(totalRow);
+  body.appendChild(totalBox);
+  go('s-almacen-detalle');
+}
+function eliminarInventario() {
+  if (!almDetalleKey || !confirm('Eliminar este inventario?')) return;
+  saveInventarios(loadInventarios().filter(function(i){ return i.mesKey !== almDetalleKey; }));
+  toast('Inventario eliminado');
+  go('s-almacen-historial');
+  renderHistorialAlmacen();
+}
 
 // ── INIT ─────────────────────────────────────────────────
 load();
