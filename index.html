@@ -272,6 +272,19 @@ body.font-xl{font-size:22px}
 .alm-nivel:last-child{border-bottom:none}
 .alm-mes-item{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;cursor:pointer;background:var(--bg)}
 .alm-mes-item:active{background:var(--bg2)}
+
+.entrega-item{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--bg);cursor:pointer}
+.entrega-item:active{background:var(--bg2)}
+.entrega-header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.entrega-conf{font-size:16px;font-weight:600;color:var(--txt);flex:1}
+.entrega-chip{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.4px}
+.chip-pendiente{background:rgba(255,159,10,0.15);color:#ff9f0a}
+.chip-proceso{background:rgba(10,132,255,0.15);color:#0a84ff}
+.chip-completado{background:rgba(48,209,88,0.15);color:#30d158}
+.entrega-meta{font-size:13px;color:var(--txt2)}
+
+.ent-linea{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ent-linea input{padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -383,6 +396,12 @@ onAuthStateChanged(auth, function(user) {
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       </div>
       <span>Notas</span>
+    </div>
+    <div class="home-btn" onclick="go('s-entregas')">
+      <div class="home-icon" style="background:linear-gradient(135deg,#0a84ff,#0051a8)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      </div>
+      <span>Entregas</span>
     </div>
     <div class="home-btn" onclick="go('s-almacen')">
       <div class="home-icon" style="background:linear-gradient(135deg,#ff6b6b,#c0392b)">
@@ -660,6 +679,60 @@ onAuthStateChanged(auth, function(user) {
     <button class="btn-secondary" onclick="compartirInventarioWhatsApp()">Enviar por WhatsApp</button>
   </div>
 </div>
+
+<div id="s-entregas" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Entregas</h1>
+  </div>
+  <div id="lst-entregas"></div>
+</div>
+
+<div id="s-entrega-form" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="cancelEntrega()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 id="entrega-form-titulo">Nueva entrega</h1>
+  </div>
+  <div style="padding:16px">
+    <div class="fg"><label>Confeccion</label>
+      <select id="ent-conf" onchange="entCambiaConf()" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
+        <option value="">Seleccionar...</option>
+        <option value="Mercedes">Mercedes</option>
+        <option value="Mamoud">Mamoud</option>
+        <option value="Bordador">Bordador</option>
+      </select>
+    </div>
+    <div class="fg"><label>Tela</label>
+      <select id="ent-tela" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
+        <option value="">Seleccionar confeccion primero</option>
+      </select>
+    </div>
+    <div class="fg"><label>Estado</label>
+      <select id="ent-estado" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
+        <option value="pendiente">Pendiente</option>
+        <option value="proceso">En proceso</option>
+        <option value="completado">Completado</option>
+      </select>
+    </div>
+    <div class="horas-row">
+      <div class="fg" style="margin-bottom:0"><label>Fecha entrega</label><input id="ent-fentrega" type="date"></div>
+      <div class="fg" style="margin-bottom:0"><label>Fecha recogida</label><input id="ent-frecogida" type="date"></div>
+    </div>
+    <div class="fg">
+      <label>Tallas y cantidades</label>
+      <div id="ent-lineas-wrap"></div>
+      <button class="btn-secondary" onclick="entAddLinea()" style="margin-top:6px;padding:8px 14px;font-size:13px">+ Añadir talla</button>
+    </div>
+    <div class="fg"><label>Materiales entregados</label><input id="ent-materiales" type="text" placeholder="Ej: goma, cajas, cursores..."></div>
+    <div class="fg"><label>Observaciones</label><textarea id="ent-obs" rows="3" placeholder="Notas adicionales..." style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;resize:none;box-sizing:border-box"></textarea></div>
+    <button class="btn-primary" onclick="guardarEntrega()">Guardar</button>
+    <button class="btn-danger" id="btn-del-entrega" onclick="eliminarEntrega()" style="display:none">Eliminar</button>
+  </div>
+</div>
 <!-- CALCULADORA DE PEDIDOS -->
 <div id="s-calc" class="screen">
   <div class="topbar">
@@ -910,6 +983,7 @@ function go(id, addHistory){
   const bar=document.getElementById('nota-input-bar-global');
   if(bar) bar.style.display=id==='s-notas'?'flex':'none';
   if(id==='s-notas') renderNotas();
+  if(id==='s-entregas') renderEntregas();
   if(id==='s-almacen') initAlmacen();
   if(id==='s-almacen-historial') renderHistorialAlmacen();
 }
@@ -1846,6 +1920,7 @@ function mostrarSplash(){
 
 // ── FAB GLOBAL ───────────────────────────────────────────
 const FAB_SCREENS = {
+  's-entregas': ()=>openFormEntrega(null),
   's-clientes-list': ()=>openFormCli(null),
   's-telas': ()=>openFormTela(null),
   's-meds': ()=>openFormMed(null),
@@ -2105,7 +2180,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202606012008', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202606031645', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2156,6 +2231,13 @@ function syncFirestore() {
     jornada: Number(getJornada()),
     notas: loadNotas().map(n => ({id:String(n.id||''),txt:String(n.txt||''),done:Boolean(n.done),fecha:String(n.fecha||''),hora:String(n.hora||'')})),
     pedidos: loadPedidos().map(p => ({id:String(p.id||''),nombre:String(p.nombre||''),fecha:String(p.fecha||''),margen:Number(p.margen)||0,pieza:Number(p.pieza)||0,lineas:(p.lineas||[]).map(l=>({id:String(l.id||''),nombre:String(l.nombre||''),talla:String(l.talla||''),uds:String(l.uds||'')}))  })),
+    entregas: (loadEntregas()||[]).map(function(e){ return {
+      id:String(e.id||''), conf:String(e.conf||''), estado:String(e.estado||'pendiente'),
+      fentrega:String(e.fentrega||''), frecogida:String(e.frecogida||''),
+      materiales:String(e.materiales||''), obs:String(e.obs||''),
+      creado:String(e.creado||''),
+      lineas:(e.lineas||[]).map(function(l){ return {talla:String(l.talla||''),uds:String(l.uds||'')}; })
+    }; }),
     inventarios: (loadInventarios()||[]).map(inv => ({
       mesKey: String(inv.mesKey||''),
       titulo: String(inv.titulo||''),
@@ -2232,6 +2314,16 @@ function mergeData(remoto) {
     const fl = loadFichajes(); let fc = false;
     Object.keys(remoto.fichajes).forEach(k => { if (!fl[k]) { fl[k] = remoto.fichajes[k]; fc = true; cambios = true; } });
     if (fc) saveFichajes(fl);
+  }
+  if (remoto.entregas && Array.isArray(remoto.entregas)) {
+    const entLocales = loadEntregas();
+    const idsEntLocal = {};
+    entLocales.forEach(function(e){ idsEntLocal[e.id] = true; });
+    let entCambios = false;
+    remoto.entregas.forEach(function(e){
+      if (!idsEntLocal[e.id]) { entLocales.push(e); entCambios = true; }
+    });
+    if (entCambios) saveEntregas(entLocales);
   }
   if (remoto.inventarios && Array.isArray(remoto.inventarios)) {
     const invLocales = loadInventarios();
@@ -2482,6 +2574,14 @@ try{window.almUpdateTela=almUpdateTela;}catch(e){}
 try{window.almDelTela=almDelTela;}catch(e){}
 try{window.verDetalleInventario=verDetalleInventario;}catch(e){}
 try{window.eliminarInventario=eliminarInventario;}catch(e){}
+try{window.openFormEntrega=openFormEntrega;}catch(e){}
+try{window.cancelEntrega=cancelEntrega;}catch(e){}
+try{window.guardarEntrega=guardarEntrega;}catch(e){}
+try{window.eliminarEntrega=eliminarEntrega;}catch(e){}
+try{window.entAddLinea=entAddLinea;}catch(e){}
+try{window.entCambiaConf=entCambiaConf;}catch(e){}
+try{window.entDelLinea=entDelLinea;}catch(e){}
+try{window.entUpdateLinea=entUpdateLinea;}catch(e){}
 try{window.compartirInventarioWhatsApp=compartirInventarioWhatsApp;}catch(e){}
 try{window.renderPedidos=renderPedidos;}catch(e){}
 try{window.setTipoDia=setTipoDia;}catch(e){}
@@ -2767,6 +2867,181 @@ function compartirInventarioWhatsApp() {
   const txt = lines.join(NL);
   const url = 'https://wa.me/?text=' + encodeURIComponent(txt);
   window.open(url, '_blank');
+}
+
+
+// ENTREGAS
+const ENT_KEY = 'entregas_v1';
+function loadEntregas() { try { const d = localStorage.getItem(ENT_KEY); return d ? JSON.parse(d) : []; } catch(e) { return []; } }
+function saveEntregas(arr) { localStorage.setItem(ENT_KEY, JSON.stringify(arr)); clearTimeout(_syncDebounce); _syncDebounce = setTimeout(syncFirestore, 1500); }
+let entEditando = null;
+let entLineas = [];
+
+const ENT_TELAS = {
+  'Mercedes': ['Oporto','Berlin','Bamboo'],
+  'Mamoud': ['Paris','Lisboa','Viena','Roma'],
+  'Bordador': ['Bari','Dreamline']
+};
+
+function entCambiaConf() {
+  const conf = document.getElementById('ent-conf').value;
+  const selTela = document.getElementById('ent-tela');
+  selTela.innerHTML = '';
+  const opt0 = document.createElement('option');
+  opt0.value = '';
+  opt0.textContent = conf ? 'Seleccionar tela...' : 'Seleccionar confeccion primero';
+  selTela.appendChild(opt0);
+  if (conf && ENT_TELAS[conf]) {
+    ENT_TELAS[conf].forEach(function(t) {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      selTela.appendChild(opt);
+    });
+  }
+}
+
+function entAddLinea() {
+  entLineas.push({ talla:'', uds:'' });
+  renderEntLineas();
+}
+
+function entDelLinea(idx) {
+  entLineas.splice(idx, 1);
+  renderEntLineas();
+}
+
+function entUpdateLinea(idx, field, value) {
+  if (entLineas[idx]) entLineas[idx][field] = value;
+}
+
+function renderEntLineas() {
+  const wrap = document.getElementById('ent-lineas-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  entLineas.forEach(function(l, idx) {
+    const row = document.createElement('div');
+    row.className = 'ent-linea';
+    const inTalla = document.createElement('input');
+    inTalla.type = 'text';
+    inTalla.placeholder = 'Talla (ej: 90x200)';
+    inTalla.value = l.talla || '';
+    inTalla.style.flex = '1';
+    inTalla.oninput = (function(i){ return function(){ entUpdateLinea(i,'talla',this.value); }; })(idx);
+    const inUds = document.createElement('input');
+    inUds.type = 'number';
+    inUds.placeholder = 'uds';
+    inUds.value = l.uds || '';
+    inUds.style.width = '70px';
+    inUds.setAttribute('inputmode','numeric');
+    inUds.oninput = (function(i){ return function(){ entUpdateLinea(i,'uds',this.value); }; })(idx);
+    const btnDel = document.createElement('button');
+    btnDel.style.cssText = 'background:none;border:none;color:var(--txt3);cursor:pointer;padding:4px;flex-shrink:0';
+    btnDel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    btnDel.onclick = (function(i){ return function(){ entDelLinea(i); }; })(idx);
+    row.appendChild(inTalla);
+    row.appendChild(inUds);
+    row.appendChild(btnDel);
+    wrap.appendChild(row);
+  });
+}
+
+function renderEntregas() {
+  const el = document.getElementById('lst-entregas');
+  if (!el) return;
+  const entregas = loadEntregas();
+  if (!entregas.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin entregas.<br>Pulsa + para crear la primera.</p></div>';
+    return;
+  }
+  el.innerHTML = '';
+  entregas.forEach(function(ent) {
+    const item = document.createElement('div');
+    item.className = 'entrega-item';
+    item.onclick = (function(e){ return function(){ openFormEntrega(e); }; })(ent);
+    const header = document.createElement('div');
+    header.className = 'entrega-header';
+    const conf = document.createElement('div');
+    conf.className = 'entrega-conf';
+    conf.textContent = (ent.conf || 'Sin nombre') + (ent.tela ? ' - ' + ent.tela : '');
+    const chip = document.createElement('div');
+    chip.className = 'entrega-chip';
+    if (ent.estado === 'proceso') { chip.className += ' chip-proceso'; chip.textContent = 'En proceso'; }
+    else if (ent.estado === 'completado') { chip.className += ' chip-completado'; chip.textContent = 'Completado'; }
+    else { chip.className += ' chip-pendiente'; chip.textContent = 'Pendiente'; }
+    header.appendChild(conf);
+    header.appendChild(chip);
+    item.appendChild(header);
+    const meta = document.createElement('div');
+    meta.className = 'entrega-meta';
+    let metaTxt = '';
+    if (ent.fentrega) metaTxt += 'Entrega: ' + ent.fentrega;
+    if (ent.frecogida) metaTxt += (metaTxt ? '  ·  ' : '') + 'Recogida: ' + ent.frecogida;
+    if (ent.cantidad) metaTxt += (metaTxt ? '  ·  ' : '') + ent.cantidad + ' uds';
+    meta.textContent = metaTxt;
+    item.appendChild(meta);
+    if (ent.lineas && ent.lineas.length) {
+      const tallas = document.createElement('div');
+      tallas.style.cssText = 'font-size:13px;color:var(--txt2);margin-top:2px';
+      tallas.textContent = ent.lineas.map(function(l){ return l.talla + (l.uds ? ': ' + l.uds + ' uds' : ''); }).join('  ·  ');
+      item.appendChild(tallas);
+    }
+    el.appendChild(item);
+  });
+}
+function openFormEntrega(ent) {
+  entEditando = ent || null;
+  const titulo = document.getElementById('entrega-form-titulo');
+  if (titulo) titulo.textContent = ent ? 'Editar entrega' : 'Nueva entrega';
+  document.getElementById('ent-conf').value = ent ? (ent.conf||'') : '';
+  entCambiaConf();
+  document.getElementById('ent-tela').value = ent ? (ent.tela||'') : '';
+  document.getElementById('ent-estado').value = ent ? (ent.estado||'pendiente') : 'pendiente';
+  document.getElementById('ent-fentrega').value = ent ? (ent.fentrega||'') : '';
+  document.getElementById('ent-frecogida').value = ent ? (ent.frecogida||'') : '';
+  entLineas = (ent && ent.lineas) ? JSON.parse(JSON.stringify(ent.lineas)) : [];
+  if (!entLineas.length) entLineas.push({ talla:'', uds:'' });
+  renderEntLineas();
+  document.getElementById('ent-materiales').value = ent ? (ent.materiales||'') : '';
+  document.getElementById('ent-obs').value = ent ? (ent.obs||'') : '';
+  const btnDel = document.getElementById('btn-del-entrega');
+  if (btnDel) btnDel.style.display = ent ? 'block' : 'none';
+  go('s-entrega-form');
+}
+function cancelEntrega() { go('s-entregas'); }
+function guardarEntrega() {
+  const conf = document.getElementById('ent-conf').value;
+  if (!conf) { toast('Selecciona una confeccion'); return; }
+  const ent = {
+    id: entEditando ? entEditando.id : uid(),
+    conf: conf,
+    tela: document.getElementById('ent-tela').value,
+    estado: document.getElementById('ent-estado').value,
+    fentrega: document.getElementById('ent-fentrega').value,
+    frecogida: document.getElementById('ent-frecogida').value,
+    lineas: entLineas.filter(function(l){ return l.talla || l.uds; }),
+    materiales: document.getElementById('ent-materiales').value.trim(),
+    obs: document.getElementById('ent-obs').value.trim(),
+    creado: entEditando ? entEditando.creado : new Date().toISOString()
+  };
+  const entregas = loadEntregas();
+  if (entEditando) {
+    const idx = entregas.findIndex(function(e){ return e.id === entEditando.id; });
+    if (idx !== -1) entregas[idx] = ent;
+  } else {
+    entregas.unshift(ent);
+  }
+  saveEntregas(entregas);
+  toast(entEditando ? 'Entrega actualizada' : 'Entrega guardada');
+  go('s-entregas');
+  renderEntregas();
+}
+function eliminarEntrega() {
+  if (!entEditando || !confirm('Eliminar esta entrega?')) return;
+  saveEntregas(loadEntregas().filter(function(e){ return e.id !== entEditando.id; }));
+  toast('Entrega eliminada');
+  go('s-entregas');
+  renderEntregas();
 }
 
 // ── INIT ─────────────────────────────────────────────────
