@@ -670,6 +670,9 @@ onAuthStateChanged(auth, function(user) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
     <h1 id="alm-detalle-titulo">Inventario</h1>
+    <button class="btn-icon" onclick="duplicarInventario()" aria-label="Duplicar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+    </button>
     <button class="btn-icon" onclick="eliminarInventario()" aria-label="Eliminar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
     </button>
@@ -2180,7 +2183,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202606031645', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202607091225', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2573,6 +2576,7 @@ try{window.almAddTela=almAddTela;}catch(e){}
 try{window.almUpdateTela=almUpdateTela;}catch(e){}
 try{window.almDelTela=almDelTela;}catch(e){}
 try{window.verDetalleInventario=verDetalleInventario;}catch(e){}
+try{window.duplicarInventario=duplicarInventario;}catch(e){}
 try{window.eliminarInventario=eliminarInventario;}catch(e){}
 try{window.openFormEntrega=openFormEntrega;}catch(e){}
 try{window.cancelEntrega=cancelEntrega;}catch(e){}
@@ -2661,10 +2665,10 @@ function renderFormularioAlmacen() {
           inNombre.style.cssText = 'flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none';
           inNombre.oninput = (function(k,i){ return function(){ almUpdateTela(k,i,'nombre',this.value); }; })(key,idx);
           const inMetros = document.createElement('input');
-          inMetros.type = 'number';
-          inMetros.placeholder = 'm';
+          inMetros.type = 'text';
+          inMetros.placeholder = 'metros o texto';
           inMetros.value = t.metros || '';
-          inMetros.setAttribute('inputmode','decimal');
+    
           inMetros.style.cssText = 'width:70px;padding:8px 6px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none;text-align:center';
           inMetros.oninput = (function(k,i){ return function(){ almUpdateTela(k,i,'metros',this.value); }; })(key,idx);
           const btnDel = document.createElement('button');
@@ -2823,6 +2827,34 @@ function verDetalleInventario(mesKey) {
   body.appendChild(totalBox);
   go('s-almacen-detalle');
 }
+function duplicarInventario() {
+  const inventarios = loadInventarios();
+  const inv = inventarios.find(function(i){ return i.mesKey === almDetalleKey; });
+  if (!inv) return;
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const hoy = new Date();
+  const sugerido = meses[hoy.getMonth()]+' '+hoy.getFullYear();
+  const mesInput = prompt('Nombre del nuevo mes:', sugerido);
+  if (!mesInput || !mesInput.trim()) return;
+  const partes = mesInput.trim().split(' ');
+  const mesNom = partes[0];
+  const anio = partes[1] || hoy.getFullYear();
+  const mesIdx = meses.findIndex(function(m){ return m.toLowerCase() === mesNom.toLowerCase(); });
+  if (mesIdx === -1) { toast('Mes no valido'); return; }
+  const mesKey2 = anio+'-'+String(mesIdx+1).padStart(2,'0');
+  if (inventarios.find(function(i){ return i.mesKey === mesKey2; })) {
+    toast('Ya existe un inventario para ese mes');
+    return;
+  }
+  almInventarioActual = {
+    mesKey: mesKey2,
+    titulo: mesNom+' '+anio,
+    zonas: JSON.parse(JSON.stringify(inv.zonas||{}))
+  };
+  toast('Duplicado como '+mesNom+' '+anio);
+  go('s-almacen');
+}
+
 function eliminarInventario() {
   if (!almDetalleKey || !confirm('Eliminar este inventario?')) return;
   saveInventarios(loadInventarios().filter(function(i){ return i.mesKey !== almDetalleKey; }));
