@@ -2186,7 +2186,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202607091931', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202607091938', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2778,6 +2778,7 @@ function renderHistorialAlmacen() {
 let almDetalleKey = null;
 function verDetalleInventario(mesKey) {
   almDetalleKey = mesKey;
+  window.almDetalleKey = mesKey;
   const inventarios = loadInventarios();
   const inv = inventarios.find(function(i){ return i.mesKey === mesKey; });
   if (!inv) return;
@@ -2806,8 +2807,8 @@ function verDetalleInventario(mesKey) {
       nivelLbl.textContent = nivel;
       estanteria.appendChild(nivelLbl);
       tf.forEach(function(t) {
-        const metros = parseFloat(t.metros)||0;
-        totalGeneral += metros;
+        const metrosNum = parseFloat(t.metros)||0;
+        totalGeneral += metrosNum;
         const row = document.createElement('div');
         row.className = 'alm-nivel';
         const nombre = document.createElement('div');
@@ -2815,7 +2816,8 @@ function verDetalleInventario(mesKey) {
         nombre.textContent = t.nombre || 'Sin nombre';
         const metrosDiv = document.createElement('div');
         metrosDiv.style.cssText = 'font-size:15px;font-weight:600;color:var(--txt)';
-        metrosDiv.textContent = metros + 'm';
+        const metrosVal = t.metros ? (isNaN(parseFloat(t.metros)) ? t.metros : parseFloat(t.metros)+'m') : '';
+        metrosDiv.textContent = metrosVal;
         row.appendChild(nombre);
         row.appendChild(metrosDiv);
         estanteria.appendChild(row);
@@ -2835,16 +2837,14 @@ function verDetalleInventario(mesKey) {
   go('s-almacen-detalle');
 }
 function editarInventario() {
-  const inventarios = loadInventarios();
-  const inv = inventarios.find(function(i){ return i.mesKey === almDetalleKey; });
+  const inv = loadInventarios().find(function(i){ return i.mesKey === (almDetalleKey||window.almDetalleKey); });
   if (!inv) return;
   almInventarioActual = JSON.parse(JSON.stringify(inv));
   go('s-almacen');
 }
 
 function duplicarInventario() {
-  const inventarios = loadInventarios();
-  const inv = inventarios.find(function(i){ return i.mesKey === almDetalleKey; });
+  const inv = loadInventarios().find(function(i){ return i.mesKey === (almDetalleKey||window.almDetalleKey); });
   if (!inv) return;
   const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const hoy = new Date();
@@ -2900,7 +2900,7 @@ function compartirInventarioWhatsApp() {
       tf.forEach(function(t) {
         const metros = parseFloat(t.metros)||0;
         totalGeneral += metros;
-        zonaLines.push('  - ' + (t.nombre||'Sin nombre') + ': ' + metros + 'm');
+        zonaLines.push('  - ' + (t.nombre||'Sin nombre') + ': ' + (t.metros||'') + (isNaN(parseFloat(t.metros)) ? '' : 'm'));
       });
     });
     if (!zonaLines.length) return;
