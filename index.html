@@ -2186,7 +2186,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202607091942', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202607091957', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2249,7 +2249,7 @@ function syncFirestore() {
       titulo: String(inv.titulo||''),
       zonas: Object.fromEntries(Object.keys(inv.zonas||{}).map(k => [k, {
         telas: ((inv.zonas[k]||{}).telas||[]).map(t => ({
-          nombre: String(t.nombre||''), metros: String(t.metros||'')
+          nombre: String(t.nombre||''), metros: '_' + String(t.metros||'')
         }))
       }]))
     }))
@@ -2674,7 +2674,7 @@ function renderFormularioAlmacen() {
           const inMetros = document.createElement('input');
           inMetros.type = 'text';
           inMetros.placeholder = 'metros o texto';
-          inMetros.value = t.metros || '';
+          inMetros.value = (t.metros||'').replace(/^_/,'');
     
           inMetros.style.cssText = 'width:70px;padding:8px 6px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none;text-align:center';
           inMetros.oninput = (function(k,i){ return function(){ almUpdateTela(k,i,'metros',this.value); }; })(key,idx);
@@ -2799,7 +2799,7 @@ function verDetalleInventario(mesKey) {
     zona.niveles.forEach(function(nivel) {
       const key = zona.id+'_'+nivel;
       const telas = (inv.zonas[key] && inv.zonas[key].telas) || [];
-      const tf = telas.filter(function(t){ return t.nombre || t.metros; });
+      const tf = telas.filter(function(t){ return t.nombre || (t.metros && t.metros !== '_'); });
       if (!tf.length) return;
       tieneEntradas = true;
       const nivelLbl = document.createElement('div');
@@ -2816,7 +2816,7 @@ function verDetalleInventario(mesKey) {
         nombre.textContent = t.nombre || 'Sin nombre';
         const metrosDiv = document.createElement('div');
         metrosDiv.style.cssText = 'font-size:15px;font-weight:600;color:var(--txt)';
-        metrosDiv.textContent = t.metros || '';
+        metrosDiv.textContent = (t.metros||'').replace(/^_/,'');
         row.appendChild(nombre);
         row.appendChild(metrosDiv);
         estanteria.appendChild(row);
@@ -2893,7 +2893,7 @@ function compartirInventarioWhatsApp() {
     zona.niveles.forEach(function(nivel) {
       const key = zona.id + '_' + nivel;
       const telas = (inv.zonas[key] && inv.zonas[key].telas) || [];
-      const tf = telas.filter(function(t){ return t.nombre || t.metros; });
+      const tf = telas.filter(function(t){ return t.nombre || (t.metros && t.metros !== '_'); });
       if (!tf.length) return;
       zonaLines.push(nivel + ':');
       tf.forEach(function(t) {
