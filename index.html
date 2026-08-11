@@ -2186,7 +2186,7 @@ window.addEventListener('popstate', function(e){
 
 // ── SERVICE WORKER ───────────────────────────────────────
 if('serviceWorker' in navigator && location.hostname !== 'www.claudeusercontent.com'){
-  navigator.serviceWorker.register('/Daurela/sw.js?v=202607091957', {scope:'/Daurela/'})
+  navigator.serviceWorker.register('/Daurela/sw.js?v=202608111027', {scope:'/Daurela/'})
     .then(()=>console.log('SW registrado'))
     .catch(e=>console.log('SW error:',e));
 }
@@ -2843,7 +2843,8 @@ function editarInventario() {
 }
 
 function duplicarInventario() {
-  const inv = loadInventarios().find(function(i){ return i.mesKey === (almDetalleKey||window.almDetalleKey); });
+  const todosInv = loadInventarios();
+  const inv = todosInv.find(function(i){ return i.mesKey === (almDetalleKey||window.almDetalleKey); });
   if (!inv) return;
   const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const hoy = new Date();
@@ -2856,7 +2857,7 @@ function duplicarInventario() {
   const mesIdx = meses.findIndex(function(m){ return m.toLowerCase() === mesNom.toLowerCase(); });
   if (mesIdx === -1) { toast('Mes no valido'); return; }
   const mesKey2 = anio+'-'+String(mesIdx+1).padStart(2,'0');
-  if (inventarios.find(function(i){ return i.mesKey === mesKey2; })) {
+  if (todosInv.find(function(i){ return i.mesKey === mesKey2; })) {
     toast('Ya existe un inventario para ese mes');
     return;
   }
