@@ -2024,16 +2024,16 @@ function mostrarSplash(){
   const sub=document.getElementById('splash-sub');
   const stitch=document.getElementById('splash-stitch');
 
-  // Animar elementos con pequeños delays
+  // La linea de puntada se dibuja entera (1.1s) antes de que aparezca el logo
   setTimeout(()=>stitch.classList.add('show'), 100);
-  setTimeout(()=>logo.classList.add('show'), 700);
-  setTimeout(()=>sub.classList.add('show'), 1000);
+  setTimeout(()=>logo.classList.add('show'), 1250);
+  setTimeout(()=>sub.classList.add('show'), 1550);
 
   // Ocultar splash y mostrar app
   setTimeout(()=>{
     splash.classList.add('hide');
     setTimeout(()=>splash.remove(), 500);
-  }, 1800);
+  }, 2500);
 }
 
 
