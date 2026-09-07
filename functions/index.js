@@ -140,11 +140,13 @@ exports.chatbot = onCall({ secrets: [anthropicApiKey] }, async (request) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 1024,
+        max_tokens: 2048,
         system:
           "Eres el asistente del taller textil Daurela. Responde en espanol, de forma breve y concreta, " +
-          "basandote unicamente en los datos de contexto proporcionados. Si no tienes datos suficientes " +
-          "para responder con certeza, dilo claramente en vez de inventar.",
+          "basandote unicamente en los datos de contexto proporcionados. Si la pregunta requiere sumar o " +
+          "calcular a partir de una lista larga (por ejemplo horas de todo un anyo), da directamente el " +
+          "resultado final, sin listar cada entrada una por una. Si no tienes datos suficientes para " +
+          "responder con certeza, dilo claramente en vez de inventar.",
         messages: [
           { role: "user", content: "Contexto de datos del taller:\n" + contexto + "\n\nPregunta: " + pregunta }
         ]
@@ -162,10 +164,14 @@ exports.chatbot = onCall({ secrets: [anthropicApiKey] }, async (request) => {
   }
 
   const json = await respuestaClaude.json();
-  const texto = (json.content && json.content[0] && json.content[0].text) || "";
+  const bloquesTexto = (json.content || [])
+    .filter(function (b) { return b.type === "text" && b.text; })
+    .map(function (b) { return b.text; });
+  let texto = bloquesTexto.join("\n").trim();
 
   if (!texto) {
     console.error("Respuesta vacia de Claude. stop_reason:", json.stop_reason, "content:", JSON.stringify(json.content));
+    texto = "El asistente no genero texto (motivo: " + (json.stop_reason || "desconocido") + "). Intenta reformular la pregunta o hacerla mas concreta.";
   }
 
   await registrarUso(db, uid, json.usage);
