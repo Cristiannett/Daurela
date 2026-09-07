@@ -1039,11 +1039,14 @@ function cargarUsoChat(){
   const mes = new Date().toISOString().slice(0,7);
   const ref = window._fireFns.doc(window._fireDB,'usuarios',uid,'uso_ia',mes);
   window._fireFns.getDoc(ref).then(function(snap){
-    if(!snap.exists()){ el.textContent='Este mes: 0 preguntas'; return; }
+    if(!snap.exists()){ el.textContent='Este mes: 0 preguntas · 0 tokens · ~0.00 $'; return; }
     const d = snap.data();
     const preguntas = d.preguntas||0;
     const coste = d.costeEstimado||0;
-    el.textContent = 'Este mes: '+preguntas+' preguntas · ~'+coste.toFixed(2)+' $';
+    const tokensIn = d.inputTokens||0;
+    const tokensOut = d.outputTokens||0;
+    const totalTokens = tokensIn+tokensOut;
+    el.textContent = 'Este mes: '+preguntas+' preguntas · '+totalTokens.toLocaleString('es-ES')+' tokens ('+tokensIn.toLocaleString('es-ES')+' entrada / '+tokensOut.toLocaleString('es-ES')+' salida) · ~'+coste.toFixed(2)+' $';
   }).catch(function(){ el.textContent=''; });
 }
 
