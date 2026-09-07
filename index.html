@@ -289,7 +289,8 @@ body.font-xl{font-size:22px}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 const firebaseConfig = {
   apiKey: "AIzaSyD6fFNWuxNGoJ0KCEBRLL7HDPWhkGeiJQU",
   authDomain: "daurela-5d59c.firebaseapp.com",
@@ -302,10 +303,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db_fire = getFirestore(app);
 const provider = new GoogleAuthProvider();
+const functions_fire = getFunctions(app);
 window._fireAuth = auth;
 window._fireDB = db_fire;
 window._fireProvider = provider;
-window._fireFns = { signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, onSnapshot };
+window._fireFunctions = functions_fire;
+window._fireFns = { signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot, httpsCallable };
 onAuthStateChanged(auth, function(user) {
   if(user){
     window._fireUser = user;
@@ -414,6 +417,12 @@ onAuthStateChanged(auth, function(user) {
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       </div>
       <span>Backup</span>
+    </div>
+    <div class="home-btn" onclick="go('s-chatbot')">
+      <div class="home-icon" style="background:linear-gradient(135deg,#bf5af2,#7d2ea8)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <span>Asistente</span>
     </div>
   </div>
 </div>
@@ -916,6 +925,24 @@ onAuthStateChanged(auth, function(user) {
   <div id="lst-notas" style="padding-bottom:120px"></div>
 </div>
 <div id="nota-input-bar-global" style="position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:none;gap:8px;z-index:90"><input id="nota-nueva-txt" type="text" placeholder="Añadir nota..." autocomplete="off" onkeydown="if(event.key==='Enter')agregarNota()" style="flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none"><button onclick="agregarNota()" style="background:var(--accent);color:var(--accent-txt);border:none;border-radius:var(--rad);padding:0 18px;font-size:15px;font-weight:600;cursor:pointer;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div>
+<!-- CHATBOT -->
+<div id="s-chatbot" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Asistente</h1>
+  </div>
+  <div id="chat-uso" style="padding:6px 16px;font-size:12px;color:var(--txt3)"></div>
+  <div id="chat-mensajes" style="padding:16px;padding-bottom:100px"></div>
+</div>
+<div id="chat-input-bar-global" style="position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:none;gap:8px;z-index:90">
+  <input id="chat-input" type="text" placeholder="Pregunta algo..." autocomplete="off" onkeydown="if(event.key==='Enter')enviarPreguntaChat()" style="flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
+  <button onclick="enviarPreguntaChat()" style="background:var(--accent);color:var(--accent-txt);border:none;border-radius:var(--rad);padding:0 18px;font-size:15px;font-weight:600;cursor:pointer;flex-shrink:0">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+  </button>
+</div>
+
 <!-- FAB GLOBAL -->
 <button class="fab" id="fab-global" style="display:none" onclick="fabGlobalClick()" aria-label="Añadir">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
@@ -988,11 +1015,89 @@ function go(id, addHistory){
   if(id==='s-cli') actualizarBadges();
   const bar=document.getElementById('nota-input-bar-global');
   if(bar) bar.style.display=id==='s-notas'?'flex':'none';
+  const chatBar=document.getElementById('chat-input-bar-global');
+  if(chatBar) chatBar.style.display=id==='s-chatbot'?'flex':'none';
   if(id==='s-notas') renderNotas();
   if(id==='s-entregas') renderEntregas();
   if(id==='s-almacen') initAlmacen();
   if(id==='s-almacen-historial') renderHistorialAlmacen();
+  if(id==='s-chatbot') initChatbot();
 }
+
+// ── CHATBOT IA ──────────────────────────────────────────
+function initChatbot(){
+  const inp = document.getElementById('chat-input');
+  if(inp) inp.focus();
+  cargarUsoChat();
+}
+
+function cargarUsoChat(){
+  const el = document.getElementById('chat-uso');
+  if(!el) return;
+  if(!window._fireUser || !window._fireDB){ el.textContent=''; return; }
+  const uid = window._fireUser.uid;
+  const mes = new Date().toISOString().slice(0,7);
+  const ref = window._fireFns.doc(window._fireDB,'usuarios',uid,'uso_ia',mes);
+  window._fireFns.getDoc(ref).then(function(snap){
+    if(!snap.exists()){ el.textContent='Este mes: 0 preguntas'; return; }
+    const d = snap.data();
+    const preguntas = d.preguntas||0;
+    const coste = d.costeEstimado||0;
+    el.textContent = 'Este mes: '+preguntas+' preguntas · ~'+coste.toFixed(2)+' $';
+  }).catch(function(){ el.textContent=''; });
+}
+
+function pintarMensajeChat(texto, tipo){
+  const cont = document.getElementById('chat-mensajes');
+  if(!cont) return null;
+  const burbuja = document.createElement('div');
+  burbuja.style.maxWidth = '85%';
+  burbuja.style.padding = '10px 14px';
+  burbuja.style.borderRadius = 'var(--rad)';
+  burbuja.style.marginBottom = '10px';
+  burbuja.style.fontSize = '14px';
+  burbuja.style.whiteSpace = 'pre-wrap';
+  if(tipo === 'user'){
+    burbuja.style.marginLeft = 'auto';
+    burbuja.style.background = 'var(--accent)';
+    burbuja.style.color = 'var(--accent-txt)';
+  } else {
+    burbuja.style.marginRight = 'auto';
+    burbuja.style.background = 'var(--bg2)';
+    burbuja.style.border = '1px solid var(--border)';
+    burbuja.style.color = 'var(--txt)';
+  }
+  burbuja.textContent = texto;
+  cont.appendChild(burbuja);
+  cont.scrollTop = cont.scrollHeight;
+  return burbuja;
+}
+
+function enviarPreguntaChat(){
+  const inp = document.getElementById('chat-input');
+  if(!inp) return;
+  const pregunta = inp.value.trim();
+  if(!pregunta) return;
+  inp.value = '';
+  pintarMensajeChat(pregunta, 'user');
+  const pensando = pintarMensajeChat('Pensando...', 'bot');
+  if(!window._fireUser){
+    if(pensando) pensando.textContent = 'Inicia sesion con Google para usar el asistente.';
+    return;
+  }
+  const llamarChatbot = window._fireFns.httpsCallable(window._fireFunctions, 'chatbot');
+  llamarChatbot({ pregunta: pregunta })
+    .then(function(res){
+      if(pensando) pensando.textContent = (res.data && res.data.respuesta) || 'Sin respuesta.';
+      cargarUsoChat();
+    })
+    .catch(function(e){
+      if(pensando) pensando.textContent = 'Error: ' + (e.message || 'no se pudo contactar con el asistente');
+    });
+}
+
+try{window.initChatbot=initChatbot;}catch(e){}
+try{window.enviarPreguntaChat=enviarPreguntaChat;}catch(e){}
 
 function cancelForm(type){
   if(formDirty&&!confirm('Tienes cambios sin guardar. Salir de todas formas?'))return;
@@ -2213,7 +2318,7 @@ function showSyncIndicator(txt) {
 
 function syncFirestore() {
   if (!window._fireUser || !window._fireFns || !window._fireDB) return;
-  const uid = window._fireUser.uid;
+  const _uid = window._fireUser.uid;
   showSyncIndicator('Sincronizando...');
   const cliLimpios = db.clientes.map(cli => ({
     id: cli.id||'', nombre: cli.nombre||'', notas: cli.notas||'',
@@ -2255,7 +2360,7 @@ function syncFirestore() {
     }))
   };
   _lastSave = data.ts;
-  window._fireFns.setDoc(window._fireFns.doc(window._fireDB,'usuarios',uid), data)
+  window._fireFns.setDoc(window._fireFns.doc(window._fireDB,'usuarios',_uid), data)
     .then(() => showSyncIndicator('Guardado'))
     .catch(e => { showSyncIndicator('Error sync'); console.error('Sync:', e.code||e.message); });
 }
@@ -2274,8 +2379,8 @@ function loginGoogle() {
 
 function initFirestore() {
   if (!window._fireUser || !window._fireFns || !window._fireDB) return;
-  const uid = window._fireUser.uid;
-  window._fireFns.onSnapshot(window._fireFns.doc(window._fireDB,'usuarios',uid), snap => {
+  const _uid = window._fireUser.uid;
+  window._fireFns.onSnapshot(window._fireFns.doc(window._fireDB,'usuarios',_uid), snap => {
     if (!snap.exists()) return;
     const remoto = snap.data();
     const ts = remoto.ts || remoto.timestamp || 0;
