@@ -164,6 +164,10 @@ exports.chatbot = onCall({ secrets: [anthropicApiKey] }, async (request) => {
   const json = await respuestaClaude.json();
   const texto = (json.content && json.content[0] && json.content[0].text) || "";
 
+  if (!texto) {
+    console.error("Respuesta vacia de Claude. stop_reason:", json.stop_reason, "content:", JSON.stringify(json.content));
+  }
+
   await registrarUso(db, uid, json.usage);
 
   return { respuesta: texto };
