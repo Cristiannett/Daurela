@@ -204,16 +204,15 @@ exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) =
         system:
           "Extraes datos de un mensaje de pedido de un cliente de un taller textil (puede venir como texto " +
           "normal, o como una tabla pegada con tabulaciones, espacios o guiones separando columnas, con " +
-          "cabecera tipo CODIGO-SERIE-TAMANO-UNIDADES-CAJAS). Cada linea de pedido suele ser una serie/medida " +
-          "con su cantidad (ej: '90x190 x4', 'taco 135 x2', 'Bamboo 135 x96'). Ignora columnas de codigo de " +
-          "producto (no aportan nada para cortar), saludos, firmas y cualquier texto que no sea parte del " +
-          "pedido en si. Si la linea indica tambien un numero de cajas, incluyelo al final entre parentesis, " +
-          "ej: 'Bamboo 135 x96 (16 cajas)'; si no hay dato de cajas, no lo inventes ni lo incluyas. Busca " +
-          "tambien si el mensaje menciona un numero de pedido (ej: 'Pedido nº 4521', 'Ref: 4521', 'Pedido " +
-          "4521'); si no aparece ninguno, deja ese campo vacio, no lo inventes. Devuelve SOLO un objeto JSON " +
-          "con esta forma exacta: {\"numeroPedido\": \"...\", \"items\": [\"...\", \"...\"]}. El array items " +
-          "son las lineas del pedido tal cual deberian quedar en una lista de corte, sin numeracion ni " +
-          "vinetas. Si no encuentras ninguna linea clara, items debe ser un array vacio [].",
+          "cabecera tipo CODIGO-SERIE-TAMANO-UNIDADES-CAJAS). Cada linea de pedido es una serie/medida con " +
+          "su cantidad (ej: 'Bamboo 135 x96', 'taco 135 x2 unidades'). Ignora columnas de codigo de producto " +
+          "(no aportan nada para cortar), saludos, firmas y cualquier texto que no sea parte del pedido en " +
+          "si. Busca tambien si el mensaje menciona un numero de pedido (ej: 'Pedido nº 4521', 'Ref: 4521', " +
+          "'Pedido 4521'); si no aparece ninguno, deja ese campo vacio, no lo inventes. Devuelve SOLO un " +
+          "objeto JSON con esta forma exacta: {\"numeroPedido\": \"...\", \"items\": [{\"serie\": \"...\", " +
+          "\"tamano\": \"...\", \"unidades\": N, \"cajas\": N}]}. serie y tamano son texto, unidades y cajas " +
+          "son numeros; si no hay dato de cajas, pon 0 en vez de inventarlo. Si no encuentras ninguna linea " +
+          "clara, items debe ser un array vacio [].",
         messages: [
           { role: "user", content: texto }
         ]
@@ -251,7 +250,16 @@ exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) =
     console.error("No se pudo parsear la respuesta de extraerPedido:", textoRespuesta);
     items = [];
   }
-  items = items.map(function (i) { return String(i || "").trim(); }).filter(function (i) { return i; });
+  items = items
+    .map(function (i) {
+      return {
+        serie: String((i && i.serie) || "").trim(),
+        tamano: String((i && i.tamano) || "").trim(),
+        unidades: Number(i && i.unidades) || 0,
+        cajas: Number(i && i.cajas) || 0
+      };
+    })
+    .filter(function (i) { return i.serie && i.tamano && i.unidades > 0; });
 
   const db = getFirestore();
   await registrarUso(db, uid, json.usage);

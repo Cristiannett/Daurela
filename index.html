@@ -1118,6 +1118,18 @@ let corteLineasActuales = [];
 let filtroCorteActual = 'pedidos';
 let corteDetalleId = null;
 
+function corteLineaVacia(){ return { serie:'', tamano:'', unidades:'', cajas:'' }; }
+
+function corteLineaCompleta(item){
+  return (Number(item.unidades)||0) > 0 && item.cortadas >= (Number(item.unidades)||0);
+}
+
+function corteTituloLinea(item){
+  let t = (item.serie||'')+' | '+(item.tamano||'')+' | '+(item.unidades||0);
+  if(item.cajas) t += ' | '+item.cajas;
+  return t;
+}
+
 function initCorte(){
   filtroCorteActual = 'pedidos';
   document.querySelectorAll('#s-corte .filtro-btn').forEach(function(b){ b.classList.remove('activo'); });
@@ -1136,12 +1148,12 @@ function initCorteNuevo(){
 }
 
 function corteAddLineaManual(){
-  corteLineasActuales.push('');
+  corteLineasActuales.push(corteLineaVacia());
   renderCorteLineas();
 }
 
-function corteUpdateLinea(idx, valor){
-  if(corteLineasActuales[idx]!==undefined) corteLineasActuales[idx]=valor;
+function corteUpdateLinea(idx, campo, valor){
+  if(corteLineasActuales[idx]!==undefined) corteLineasActuales[idx][campo]=valor;
 }
 
 function corteDelLinea(idx){
@@ -1153,22 +1165,46 @@ function renderCorteLineas(){
   const wrap = document.getElementById('corte-lineas-wrap');
   if(!wrap) return;
   wrap.innerHTML='';
-  corteLineasActuales.forEach(function(texto, idx){
-    const row = document.createElement('div');
-    row.style.cssText='display:flex;gap:8px;margin-bottom:8px';
-    const input = document.createElement('input');
-    input.type='text';
-    input.placeholder='Ej: 90x190 x4';
-    input.value=texto||'';
-    input.style.cssText='flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none';
-    input.oninput=(function(i){ return function(){ corteUpdateLinea(i, this.value); }; })(idx);
+  corteLineasActuales.forEach(function(linea, idx){
+    const card = document.createElement('div');
+    card.style.cssText='border:1px solid var(--border2);border-radius:var(--rad-sm);padding:10px;margin-bottom:8px';
+
+    const fila1 = document.createElement('div');
+    fila1.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px';
+    const inSerie = document.createElement('input');
+    inSerie.type='text'; inSerie.placeholder='Serie (ej: Bamboo)'; inSerie.value=linea.serie||'';
+    inSerie.style.cssText='padding:10px 12px;border:1px solid var(--border2);border-radius:var(--rad-sm);font-size:14px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none';
+    inSerie.oninput=(function(i){ return function(){ corteUpdateLinea(i,'serie',this.value); }; })(idx);
+    const inTamano = document.createElement('input');
+    inTamano.type='text'; inTamano.placeholder='Tamano (ej: 135)'; inTamano.value=linea.tamano||'';
+    inTamano.style.cssText=inSerie.style.cssText;
+    inTamano.oninput=(function(i){ return function(){ corteUpdateLinea(i,'tamano',this.value); }; })(idx);
+    fila1.appendChild(inSerie);
+    fila1.appendChild(inTamano);
+
+    const fila2 = document.createElement('div');
+    fila2.style.cssText='display:grid;grid-template-columns:1fr 1fr auto;gap:8px';
+    const inUds = document.createElement('input');
+    inUds.type='number'; inUds.placeholder='Unidades'; inUds.value=linea.unidades||'';
+    inUds.setAttribute('inputmode','numeric');
+    inUds.style.cssText='padding:10px 12px;border:1px solid var(--border2);border-radius:var(--rad-sm);font-size:14px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none';
+    inUds.oninput=(function(i){ return function(){ corteUpdateLinea(i,'unidades',this.value); }; })(idx);
+    const inCajas = document.createElement('input');
+    inCajas.type='number'; inCajas.placeholder='Cajas (opc.)'; inCajas.value=linea.cajas||'';
+    inCajas.setAttribute('inputmode','numeric');
+    inCajas.style.cssText=inUds.style.cssText;
+    inCajas.oninput=(function(i){ return function(){ corteUpdateLinea(i,'cajas',this.value); }; })(idx);
     const btnDel=document.createElement('button');
     btnDel.className='btn-del-direct';
     btnDel.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>';
     btnDel.onclick=(function(i){ return function(){ corteDelLinea(i); }; })(idx);
-    row.appendChild(input);
-    row.appendChild(btnDel);
-    wrap.appendChild(row);
+    fila2.appendChild(inUds);
+    fila2.appendChild(inCajas);
+    fila2.appendChild(btnDel);
+
+    card.appendChild(fila1);
+    card.appendChild(fila2);
+    wrap.appendChild(card);
   });
 }
 
@@ -1178,11 +1214,17 @@ function guardarPedidoCorte(){
   const fecha = document.getElementById('corte-fecha').value || new Date().toISOString().slice(0,10);
   const textoOriginal = document.getElementById('corte-texto-original').value||'';
   if(!cliente){ toast('Falta el nombre del cliente'); return; }
-  const lineasValidas = corteLineasActuales.map(function(t){ return (t||'').trim(); }).filter(function(t){ return t; });
-  if(!lineasValidas.length){ toast('Anade al menos una linea'); return; }
+  const lineasValidas = corteLineasActuales.filter(function(l){
+    return (l.serie||'').trim() && (l.tamano||'').trim() && Number(l.unidades)>0;
+  });
+  if(!lineasValidas.length){ toast('Anade al menos una linea con serie, tamano y unidades'); return; }
   const pedido = {
     id: uid(), cliente: cliente, numeroPedido: numeroPedido, fecha: fecha, textoOriginal: textoOriginal,
-    items: lineasValidas.map(function(t){ return { id: uid(), texto: t, cortado: false, motivo: '' }; })
+    items: lineasValidas.map(function(l){ return {
+      id: uid(), serie:(l.serie||'').trim(), tamano:(l.tamano||'').trim(),
+      unidades:Number(l.unidades)||0, cajas:Number(l.cajas)||0,
+      cortadas: 0, motivo: ''
+    }; })
   };
   const pedidos = loadCorte();
   pedidos.unshift(pedido);
@@ -1210,7 +1252,7 @@ function renderCorte(){
       return;
     }
     pedidos.forEach(function(p){
-      const pendientes = p.items.filter(function(i){ return !i.cortado; }).length;
+      const pendientes = p.items.filter(function(i){ return !corteLineaCompleta(i); }).length;
       const item = document.createElement('div');
       item.className='list-item';
       item.onclick=(function(id){ return function(){ abrirPedidoCorte(id); }; })(p.id);
@@ -1242,7 +1284,7 @@ function renderCorte(){
   const pendientesTotal = [];
   pedidos.forEach(function(p){
     p.items.forEach(function(it){
-      if(!it.cortado) pendientesTotal.push({ pedido:p, item:it });
+      if(!corteLineaCompleta(it)) pendientesTotal.push({ pedido:p, item:it });
     });
   });
   if(!pendientesTotal.length){
@@ -1268,8 +1310,12 @@ function renderCorte(){
     info.className='li-info';
     const txt = document.createElement('div');
     txt.className='li-name';
-    txt.textContent = par.item.texto;
+    txt.textContent = corteTituloLinea(par.item);
     info.appendChild(txt);
+    const progreso = document.createElement('div');
+    progreso.className='li-sub';
+    progreso.textContent = (par.item.cortadas||0)+'/'+par.item.unidades+' cortadas';
+    info.appendChild(progreso);
     if(par.item.motivo){
       const mot = document.createElement('div');
       mot.className='li-sub';
@@ -1297,21 +1343,58 @@ function renderCorteDetalle(){
   if(titulo) titulo.textContent = pedido.cliente+(pedido.numeroPedido?' · #'+pedido.numeroPedido:'')+' · '+pedido.fecha;
   body.innerHTML='';
   pedido.items.forEach(function(item){
+    const completo = corteLineaCompleta(item);
+    const cortadas = item.cortadas||0;
+    const restan = Math.max((Number(item.unidades)||0)-cortadas, 0);
     const row = document.createElement('div');
     row.style.cssText='padding:14px 16px;border-bottom:1px solid var(--border)';
+
     const top = document.createElement('div');
-    top.style.cssText='display:flex;align-items:center;gap:12px;cursor:pointer';
+    top.style.cssText='display:flex;align-items:center;gap:12px';
     const check = document.createElement('div');
-    check.style.cssText='width:24px;height:24px;border-radius:7px;border:1.5px solid '+(item.cortado?'#30d158':'var(--border3)')+';background:'+(item.cortado?'#30d158':'transparent')+';flex-shrink:0;display:flex;align-items:center;justify-content:center';
-    if(item.cortado){ check.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'; }
+    check.style.cssText='width:24px;height:24px;border-radius:7px;border:1.5px solid '+(completo?'#30d158':'var(--border3)')+';background:'+(completo?'#30d158':'transparent')+';flex-shrink:0;display:flex;align-items:center;justify-content:center';
+    if(completo){ check.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'; }
+    const info = document.createElement('div');
+    info.style.cssText='flex:1';
     const txt = document.createElement('div');
-    txt.style.cssText='flex:1;font-size:15px;'+(item.cortado?'color:var(--txt2);text-decoration:line-through':'color:var(--txt)');
-    txt.textContent = item.texto;
+    txt.style.cssText='font-size:15px;'+(completo?'color:var(--txt2);text-decoration:line-through':'color:var(--txt)');
+    txt.textContent = corteTituloLinea(item);
+    const progreso = document.createElement('div');
+    progreso.style.cssText='font-size:12px;color:'+(completo?'#30d158':'var(--txt2)')+';margin-top:2px';
+    progreso.textContent = completo ? 'Completo' : (cortadas+'/'+item.unidades+' cortadas · quedan '+restan);
+    info.appendChild(txt);
+    info.appendChild(progreso);
     top.appendChild(check);
-    top.appendChild(txt);
-    top.onclick=(function(itemId){ return function(){ toggleLineaCortada(corteDetalleId, itemId); }; })(item.id);
+    top.appendChild(info);
     row.appendChild(top);
-    if(!item.cortado){
+
+    if(!completo){
+      const accion = document.createElement('div');
+      accion.style.cssText='display:flex;gap:8px;margin-top:10px;margin-left:36px';
+      const inputCant = document.createElement('input');
+      inputCant.type='number';
+      inputCant.setAttribute('inputmode','numeric');
+      inputCant.placeholder='Cantidad';
+      inputCant.style.cssText='width:90px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rad-sm);font-size:13px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none';
+      const btnAdd = document.createElement('button');
+      btnAdd.className='btn-secondary';
+      btnAdd.textContent='Anadir cortadas';
+      btnAdd.style.cssText='margin-top:0;padding:8px 14px;font-size:13px;width:auto';
+      btnAdd.onclick=(function(itemId,input){ return function(){
+        const cant = parseInt(input.value,10);
+        if(!cant || cant<=0){ toast('Pon una cantidad valida'); return; }
+        agregarCortadas(corteDetalleId, itemId, cant);
+      }; })(item.id, inputCant);
+      const btnTodo = document.createElement('button');
+      btnTodo.className='btn-secondary';
+      btnTodo.textContent='Todo';
+      btnTodo.style.cssText='margin-top:0;padding:8px 14px;font-size:13px;width:auto';
+      btnTodo.onclick=(function(itemId,cant){ return function(){ agregarCortadas(corteDetalleId, itemId, cant); }; })(item.id, restan);
+      accion.appendChild(inputCant);
+      accion.appendChild(btnAdd);
+      accion.appendChild(btnTodo);
+      row.appendChild(accion);
+
       const motivos = document.createElement('div');
       motivos.style.cssText='display:flex;gap:6px;margin-top:8px;margin-left:36px;flex-wrap:wrap';
       ['Sin tela','Falta tiempo','Otro'].forEach(function(opt){
@@ -1329,19 +1412,38 @@ function renderCorteDetalle(){
         motivoTxt.textContent = item.motivo;
         row.appendChild(motivoTxt);
       }
+    } else {
+      const btnDeshacer = document.createElement('button');
+      btnDeshacer.className='btn-secondary';
+      btnDeshacer.textContent='Deshacer';
+      btnDeshacer.style.cssText='margin-top:8px;margin-left:36px;padding:6px 12px;font-size:12px;width:auto';
+      btnDeshacer.onclick=(function(itemId){ return function(){ resetearCortadas(corteDetalleId, itemId); }; })(item.id);
+      row.appendChild(btnDeshacer);
     }
     body.appendChild(row);
   });
 }
 
-function toggleLineaCortada(pedidoId, lineaId){
+function agregarCortadas(pedidoId, lineaId, cantidad){
   const pedidos = loadCorte();
   const pedido = pedidos.find(function(p){ return p.id===pedidoId; });
   if(!pedido) return;
   const item = pedido.items.find(function(i){ return i.id===lineaId; });
   if(!item) return;
-  item.cortado = !item.cortado;
-  if(item.cortado) item.motivo='';
+  const total = Number(item.unidades)||0;
+  item.cortadas = Math.min((item.cortadas||0)+cantidad, total);
+  if(item.cortadas>=total) item.motivo='';
+  saveCorte(pedidos);
+  renderCorteDetalle();
+}
+
+function resetearCortadas(pedidoId, lineaId){
+  const pedidos = loadCorte();
+  const pedido = pedidos.find(function(p){ return p.id===pedidoId; });
+  if(!pedido) return;
+  const item = pedido.items.find(function(i){ return i.id===lineaId; });
+  if(!item) return;
+  item.cortadas = 0;
   saveCorte(pedidos);
   renderCorteDetalle();
 }
@@ -1389,7 +1491,11 @@ function extraerLineasPedido(){
         if(campoNum && !campoNum.value) campoNum.value = numeroPedido;
       }
       if(!items.length){ toast('No se encontraron lineas, anadelas a mano'); return; }
-      corteLineasActuales = corteLineasActuales.concat(items);
+      const nuevas = items.map(function(it){ return {
+        serie: String((it&&it.serie)||''), tamano: String((it&&it.tamano)||''),
+        unidades: (it&&it.unidades)||'', cajas: (it&&it.cajas)||''
+      }; });
+      corteLineasActuales = corteLineasActuales.concat(nuevas);
       renderCorteLineas();
       toast(items.length+' lineas extraidas'+(numeroPedido?' · pedido '+numeroPedido:''));
     })
@@ -1408,7 +1514,6 @@ try{window.extraerLineasPedido=extraerLineasPedido;}catch(e){}
 try{window.guardarPedidoCorte=guardarPedidoCorte;}catch(e){}
 try{window.abrirPedidoCorte=abrirPedidoCorte;}catch(e){}
 try{window.eliminarPedidoCorte=eliminarPedidoCorte;}catch(e){}
-try{window.toggleLineaCortada=toggleLineaCortada;}catch(e){}
 try{window.setMotivoLinea=setMotivoLinea;}catch(e){}
 
 // ── PREPARACION ENTREGAS ───────────────────────────────────
@@ -2810,7 +2915,11 @@ function syncFirestore() {
     corte: loadCorte().map(function(p){ return {
       id:String(p.id||''), cliente:String(p.cliente||''), numeroPedido:String(p.numeroPedido||''), fecha:String(p.fecha||''),
       textoOriginal:String(p.textoOriginal||''),
-      items:(p.items||[]).map(function(i){ return { id:String(i.id||''), texto:String(i.texto||''), cortado:Boolean(i.cortado), motivo:String(i.motivo||'') }; })
+      items:(p.items||[]).map(function(i){ return {
+        id:String(i.id||''), serie:String(i.serie||''), tamano:String(i.tamano||''),
+        unidades:Number(i.unidades)||0, cajas:Number(i.cajas)||0,
+        cortadas:Number(i.cortadas)||0, motivo:String(i.motivo||'')
+      }; })
     }; }),
     inventarios: (loadInventarios()||[]).map(inv => ({
       mesKey: String(inv.mesKey||''),
