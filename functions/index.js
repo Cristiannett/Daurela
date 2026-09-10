@@ -202,11 +202,16 @@ exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) =
         model: "claude-sonnet-5",
         max_tokens: 1024,
         system:
-          "Extraes lineas de pedido de un mensaje de un cliente de un taller textil. Cada linea suele ser " +
-          "una medida o talla con su cantidad (ej: '90x190 x4', 'taco 135 x2'). Ignora saludos, firmas y " +
-          "cualquier texto que no sea parte del pedido en si. Devuelve SOLO un array JSON de strings, cada " +
-          "string una linea del pedido tal cual deberia quedar en una lista de corte, sin numeracion ni " +
-          "vinetas. Si no encuentras ninguna linea clara, devuelve un array vacio [].",
+          "Extraes lineas de pedido de un mensaje de un cliente de un taller textil (puede venir como texto " +
+          "normal, o como una tabla pegada con tabulaciones, espacios o guiones separando columnas, con " +
+          "cabecera tipo CODIGO-SERIE-TAMANO-UNIDADES-CAJAS). Cada linea suele ser una serie/medida con su " +
+          "cantidad (ej: '90x190 x4', 'taco 135 x2', 'Bamboo 135 x96'). Ignora columnas de codigo de " +
+          "producto (no aportan nada para cortar), saludos, firmas y cualquier texto que no sea parte del " +
+          "pedido en si. Si la linea indica tambien un numero de cajas, incluyelo al final entre parentesis, " +
+          "ej: 'Bamboo 135 x96 (16 cajas)'; si no hay dato de cajas, no lo inventes ni lo incluyas. Devuelve " +
+          "SOLO un array JSON de strings, cada string una linea del pedido tal cual deberia quedar en una " +
+          "lista de corte, sin numeracion ni vinetas. Si no encuentras ninguna linea clara, devuelve un " +
+          "array vacio [].",
         messages: [
           { role: "user", content: texto }
         ]
