@@ -1130,6 +1130,19 @@ function corteTituloLinea(item){
   return t;
 }
 
+function confeccionDeSerie(serie){
+  const s = (serie||'').trim().toLowerCase();
+  if(!s) return null;
+  const confs = Object.keys(ENT_TELAS);
+  for(let i=0;i<confs.length;i++){
+    const telas = ENT_TELAS[confs[i]];
+    for(let j=0;j<telas.length;j++){
+      if(telas[j].toLowerCase()===s) return confs[i];
+    }
+  }
+  return null;
+}
+
 function initCorte(){
   filtroCorteActual = 'pedidos';
   document.querySelectorAll('#s-corte .filtro-btn').forEach(function(b){ b.classList.remove('activo'); });
@@ -1220,6 +1233,7 @@ function guardarPedidoCorte(){
   if(!lineasValidas.length){ toast('Anade al menos una linea con serie, tamano y unidades'); return; }
   const pedido = {
     id: uid(), cliente: cliente, numeroPedido: numeroPedido, fecha: fecha, textoOriginal: textoOriginal,
+    entregado: {},
     items: lineasValidas.map(function(l){ return {
       id: uid(), serie:(l.serie||'').trim(), tamano:(l.tamano||'').trim(),
       unidades:Number(l.unidades)||0, cajas:Number(l.cajas)||0,
@@ -1342,7 +1356,36 @@ function renderCorteDetalle(){
   if(!pedido || !body) return;
   if(titulo) titulo.textContent = pedido.cliente+(pedido.numeroPedido?' · #'+pedido.numeroPedido:'')+' · '+pedido.fecha;
   body.innerHTML='';
+
+  const grupos = {};
+  const ordenGrupos = [];
   pedido.items.forEach(function(item){
+    const conf = confeccionDeSerie(item.serie) || 'Sin confeccion asociada';
+    if(!grupos[conf]){ grupos[conf]=[]; ordenGrupos.push(conf); }
+    grupos[conf].push(item);
+  });
+
+  ordenGrupos.forEach(function(conf){
+    const hdr = document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);border-top:1px solid var(--border)';
+    const nombreConf = document.createElement('span');
+    nombreConf.style.cssText='font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3)';
+    nombreConf.textContent = conf;
+    hdr.appendChild(nombreConf);
+    if(conf!=='Sin confeccion asociada'){
+      const entregado = !!(pedido.entregado && pedido.entregado[conf]);
+      const btnEnt = document.createElement('button');
+      btnEnt.textContent = entregado ? 'Entregado' : 'Marcar entregado';
+      btnEnt.style.cssText='padding:5px 12px;border-radius:20px;font-size:11px;font-family:inherit;cursor:pointer;border:1px solid '+(entregado?'#30d158':'var(--border2)')+';background:'+(entregado?'rgba(48,209,88,0.15)':'none')+';color:'+(entregado?'#30d158':'var(--txt2)');
+      btnEnt.onclick=(function(c){ return function(){ toggleEntregaConfeccion(corteDetalleId, c); }; })(conf);
+      hdr.appendChild(btnEnt);
+    }
+    body.appendChild(hdr);
+    grupos[conf].forEach(function(item){ body.appendChild(renderCorteItemRow(item)); });
+  });
+}
+
+function renderCorteItemRow(item){
     const completo = corteLineaCompleta(item);
     const cortadas = item.cortadas||0;
     const restan = Math.max((Number(item.unidades)||0)-cortadas, 0);
@@ -1420,8 +1463,17 @@ function renderCorteDetalle(){
       btnDeshacer.onclick=(function(itemId){ return function(){ resetearCortadas(corteDetalleId, itemId); }; })(item.id);
       row.appendChild(btnDeshacer);
     }
-    body.appendChild(row);
-  });
+    return row;
+}
+
+function toggleEntregaConfeccion(pedidoId, confeccion){
+  const pedidos = loadCorte();
+  const pedido = pedidos.find(function(p){ return p.id===pedidoId; });
+  if(!pedido) return;
+  if(!pedido.entregado) pedido.entregado = {};
+  pedido.entregado[confeccion] = !pedido.entregado[confeccion];
+  saveCorte(pedidos);
+  renderCorteDetalle();
 }
 
 function agregarCortadas(pedidoId, lineaId, cantidad){
@@ -2914,7 +2966,7 @@ function syncFirestore() {
     prep: loadPrep(),
     corte: loadCorte().map(function(p){ return {
       id:String(p.id||''), cliente:String(p.cliente||''), numeroPedido:String(p.numeroPedido||''), fecha:String(p.fecha||''),
-      textoOriginal:String(p.textoOriginal||''),
+      textoOriginal:String(p.textoOriginal||''), entregado:Object.assign({},p.entregado||{}),
       items:(p.items||[]).map(function(i){ return {
         id:String(i.id||''), serie:String(i.serie||''), tamano:String(i.tamano||''),
         unidades:Number(i.unidades)||0, cajas:Number(i.cajas)||0,
