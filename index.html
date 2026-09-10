@@ -374,6 +374,7 @@ onAuthStateChanged(auth, function(user) {
       <div id="weather-time" style="font-size:11px;color:var(--txt3);margin-top:4px"></div>
     </div>
   </div>
+  <div id="acum-extra-home" style="margin:-12px 20px 20px;font-size:12px;color:var(--txt3);text-align:right;display:none"></div>
   <div class="home-grid">
     <div class="home-btn" onclick="go('s-clientes-list')">
       <div class="home-icon" style="background:linear-gradient(135deg,#2c6bed,#1a4fc4)">
@@ -1092,7 +1093,7 @@ function go(id, addHistory){
   el.scrollTop=0;
   if(addHistory) history.pushState({screen:id}, '', '');
   actualizarFab();
-  if(id==='s-cli') actualizarBadges();
+  if(id==='s-cli') { actualizarBadges(); actualizarAcumExtraHome(); }
   const bar=document.getElementById('nota-input-bar-global');
   if(bar) bar.style.display=id==='s-notas'?'flex':'none';
   const chatBar=document.getElementById('chat-input-bar-global');
@@ -2617,14 +2618,20 @@ function renderFichaje(){
   document.getElementById('fich-calendario').innerHTML=html;
   document.getElementById('fich-total-norm').textContent=totalNorm%1===0?totalNorm:totalNorm.toFixed(1);
   document.getElementById('fich-total-extra').textContent=totalExtra%1===0?totalExtra:totalExtra.toFixed(1);
+}
 
-  // Calcular acumulado total de todos los meses
+function actualizarAcumExtraHome(){
+  const el=document.getElementById('acum-extra-home');
+  if(!el) return;
   const todosLosFichajes=loadFichajes();
-  let acumNorm=0,acumExtra=0;
-  Object.values(todosLosFichajes).forEach(r=>{acumNorm+=r.norm||0;acumExtra+=r.extra||0;});
-  document.getElementById('fich-acum-norm').textContent=acumNorm%1===0?acumNorm:acumNorm.toFixed(1);
-  document.getElementById('fich-acum-extra').textContent=acumExtra%1===0?acumExtra:acumExtra.toFixed(1);
-
+  let acumExtra=0;
+  Object.values(todosLosFichajes).forEach(function(r){ acumExtra+=r.extra||0; });
+  if(acumExtra>0){
+    el.textContent=(acumExtra%1===0?acumExtra:acumExtra.toFixed(1))+'h extra acumuladas';
+    el.style.display='block';
+  } else {
+    el.style.display='none';
+  }
 }
 
 function seleccionarDia(key, dia){
@@ -3675,6 +3682,7 @@ initEasterEgg();
 actualizarFab();
 initWeather();
 actualizarBadges();
+actualizarAcumExtraHome();
 window.initFirestore = initFirestore;
 </script>
 </body>
