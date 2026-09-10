@@ -978,6 +978,7 @@ onAuthStateChanged(auth, function(user) {
   </div>
   <div style="padding:16px">
     <div class="fg"><label>Cliente</label><input id="corte-cliente" type="text" placeholder="Ej: Paco" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;box-sizing:border-box"></div>
+    <div class="fg"><label>Numero de pedido</label><input id="corte-numero-pedido" type="text" placeholder="Ej: 4521" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;box-sizing:border-box"></div>
     <div class="fg"><label>Fecha</label><input id="corte-fecha" type="date" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;box-sizing:border-box"></div>
     <div class="fg">
       <label>Pega aqui el texto del pedido (email, whatsapp...)</label>
@@ -1128,6 +1129,7 @@ function initCorte(){
 function initCorteNuevo(){
   corteLineasActuales = [];
   const cli = document.getElementById('corte-cliente'); if(cli) cli.value='';
+  const numPedido = document.getElementById('corte-numero-pedido'); if(numPedido) numPedido.value='';
   const fecha = document.getElementById('corte-fecha'); if(fecha) fecha.value = new Date().toISOString().slice(0,10);
   const txt = document.getElementById('corte-texto-original'); if(txt) txt.value='';
   renderCorteLineas();
@@ -1172,13 +1174,14 @@ function renderCorteLineas(){
 
 function guardarPedidoCorte(){
   const cliente = (document.getElementById('corte-cliente').value||'').trim();
+  const numeroPedido = (document.getElementById('corte-numero-pedido').value||'').trim();
   const fecha = document.getElementById('corte-fecha').value || new Date().toISOString().slice(0,10);
   const textoOriginal = document.getElementById('corte-texto-original').value||'';
   if(!cliente){ toast('Falta el nombre del cliente'); return; }
   const lineasValidas = corteLineasActuales.map(function(t){ return (t||'').trim(); }).filter(function(t){ return t; });
   if(!lineasValidas.length){ toast('Anade al menos una linea'); return; }
   const pedido = {
-    id: uid(), cliente: cliente, fecha: fecha, textoOriginal: textoOriginal,
+    id: uid(), cliente: cliente, numeroPedido: numeroPedido, fecha: fecha, textoOriginal: textoOriginal,
     items: lineasValidas.map(function(t){ return { id: uid(), texto: t, cortado: false, motivo: '' }; })
   };
   const pedidos = loadCorte();
@@ -1215,7 +1218,7 @@ function renderCorte(){
       info.className='li-info';
       const nombre = document.createElement('div');
       nombre.className='li-name';
-      nombre.textContent = p.cliente;
+      nombre.textContent = p.cliente+(p.numeroPedido?' · #'+p.numeroPedido:'');
       const sub = document.createElement('div');
       sub.className='li-sub';
       sub.textContent = p.fecha+' · '+(p.items.length-pendientes)+'/'+p.items.length+' cortadas';
@@ -1252,7 +1255,7 @@ function renderCorte(){
       clienteActual = par.pedido.cliente+par.pedido.fecha;
       const hdr = document.createElement('div');
       hdr.className='search-sec';
-      hdr.textContent = par.pedido.cliente+' · '+par.pedido.fecha;
+      hdr.textContent = par.pedido.cliente+(par.pedido.numeroPedido?' · #'+par.pedido.numeroPedido:'')+' · '+par.pedido.fecha;
       el.appendChild(hdr);
     }
     const row = document.createElement('div');
@@ -1291,7 +1294,7 @@ function renderCorteDetalle(){
   const titulo = document.getElementById('corte-detalle-titulo');
   const body = document.getElementById('corte-detalle-body');
   if(!pedido || !body) return;
-  if(titulo) titulo.textContent = pedido.cliente+' · '+pedido.fecha;
+  if(titulo) titulo.textContent = pedido.cliente+(pedido.numeroPedido?' · #'+pedido.numeroPedido:'')+' · '+pedido.fecha;
   body.innerHTML='';
   pedido.items.forEach(function(item){
     const row = document.createElement('div');
@@ -1380,10 +1383,15 @@ function extraerLineasPedido(){
   llamar({ texto: texto })
     .then(function(res){
       const items = (res.data && res.data.items) || [];
+      const numeroPedido = (res.data && res.data.numeroPedido) || '';
+      if(numeroPedido){
+        const campoNum = document.getElementById('corte-numero-pedido');
+        if(campoNum && !campoNum.value) campoNum.value = numeroPedido;
+      }
       if(!items.length){ toast('No se encontraron lineas, anadelas a mano'); return; }
       corteLineasActuales = corteLineasActuales.concat(items);
       renderCorteLineas();
-      toast(items.length+' lineas extraidas');
+      toast(items.length+' lineas extraidas'+(numeroPedido?' · pedido '+numeroPedido:''));
     })
     .catch(function(e){
       toast('Error: '+(e.message||'no se pudo extraer'));
@@ -2800,7 +2808,7 @@ function syncFirestore() {
     }; }),
     prep: loadPrep(),
     corte: loadCorte().map(function(p){ return {
-      id:String(p.id||''), cliente:String(p.cliente||''), fecha:String(p.fecha||''),
+      id:String(p.id||''), cliente:String(p.cliente||''), numeroPedido:String(p.numeroPedido||''), fecha:String(p.fecha||''),
       textoOriginal:String(p.textoOriginal||''),
       items:(p.items||[]).map(function(i){ return { id:String(i.id||''), texto:String(i.texto||''), cortado:Boolean(i.cortado), motivo:String(i.motivo||'') }; })
     }; }),

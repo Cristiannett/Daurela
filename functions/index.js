@@ -202,16 +202,18 @@ exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) =
         model: "claude-sonnet-5",
         max_tokens: 1024,
         system:
-          "Extraes lineas de pedido de un mensaje de un cliente de un taller textil (puede venir como texto " +
+          "Extraes datos de un mensaje de pedido de un cliente de un taller textil (puede venir como texto " +
           "normal, o como una tabla pegada con tabulaciones, espacios o guiones separando columnas, con " +
-          "cabecera tipo CODIGO-SERIE-TAMANO-UNIDADES-CAJAS). Cada linea suele ser una serie/medida con su " +
-          "cantidad (ej: '90x190 x4', 'taco 135 x2', 'Bamboo 135 x96'). Ignora columnas de codigo de " +
+          "cabecera tipo CODIGO-SERIE-TAMANO-UNIDADES-CAJAS). Cada linea de pedido suele ser una serie/medida " +
+          "con su cantidad (ej: '90x190 x4', 'taco 135 x2', 'Bamboo 135 x96'). Ignora columnas de codigo de " +
           "producto (no aportan nada para cortar), saludos, firmas y cualquier texto que no sea parte del " +
           "pedido en si. Si la linea indica tambien un numero de cajas, incluyelo al final entre parentesis, " +
-          "ej: 'Bamboo 135 x96 (16 cajas)'; si no hay dato de cajas, no lo inventes ni lo incluyas. Devuelve " +
-          "SOLO un array JSON de strings, cada string una linea del pedido tal cual deberia quedar en una " +
-          "lista de corte, sin numeracion ni vinetas. Si no encuentras ninguna linea clara, devuelve un " +
-          "array vacio [].",
+          "ej: 'Bamboo 135 x96 (16 cajas)'; si no hay dato de cajas, no lo inventes ni lo incluyas. Busca " +
+          "tambien si el mensaje menciona un numero de pedido (ej: 'Pedido nº 4521', 'Ref: 4521', 'Pedido " +
+          "4521'); si no aparece ninguno, deja ese campo vacio, no lo inventes. Devuelve SOLO un objeto JSON " +
+          "con esta forma exacta: {\"numeroPedido\": \"...\", \"items\": [\"...\", \"...\"]}. El array items " +
+          "son las lineas del pedido tal cual deberian quedar en una lista de corte, sin numeracion ni " +
+          "vinetas. Si no encuentras ninguna linea clara, items debe ser un array vacio [].",
         messages: [
           { role: "user", content: texto }
         ]
@@ -235,10 +237,16 @@ exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) =
   const textoRespuesta = bloquesTexto.join("\n").trim();
 
   let items = [];
+  let numeroPedido = "";
   try {
-    const match = textoRespuesta.match(/\[[\s\S]*\]/);
-    items = JSON.parse(match ? match[0] : textoRespuesta);
-    if (!Array.isArray(items)) items = [];
+    const match = textoRespuesta.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(match ? match[0] : textoRespuesta);
+    if (Array.isArray(parsed)) {
+      items = parsed;
+    } else if (parsed && typeof parsed === "object") {
+      items = Array.isArray(parsed.items) ? parsed.items : [];
+      numeroPedido = String(parsed.numeroPedido || "").trim();
+    }
   } catch (e) {
     console.error("No se pudo parsear la respuesta de extraerPedido:", textoRespuesta);
     items = [];
@@ -248,5 +256,5 @@ exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) =
   const db = getFirestore();
   await registrarUso(db, uid, json.usage);
 
-  return { items: items };
+  return { items: items, numeroPedido: numeroPedido };
 });
