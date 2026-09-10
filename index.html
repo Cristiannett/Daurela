@@ -708,8 +708,21 @@ onAuthStateChanged(auth, function(user) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
     <h1>Entregas</h1>
+    <button class="btn-icon" onclick="go('s-prep')" aria-label="Preparacion">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+    </button>
   </div>
   <div id="lst-entregas"></div>
+</div>
+
+<div id="s-prep" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-entregas')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Preparacion</h1>
+  </div>
+  <div id="prep-body" style="padding:16px"></div>
 </div>
 
 <div id="s-entrega-form" class="screen">
@@ -729,10 +742,11 @@ onAuthStateChanged(auth, function(user) {
       </select>
     </div>
     <div class="fg"><label>Tela</label>
-      <select id="ent-tela" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
+      <select id="ent-tela" onchange="entCambiaTela()" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
         <option value="">Seleccionar confeccion primero</option>
       </select>
     </div>
+    <div id="ent-prep-info" style="display:none"></div>
     <div class="fg"><label>Estado</label>
       <select id="ent-estado" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
         <option value="pendiente">Pendiente</option>
@@ -1029,7 +1043,68 @@ function go(id, addHistory){
   if(id==='s-almacen') initAlmacen();
   if(id==='s-almacen-historial') renderHistorialAlmacen();
   if(id==='s-chatbot') initChatbot();
+  if(id==='s-prep') initPrep();
 }
+
+// ── PREPARACION ENTREGAS ───────────────────────────────────
+const PREP_KEY = 'prep_v1';
+function loadPrep(){ try{ const d=localStorage.getItem(PREP_KEY); return d?JSON.parse(d):{}; }catch(e){ return {}; } }
+function savePrep(obj){ localStorage.setItem(PREP_KEY, JSON.stringify(obj)); clearTimeout(_syncDebounce); _syncDebounce=setTimeout(syncFirestore, 1500); }
+function clavePrep(conf, tela){ return conf+'|'+tela; }
+
+function initPrep(){ renderPrep(); }
+
+function renderPrep(){
+  const body = document.getElementById('prep-body');
+  if(!body) return;
+  body.innerHTML = '';
+  const datos = loadPrep();
+  Object.keys(ENT_TELAS).forEach(function(conf){
+    const secTitulo = document.createElement('div');
+    secTitulo.className = 'sec-hdr';
+    secTitulo.style.margin = '0 -16px';
+    secTitulo.textContent = conf;
+    body.appendChild(secTitulo);
+    ENT_TELAS[conf].forEach(function(tela){
+      const clave = clavePrep(conf, tela);
+      const wrap = document.createElement('div');
+      wrap.className = 'fg';
+      const label = document.createElement('label');
+      label.textContent = tela;
+      const textarea = document.createElement('textarea');
+      textarea.rows = 3;
+      textarea.placeholder = 'Que tener en cuenta para '+tela+'...';
+      textarea.value = datos[clave] || '';
+      textarea.style.cssText = 'width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;resize:none;box-sizing:border-box';
+      textarea.onblur = function(){ guardarPrepCampo(clave, textarea.value); };
+      wrap.appendChild(label);
+      wrap.appendChild(textarea);
+      body.appendChild(wrap);
+    });
+  });
+}
+
+function guardarPrepCampo(clave, valor){
+  const datos = loadPrep();
+  datos[clave] = valor;
+  savePrep(datos);
+  toast('Preparacion guardada');
+}
+
+function entCambiaTela(){
+  const conf = document.getElementById('ent-conf').value;
+  const tela = document.getElementById('ent-tela').value;
+  const info = document.getElementById('ent-prep-info');
+  if(!info) return;
+  if(!conf || !tela){ info.style.display='none'; return; }
+  const datos = loadPrep();
+  const texto = datos[clavePrep(conf, tela)];
+  if(!texto){ info.style.display='none'; return; }
+  info.textContent = texto;
+  info.style.cssText = 'display:block;margin:0 0 16px;padding:12px 14px;background:rgba(255,159,10,0.08);border:1px solid rgba(255,159,10,0.3);border-radius:var(--rad);font-size:13px;color:var(--txt2);white-space:pre-wrap';
+}
+
+try{window.entCambiaTela=entCambiaTela;}catch(e){}
 
 // ── CHATBOT IA ──────────────────────────────────────────
 function initChatbot(){
@@ -2359,6 +2434,7 @@ function syncFirestore() {
       creado:String(e.creado||''),
       lineas:(e.lineas||[]).map(function(l){ return {talla:String(l.talla||''),uds:String(l.uds||'')}; })
     }; }),
+    prep: loadPrep(),
     inventarios: (loadInventarios()||[]).map(inv => ({
       mesKey: String(inv.mesKey||''),
       titulo: String(inv.titulo||''),
@@ -2455,6 +2531,11 @@ function mergeData(remoto) {
       if (!idsInvLocal[inv.mesKey]) { invLocales.push(inv); invCambios = true; }
     });
     if (invCambios) saveInventarios(invLocales);
+  }
+  if (remoto.prep && typeof remoto.prep === 'object') {
+    const pl = loadPrep(); let prc = false;
+    Object.keys(remoto.prep).forEach(function(k){ if(!pl[k] && remoto.prep[k]){ pl[k] = remoto.prep[k]; prc = true; cambios = true; } });
+    if (prc) savePrep(pl);
   }
   if (remoto.pedidos && Array.isArray(remoto.pedidos)) {
     const pl = loadPedidos(); const idsP = {}; pl.forEach(p => idsP[p.id] = true);
