@@ -963,8 +963,8 @@ onAuthStateChanged(auth, function(user) {
     <h1>Corte</h1>
   </div>
   <div class="filtro-bar">
-    <button class="filtro-btn activo" id="filtro-corte-pendientes" onclick="setFiltroCorte('pendientes')">Pendientes</button>
-    <button class="filtro-btn" id="filtro-corte-pedidos" onclick="setFiltroCorte('pedidos')">Pedidos</button>
+    <button class="filtro-btn activo" id="filtro-corte-pedidos" onclick="setFiltroCorte('pedidos')">Pedidos</button>
+    <button class="filtro-btn" id="filtro-corte-pendientes" onclick="setFiltroCorte('pendientes')">Pendientes</button>
   </div>
   <div id="lst-corte" style="padding-bottom:120px"></div>
 </div>
@@ -1115,13 +1115,13 @@ function loadCorte(){ try{ const d=localStorage.getItem(CORTE_KEY); return d?JSO
 function saveCorte(arr){ localStorage.setItem(CORTE_KEY, JSON.stringify(arr)); clearTimeout(_syncDebounce); _syncDebounce=setTimeout(syncFirestore, 1500); actualizarBadges(); }
 
 let corteLineasActuales = [];
-let filtroCorteActual = 'pendientes';
+let filtroCorteActual = 'pedidos';
 let corteDetalleId = null;
 
 function initCorte(){
-  filtroCorteActual = 'pendientes';
+  filtroCorteActual = 'pedidos';
   document.querySelectorAll('#s-corte .filtro-btn').forEach(function(b){ b.classList.remove('activo'); });
-  const btn = document.getElementById('filtro-corte-pendientes');
+  const btn = document.getElementById('filtro-corte-pedidos');
   if(btn) btn.classList.add('activo');
   renderCorte();
 }
