@@ -431,6 +431,13 @@ onAuthStateChanged(auth, function(user) {
       </div>
       <span>Asistente</span>
     </div>
+    <div class="home-btn" onclick="go('s-corte')">
+      <span class="badge" id="badge-corte" style="display:none"></span>
+      <div class="home-icon" style="background:linear-gradient(135deg,#00c7be,#037a74)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+      </div>
+      <span>Corte</span>
+    </div>
   </div>
 </div>
 
@@ -946,6 +953,58 @@ onAuthStateChanged(auth, function(user) {
   <div id="lst-notas" style="padding-bottom:120px"></div>
 </div>
 <div id="nota-input-bar-global" style="position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));display:none;gap:8px;z-index:90"><input id="nota-nueva-txt" type="text" placeholder="Añadir nota..." autocomplete="off" onkeydown="if(event.key==='Enter')agregarNota()" style="flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none"><button onclick="agregarNota()" style="background:var(--accent);color:var(--accent-txt);border:none;border-radius:var(--rad);padding:0 18px;font-size:15px;font-weight:600;cursor:pointer;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div>
+<!-- CORTE -->
+<div id="s-corte" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Corte</h1>
+  </div>
+  <div class="filtro-bar">
+    <button class="filtro-btn activo" id="filtro-corte-pendientes" onclick="setFiltroCorte('pendientes')">Pendientes</button>
+    <button class="filtro-btn" id="filtro-corte-pedidos" onclick="setFiltroCorte('pedidos')">Pedidos</button>
+  </div>
+  <div id="lst-corte" style="padding-bottom:120px"></div>
+</div>
+
+<div id="s-corte-nuevo" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-corte')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1>Nuevo pedido</h1>
+  </div>
+  <div style="padding:16px">
+    <div class="fg"><label>Cliente</label><input id="corte-cliente" type="text" placeholder="Ej: Paco" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;box-sizing:border-box"></div>
+    <div class="fg"><label>Fecha</label><input id="corte-fecha" type="date" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;box-sizing:border-box"></div>
+    <div class="fg">
+      <label>Pega aqui el texto del pedido (email, whatsapp...)</label>
+      <textarea id="corte-texto-original" rows="6" placeholder="Pega aqui el pedido tal cual te lo mandan..." style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none;resize:none;box-sizing:border-box"></textarea>
+      <button class="btn-secondary" id="btn-extraer-corte" onclick="extraerLineasPedido()" style="margin-top:6px;padding:8px 14px;font-size:13px">Extraer lineas con IA</button>
+    </div>
+    <div class="fg">
+      <label>Lineas del pedido</label>
+      <div id="corte-lineas-wrap"></div>
+      <button class="btn-secondary" onclick="corteAddLineaManual()" style="margin-top:6px;padding:8px 14px;font-size:13px">+ Anadir linea manual</button>
+    </div>
+    <button class="btn-primary" onclick="guardarPedidoCorte()">Guardar pedido</button>
+  </div>
+</div>
+
+<div id="s-corte-detalle" class="screen">
+  <div class="topbar">
+    <button class="btn-icon" onclick="go('s-corte')" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 id="corte-detalle-titulo">Pedido</h1>
+    <button class="btn-icon" onclick="eliminarPedidoCorte()" aria-label="Eliminar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+    </button>
+  </div>
+  <div id="corte-detalle-body" style="padding-bottom:24px"></div>
+</div>
+
 <!-- CHATBOT -->
 <div id="s-chatbot" class="screen">
   <div class="topbar">
@@ -1044,7 +1103,304 @@ function go(id, addHistory){
   if(id==='s-almacen-historial') renderHistorialAlmacen();
   if(id==='s-chatbot') initChatbot();
   if(id==='s-prep') initPrep();
+  if(id==='s-corte') initCorte();
+  if(id==='s-corte-nuevo') initCorteNuevo();
 }
+
+// ── CORTE (pedidos digitalizados) ──────────────────────────
+const CORTE_KEY = 'corte_v1';
+function loadCorte(){ try{ const d=localStorage.getItem(CORTE_KEY); return d?JSON.parse(d):[]; }catch(e){ return []; } }
+function saveCorte(arr){ localStorage.setItem(CORTE_KEY, JSON.stringify(arr)); clearTimeout(_syncDebounce); _syncDebounce=setTimeout(syncFirestore, 1500); actualizarBadges(); }
+
+let corteLineasActuales = [];
+let filtroCorteActual = 'pendientes';
+let corteDetalleId = null;
+
+function initCorte(){
+  filtroCorteActual = 'pendientes';
+  document.querySelectorAll('#s-corte .filtro-btn').forEach(function(b){ b.classList.remove('activo'); });
+  const btn = document.getElementById('filtro-corte-pendientes');
+  if(btn) btn.classList.add('activo');
+  renderCorte();
+}
+
+function initCorteNuevo(){
+  corteLineasActuales = [];
+  const cli = document.getElementById('corte-cliente'); if(cli) cli.value='';
+  const fecha = document.getElementById('corte-fecha'); if(fecha) fecha.value = new Date().toISOString().slice(0,10);
+  const txt = document.getElementById('corte-texto-original'); if(txt) txt.value='';
+  renderCorteLineas();
+}
+
+function corteAddLineaManual(){
+  corteLineasActuales.push('');
+  renderCorteLineas();
+}
+
+function corteUpdateLinea(idx, valor){
+  if(corteLineasActuales[idx]!==undefined) corteLineasActuales[idx]=valor;
+}
+
+function corteDelLinea(idx){
+  corteLineasActuales.splice(idx,1);
+  renderCorteLineas();
+}
+
+function renderCorteLineas(){
+  const wrap = document.getElementById('corte-lineas-wrap');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  corteLineasActuales.forEach(function(texto, idx){
+    const row = document.createElement('div');
+    row.style.cssText='display:flex;gap:8px;margin-bottom:8px';
+    const input = document.createElement('input');
+    input.type='text';
+    input.placeholder='Ej: 90x190 x4';
+    input.value=texto||'';
+    input.style.cssText='flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none';
+    input.oninput=(function(i){ return function(){ corteUpdateLinea(i, this.value); }; })(idx);
+    const btnDel=document.createElement('button');
+    btnDel.className='btn-del-direct';
+    btnDel.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>';
+    btnDel.onclick=(function(i){ return function(){ corteDelLinea(i); }; })(idx);
+    row.appendChild(input);
+    row.appendChild(btnDel);
+    wrap.appendChild(row);
+  });
+}
+
+function guardarPedidoCorte(){
+  const cliente = (document.getElementById('corte-cliente').value||'').trim();
+  const fecha = document.getElementById('corte-fecha').value || new Date().toISOString().slice(0,10);
+  const textoOriginal = document.getElementById('corte-texto-original').value||'';
+  if(!cliente){ toast('Falta el nombre del cliente'); return; }
+  const lineasValidas = corteLineasActuales.map(function(t){ return (t||'').trim(); }).filter(function(t){ return t; });
+  if(!lineasValidas.length){ toast('Anade al menos una linea'); return; }
+  const pedido = {
+    id: uid(), cliente: cliente, fecha: fecha, textoOriginal: textoOriginal,
+    items: lineasValidas.map(function(t){ return { id: uid(), texto: t, cortado: false, motivo: '' }; })
+  };
+  const pedidos = loadCorte();
+  pedidos.unshift(pedido);
+  saveCorte(pedidos);
+  toast('Pedido guardado');
+  go('s-corte');
+}
+
+function setFiltroCorte(f){
+  filtroCorteActual = f;
+  document.querySelectorAll('#s-corte .filtro-btn').forEach(function(b){ b.classList.remove('activo'); });
+  const btn = document.getElementById('filtro-corte-'+f);
+  if(btn) btn.classList.add('activo');
+  renderCorte();
+}
+
+function renderCorte(){
+  const el = document.getElementById('lst-corte');
+  if(!el) return;
+  const pedidos = loadCorte();
+  el.innerHTML='';
+  if(filtroCorteActual==='pedidos'){
+    if(!pedidos.length){
+      el.innerHTML = '<div class="empty-state"><p>Sin pedidos todavia.<br>Pulsa <strong>+</strong> para anadir el primero.</p></div>';
+      return;
+    }
+    pedidos.forEach(function(p){
+      const pendientes = p.items.filter(function(i){ return !i.cortado; }).length;
+      const item = document.createElement('div');
+      item.className='list-item';
+      item.onclick=(function(id){ return function(){ abrirPedidoCorte(id); }; })(p.id);
+      const info = document.createElement('div');
+      info.className='li-info';
+      const nombre = document.createElement('div');
+      nombre.className='li-name';
+      nombre.textContent = p.cliente;
+      const sub = document.createElement('div');
+      sub.className='li-sub';
+      sub.textContent = p.fecha+' · '+(p.items.length-pendientes)+'/'+p.items.length+' cortadas';
+      info.appendChild(nombre);
+      info.appendChild(sub);
+      const chevron = document.createElement('div');
+      chevron.className='chevron';
+      chevron.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg>';
+      item.appendChild(info);
+      item.appendChild(chevron);
+      if(pendientes===0){
+        const badge = document.createElement('span');
+        badge.style.cssText='font-size:11px;color:#30d158;font-weight:600;margin-right:8px';
+        badge.textContent='Completo';
+        item.insertBefore(badge, chevron);
+      }
+      el.appendChild(item);
+    });
+    return;
+  }
+  const pendientesTotal = [];
+  pedidos.forEach(function(p){
+    p.items.forEach(function(it){
+      if(!it.cortado) pendientesTotal.push({ pedido:p, item:it });
+    });
+  });
+  if(!pendientesTotal.length){
+    el.innerHTML = '<div class="empty-state"><p>Nada pendiente por cortar.</p></div>';
+    return;
+  }
+  let clienteActual = null;
+  pendientesTotal.forEach(function(par){
+    if(par.pedido.cliente+par.pedido.fecha !== clienteActual){
+      clienteActual = par.pedido.cliente+par.pedido.fecha;
+      const hdr = document.createElement('div');
+      hdr.className='search-sec';
+      hdr.textContent = par.pedido.cliente+' · '+par.pedido.fecha;
+      el.appendChild(hdr);
+    }
+    const row = document.createElement('div');
+    row.className='list-item';
+    row.style.cursor='pointer';
+    row.onclick=(function(pid){ return function(){ abrirPedidoCorte(pid); }; })(par.pedido.id);
+    const check = document.createElement('div');
+    check.style.cssText='width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border3);flex-shrink:0';
+    const info = document.createElement('div');
+    info.className='li-info';
+    const txt = document.createElement('div');
+    txt.className='li-name';
+    txt.textContent = par.item.texto;
+    info.appendChild(txt);
+    if(par.item.motivo){
+      const mot = document.createElement('div');
+      mot.className='li-sub';
+      mot.style.color='#ff9f0a';
+      mot.textContent = par.item.motivo;
+      info.appendChild(mot);
+    }
+    row.appendChild(check);
+    row.appendChild(info);
+    el.appendChild(row);
+  });
+}
+
+function abrirPedidoCorte(id){
+  corteDetalleId = id;
+  go('s-corte-detalle');
+  renderCorteDetalle();
+}
+
+function renderCorteDetalle(){
+  const pedido = loadCorte().find(function(p){ return p.id===corteDetalleId; });
+  const titulo = document.getElementById('corte-detalle-titulo');
+  const body = document.getElementById('corte-detalle-body');
+  if(!pedido || !body) return;
+  if(titulo) titulo.textContent = pedido.cliente+' · '+pedido.fecha;
+  body.innerHTML='';
+  pedido.items.forEach(function(item){
+    const row = document.createElement('div');
+    row.style.cssText='padding:14px 16px;border-bottom:1px solid var(--border)';
+    const top = document.createElement('div');
+    top.style.cssText='display:flex;align-items:center;gap:12px;cursor:pointer';
+    const check = document.createElement('div');
+    check.style.cssText='width:24px;height:24px;border-radius:7px;border:1.5px solid '+(item.cortado?'#30d158':'var(--border3)')+';background:'+(item.cortado?'#30d158':'transparent')+';flex-shrink:0;display:flex;align-items:center;justify-content:center';
+    if(item.cortado){ check.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'; }
+    const txt = document.createElement('div');
+    txt.style.cssText='flex:1;font-size:15px;'+(item.cortado?'color:var(--txt2);text-decoration:line-through':'color:var(--txt)');
+    txt.textContent = item.texto;
+    top.appendChild(check);
+    top.appendChild(txt);
+    top.onclick=(function(itemId){ return function(){ toggleLineaCortada(corteDetalleId, itemId); }; })(item.id);
+    row.appendChild(top);
+    if(!item.cortado){
+      const motivos = document.createElement('div');
+      motivos.style.cssText='display:flex;gap:6px;margin-top:8px;margin-left:36px;flex-wrap:wrap';
+      ['Sin tela','Falta tiempo','Otro'].forEach(function(opt){
+        const b = document.createElement('button');
+        b.textContent = opt;
+        const activo = item.motivo===opt || (opt==='Otro' && item.motivo && ['Sin tela','Falta tiempo'].indexOf(item.motivo)===-1);
+        b.style.cssText='padding:5px 12px;border-radius:20px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid '+(activo?'#ff9f0a':'var(--border2)')+';background:'+(activo?'rgba(255,159,10,0.15)':'none')+';color:'+(activo?'#ff9f0a':'var(--txt2)');
+        b.onclick=(function(itemId,opcion){ return function(){ setMotivoLinea(corteDetalleId, itemId, opcion); }; })(item.id, opt);
+        motivos.appendChild(b);
+      });
+      row.appendChild(motivos);
+      if(item.motivo){
+        const motivoTxt = document.createElement('div');
+        motivoTxt.style.cssText='margin-top:6px;margin-left:36px;font-size:12px;color:var(--txt2)';
+        motivoTxt.textContent = item.motivo;
+        row.appendChild(motivoTxt);
+      }
+    }
+    body.appendChild(row);
+  });
+}
+
+function toggleLineaCortada(pedidoId, lineaId){
+  const pedidos = loadCorte();
+  const pedido = pedidos.find(function(p){ return p.id===pedidoId; });
+  if(!pedido) return;
+  const item = pedido.items.find(function(i){ return i.id===lineaId; });
+  if(!item) return;
+  item.cortado = !item.cortado;
+  if(item.cortado) item.motivo='';
+  saveCorte(pedidos);
+  renderCorteDetalle();
+}
+
+function setMotivoLinea(pedidoId, lineaId, motivo){
+  const pedidos = loadCorte();
+  const pedido = pedidos.find(function(p){ return p.id===pedidoId; });
+  if(!pedido) return;
+  const item = pedido.items.find(function(i){ return i.id===lineaId; });
+  if(!item) return;
+  if(motivo==='Otro'){
+    const libre = prompt('Motivo:', (item.motivo && ['Sin tela','Falta tiempo'].indexOf(item.motivo)===-1)?item.motivo:'');
+    if(libre===null) return;
+    item.motivo = libre.trim();
+  } else {
+    item.motivo = item.motivo===motivo ? '' : motivo;
+  }
+  saveCorte(pedidos);
+  renderCorteDetalle();
+}
+
+function eliminarPedidoCorte(){
+  if(!confirm('Eliminar este pedido y todas sus lineas?')) return;
+  const pedidos = loadCorte().filter(function(p){ return p.id!==corteDetalleId; });
+  saveCorte(pedidos);
+  toast('Pedido eliminado');
+  go('s-corte');
+}
+
+function extraerLineasPedido(){
+  const texto = (document.getElementById('corte-texto-original').value||'').trim();
+  if(!texto){ toast('Pega primero el texto del pedido'); return; }
+  if(!window._fireUser){ toast('Inicia sesion con Google para usar esto'); return; }
+  const btn = document.getElementById('btn-extraer-corte');
+  const textoOriginalBtn = btn.textContent;
+  btn.textContent = 'Extrayendo...';
+  btn.disabled = true;
+  const llamar = window._fireFns.httpsCallable(window._fireFunctions, 'extraerPedido');
+  llamar({ texto: texto })
+    .then(function(res){
+      const items = (res.data && res.data.items) || [];
+      if(!items.length){ toast('No se encontraron lineas, anadelas a mano'); return; }
+      corteLineasActuales = corteLineasActuales.concat(items);
+      renderCorteLineas();
+      toast(items.length+' lineas extraidas');
+    })
+    .catch(function(e){
+      toast('Error: '+(e.message||'no se pudo extraer'));
+    })
+    .finally(function(){
+      btn.textContent = textoOriginalBtn;
+      btn.disabled = false;
+    });
+}
+
+try{window.setFiltroCorte=setFiltroCorte;}catch(e){}
+try{window.corteAddLineaManual=corteAddLineaManual;}catch(e){}
+try{window.extraerLineasPedido=extraerLineasPedido;}catch(e){}
+try{window.guardarPedidoCorte=guardarPedidoCorte;}catch(e){}
+try{window.abrirPedidoCorte=abrirPedidoCorte;}catch(e){}
+try{window.eliminarPedidoCorte=eliminarPedidoCorte;}catch(e){}
+try{window.toggleLineaCortada=toggleLineaCortada;}catch(e){}
+try{window.setMotivoLinea=setMotivoLinea;}catch(e){}
 
 // ── PREPARACION ENTREGAS ───────────────────────────────────
 const PREP_KEY = 'prep_v1';
@@ -2120,6 +2476,7 @@ const FAB_SCREENS = {
   's-clientes-list': ()=>openFormCli(null),
   's-telas': ()=>openFormTela(null),
   's-meds': ()=>openFormMed(null),
+  's-corte': ()=>go('s-corte-nuevo'),
 };
 
 function fabGlobalClick(){
@@ -2435,6 +2792,11 @@ function syncFirestore() {
       lineas:(e.lineas||[]).map(function(l){ return {talla:String(l.talla||''),uds:String(l.uds||'')}; })
     }; }),
     prep: loadPrep(),
+    corte: loadCorte().map(function(p){ return {
+      id:String(p.id||''), cliente:String(p.cliente||''), fecha:String(p.fecha||''),
+      textoOriginal:String(p.textoOriginal||''),
+      items:(p.items||[]).map(function(i){ return { id:String(i.id||''), texto:String(i.texto||''), cortado:Boolean(i.cortado), motivo:String(i.motivo||'') }; })
+    }; }),
     inventarios: (loadInventarios()||[]).map(inv => ({
       mesKey: String(inv.mesKey||''),
       titulo: String(inv.titulo||''),
@@ -2536,6 +2898,16 @@ function mergeData(remoto) {
     const pl = loadPrep(); let prc = false;
     Object.keys(remoto.prep).forEach(function(k){ if(!pl[k] && remoto.prep[k]){ pl[k] = remoto.prep[k]; prc = true; cambios = true; } });
     if (prc) savePrep(pl);
+  }
+  if (remoto.corte && Array.isArray(remoto.corte)) {
+    const cortLocales = loadCorte();
+    const idsCortLocal = {};
+    cortLocales.forEach(function(p){ idsCortLocal[p.id] = true; });
+    let cortCambios = false;
+    remoto.corte.forEach(function(p){
+      if (!idsCortLocal[p.id]) { cortLocales.push(p); cortCambios = true; }
+    });
+    if (cortCambios) saveCorte(cortLocales);
   }
   if (remoto.pedidos && Array.isArray(remoto.pedidos)) {
     const pl = loadPedidos(); const idsP = {}; pl.forEach(p => idsP[p.id] = true);
@@ -2644,6 +3016,8 @@ function actualizarBadges() {
   setBadge('badge-notas', notas, false);
   const pedidos = loadPedidos().length;
   setBadge('badge-calc', pedidos, true);
+  const pendientesCorte = loadCorte().reduce(function(acc,p){ return acc + p.items.filter(function(i){ return !i.cortado; }).length; }, 0);
+  setBadge('badge-corte', pendientesCorte, false);
 }
 
 function setBadge(id, count, esVerde) {

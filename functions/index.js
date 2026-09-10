@@ -178,3 +178,70 @@ exports.chatbot = onCall({ secrets: [anthropicApiKey] }, async (request) => {
 
   return { respuesta: texto };
 });
+
+exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Debes iniciar sesion.");
+  }
+  const uid = request.auth.uid;
+  const texto = String((request.data && request.data.texto) || "").trim();
+  if (!texto) {
+    throw new HttpsError("invalid-argument", "Falta el texto del pedido.");
+  }
+
+  let respuestaClaude;
+  try {
+    respuestaClaude = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": anthropicApiKey.value(),
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-5",
+        max_tokens: 1024,
+        system:
+          "Extraes lineas de pedido de un mensaje de un cliente de un taller textil. Cada linea suele ser " +
+          "una medida o talla con su cantidad (ej: '90x190 x4', 'taco 135 x2'). Ignora saludos, firmas y " +
+          "cualquier texto que no sea parte del pedido en si. Devuelve SOLO un array JSON de strings, cada " +
+          "string una linea del pedido tal cual deberia quedar en una lista de corte, sin numeracion ni " +
+          "vinetas. Si no encuentras ninguna linea clara, devuelve un array vacio [].",
+        messages: [
+          { role: "user", content: texto }
+        ]
+      })
+    });
+  } catch (e) {
+    console.error("Fallo de red llamando a Claude (extraerPedido):", e);
+    throw new HttpsError("unavailable", "No se pudo contactar con el servicio.");
+  }
+
+  if (!respuestaClaude.ok) {
+    const errText = await respuestaClaude.text();
+    console.error("Error de la API de Claude (extraerPedido):", respuestaClaude.status, errText);
+    throw new HttpsError("internal", "El servicio devolvio un error.");
+  }
+
+  const json = await respuestaClaude.json();
+  const bloquesTexto = (json.content || [])
+    .filter(function (b) { return b.type === "text" && b.text; })
+    .map(function (b) { return b.text; });
+  const textoRespuesta = bloquesTexto.join("\n").trim();
+
+  let items = [];
+  try {
+    const match = textoRespuesta.match(/\[[\s\S]*\]/);
+    items = JSON.parse(match ? match[0] : textoRespuesta);
+    if (!Array.isArray(items)) items = [];
+  } catch (e) {
+    console.error("No se pudo parsear la respuesta de extraerPedido:", textoRespuesta);
+    items = [];
+  }
+  items = items.map(function (i) { return String(i || "").trim(); }).filter(function (i) { return i; });
+
+  const db = getFirestore();
+  await registrarUso(db, uid, json.usage);
+
+  return { items: items };
+});
