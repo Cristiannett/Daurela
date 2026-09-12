@@ -1387,21 +1387,33 @@ function renderCorteDetalle(){
   });
 }
 
-function renderCorteEntregaCard(pedido, conf, serie, items){
+function corteRestantePorTamano(pedido, conf, serie, items){
   const entregasVinculadas = loadEntregas().filter(function(e){
     return e.origenCorte && e.origenCorte.pedidoId===pedido.id && e.conf===conf && e.origenCorte.serie===serie;
   });
+  const enviadoPorTamano = {};
+  entregasVinculadas.forEach(function(e){
+    (e.lineas||[]).forEach(function(l){
+      enviadoPorTamano[l.talla] = (enviadoPorTamano[l.talla]||0) + (parseInt(l.uds,10)||0);
+    });
+  });
+  const cortadasPorTamano = {};
+  items.forEach(function(i){
+    cortadasPorTamano[i.tamano] = (cortadasPorTamano[i.tamano]||0) + (i.cortadas||0);
+  });
+  const restante = {};
+  Object.keys(cortadasPorTamano).forEach(function(t){
+    const r = cortadasPorTamano[t] - (enviadoPorTamano[t]||0);
+    if(r>0) restante[t] = r;
+  });
+  return { restante: restante, entregasVinculadas: entregasVinculadas };
+}
+
+function renderCorteEntregaCard(pedido, conf, serie, items){
+  const info = corteRestantePorTamano(pedido, conf, serie, items);
+  const entregasVinculadas = info.entregasVinculadas;
   const wrap = document.createElement('div');
   wrap.style.cssText='margin:0 16px 14px';
-
-  if(!entregasVinculadas.length){
-    const btn = document.createElement('button');
-    btn.textContent = '+ Enviar '+serie+' a Entregas';
-    btn.style.cssText='padding:8px 14px;border-radius:20px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #0a84ff;background:rgba(10,132,255,0.1);color:#0a84ff';
-    btn.onclick=(function(c,s){ return function(){ enviarCorteAEntregas(corteDetalleId, c, s); }; })(conf, serie);
-    wrap.appendChild(btn);
-    return wrap;
-  }
 
   entregasVinculadas.forEach(function(ent){
     const card = document.createElement('div');
@@ -1418,8 +1430,11 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
     btnEstado.onclick=(function(entId){ return function(){ toggleEstadoEntregaDesdeCorte(entId); }; })(ent.id);
     hdr.appendChild(titulo);
     hdr.appendChild(btnEstado);
+    const tallas = document.createElement('div');
+    tallas.style.cssText='font-size:12px;color:var(--txt2)';
+    tallas.textContent = (ent.lineas||[]).map(function(l){ return l.talla+': '+l.uds+' uds'; }).join(' · ');
     const detalle = document.createElement('div');
-    detalle.style.cssText='font-size:12px;color:var(--txt2)';
+    detalle.style.cssText='font-size:12px;color:var(--txt2);margin-top:2px';
     detalle.textContent = (ent.fentrega?'Entrega: '+ent.fentrega:'Sin fecha')+(ent.materiales?' · '+ent.materiales:'');
     const btnVer = document.createElement('button');
     btnVer.className='btn-secondary';
@@ -1427,10 +1442,61 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
     btnVer.style.cssText='margin-top:8px;padding:6px 12px;font-size:12px;width:auto';
     btnVer.onclick=function(){ openFormEntrega(ent); };
     card.appendChild(hdr);
+    card.appendChild(tallas);
     card.appendChild(detalle);
     card.appendChild(btnVer);
     wrap.appendChild(card);
   });
+
+  const tamanos = Object.keys(info.restante);
+  if(tamanos.length){
+    const form = document.createElement('div');
+    form.style.cssText='padding:12px;border:1px dashed var(--border3);border-radius:var(--rad-sm)';
+    const titulo = document.createElement('div');
+    titulo.style.cssText='font-size:12px;font-weight:700;color:#0a84ff;margin-bottom:8px';
+    titulo.textContent = 'Enviar '+serie+' a Entregas';
+    form.appendChild(titulo);
+    const inputs = {};
+    tamanos.forEach(function(t){
+      const row = document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px';
+      const lbl = document.createElement('span');
+      lbl.style.cssText='font-size:13px;color:var(--txt2);width:60px;flex-shrink:0';
+      lbl.textContent = t;
+      const inp = document.createElement('input');
+      inp.type='number';
+      inp.setAttribute('inputmode','numeric');
+      inp.value = info.restante[t];
+      inp.max = info.restante[t];
+      inp.min = 0;
+      inp.style.cssText='flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none';
+      const maxTxt = document.createElement('span');
+      maxTxt.style.cssText='font-size:11px;color:var(--txt3);flex-shrink:0';
+      maxTxt.textContent = 'de '+info.restante[t]+' cortadas sin enviar';
+      row.appendChild(lbl);
+      row.appendChild(inp);
+      row.appendChild(maxTxt);
+      form.appendChild(row);
+      inputs[t] = inp;
+    });
+    const btnEnviar = document.createElement('button');
+    btnEnviar.textContent = 'Enviar a Entregas';
+    btnEnviar.style.cssText='padding:8px 14px;border-radius:20px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #0a84ff;background:rgba(10,132,255,0.1);color:#0a84ff;margin-top:2px';
+    btnEnviar.onclick=(function(c,s,ins,maxes){ return function(){
+      const cantidades = {};
+      let total = 0;
+      Object.keys(ins).forEach(function(t){
+        let v = parseInt(ins[t].value,10)||0;
+        if(v>maxes[t]) v = maxes[t];
+        if(v<0) v = 0;
+        if(v>0){ cantidades[t]=v; total+=v; }
+      });
+      if(!total){ toast('Pon alguna cantidad a enviar'); return; }
+      enviarCorteAEntregas(corteDetalleId, c, s, cantidades);
+    }; })(conf, serie, inputs, info.restante);
+    form.appendChild(btnEnviar);
+    wrap.appendChild(form);
+  }
   return wrap;
 }
 
@@ -1515,16 +1581,16 @@ function renderCorteItemRow(item){
     return row;
 }
 
-function enviarCorteAEntregas(pedidoId, confeccion, serie){
+function enviarCorteAEntregas(pedidoId, confeccion, serie, cantidadesPorTamano){
   const pedido = loadCorte().find(function(p){ return p.id===pedidoId; });
   if(!pedido) return;
-  const items = pedido.items.filter(function(i){ return i.serie===serie && (confeccionDeSerie(i.serie)||'')===confeccion; });
-  if(!items.length) return;
+  const tamanos = Object.keys(cantidadesPorTamano||{});
+  if(!tamanos.length) return;
   const notaPrep = loadPrep()[clavePrep(confeccion, serie)] || '';
   const entrega = {
     id: uid(), conf: confeccion, tela: serie, estado: 'pendiente',
     fentrega: new Date().toISOString().slice(0,10), frecogida: '',
-    lineas: items.map(function(i){ return { talla:i.tamano, uds:String(i.unidades) }; }),
+    lineas: tamanos.map(function(t){ return { talla:t, uds:String(cantidadesPorTamano[t]) }; }),
     materiales: notaPrep, obs: '', creado: new Date().toISOString(),
     origenCorte: { pedidoId: pedido.id, serie: serie, cliente: pedido.cliente, numeroPedido: pedido.numeroPedido }
   };
