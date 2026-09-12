@@ -426,12 +426,6 @@ onAuthStateChanged(auth, function(user) {
       </div>
       <span>Backup</span>
     </div>
-    <div class="home-btn" onclick="go('s-chatbot')">
-      <div class="home-icon" style="background:linear-gradient(135deg,#bf5af2,#7d2ea8)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-      </div>
-      <span>Asistente</span>
-    </div>
     <div class="home-btn" onclick="go('s-corte')">
       <span class="badge" id="badge-corte" style="display:none"></span>
       <div class="home-icon" style="background:linear-gradient(135deg,#00c7be,#037a74)">
@@ -1028,6 +1022,11 @@ onAuthStateChanged(auth, function(user) {
 <!-- FAB GLOBAL -->
 <button class="fab" id="fab-global" style="display:none" onclick="fabGlobalClick()" aria-label="Añadir">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<!-- FAB ASISTENTE -->
+<button class="fab" id="fab-asistente" style="width:50px;height:50px;bottom:calc(98px + env(safe-area-inset-bottom,0px));background:linear-gradient(135deg,#bf5af2,#7d2ea8);color:white" onclick="go('s-chatbot')" aria-label="Asistente">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
 </button>
 
 </div>
@@ -2789,11 +2788,16 @@ function fabGlobalClick(){
 function actualizarFab(){
   const active=document.querySelector('.screen.active');
   const fab=document.getElementById('fab-global');
-  if(!fab)return;
-  if(active&&FAB_SCREENS[active.id]){
-    fab.style.display='flex';
-  } else {
-    fab.style.display='none';
+  if(fab){
+    if(active&&FAB_SCREENS[active.id]){
+      fab.style.display='flex';
+    } else {
+      fab.style.display='none';
+    }
+  }
+  const fabAsistente=document.getElementById('fab-asistente');
+  if(fabAsistente){
+    fabAsistente.style.display=(active&&active.id==='s-chatbot')?'none':'flex';
   }
 }
 
