@@ -2899,6 +2899,10 @@ window.addEventListener('popstate', function(e){
   else if(id === 's-fichaje') go('s-cli');
   else if(id === 's-fich-config') go('s-fichaje');
   else if(id === 's-calc') go('s-cli');
+  else if(id === 's-corte-nuevo') go('s-corte', false);
+  else if(id === 's-corte-detalle') go('s-corte', false);
+  else if(id === 's-corte') go('s-cli');
+  else if(id === 's-prep') go('s-entregas', false);
   else go('s-cli');
 });
 
