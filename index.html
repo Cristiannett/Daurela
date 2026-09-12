@@ -1233,7 +1233,6 @@ function guardarPedidoCorte(){
   if(!lineasValidas.length){ toast('Anade al menos una linea con serie, tamano y unidades'); return; }
   const pedido = {
     id: uid(), cliente: cliente, numeroPedido: numeroPedido, fecha: fecha, textoOriginal: textoOriginal,
-    entregado: {},
     items: lineasValidas.map(function(l){ return {
       id: uid(), serie:(l.serie||'').trim(), tamano:(l.tamano||'').trim(),
       unidades:Number(l.unidades)||0, cajas:Number(l.cajas)||0,
@@ -1367,22 +1366,72 @@ function renderCorteDetalle(){
 
   ordenGrupos.forEach(function(conf){
     const hdr = document.createElement('div');
-    hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);border-top:1px solid var(--border)';
-    const nombreConf = document.createElement('span');
-    nombreConf.style.cssText='font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3)';
-    nombreConf.textContent = conf;
-    hdr.appendChild(nombreConf);
-    if(conf!=='Sin confeccion asociada'){
-      const entregado = !!(pedido.entregado && pedido.entregado[conf]);
-      const btnEnt = document.createElement('button');
-      btnEnt.textContent = entregado ? 'Entregado' : 'Marcar entregado';
-      btnEnt.style.cssText='padding:5px 12px;border-radius:20px;font-size:11px;font-family:inherit;cursor:pointer;border:1px solid '+(entregado?'#30d158':'var(--border2)')+';background:'+(entregado?'rgba(48,209,88,0.15)':'none')+';color:'+(entregado?'#30d158':'var(--txt2)');
-      btnEnt.onclick=(function(c){ return function(){ toggleEntregaConfeccion(corteDetalleId, c); }; })(conf);
-      hdr.appendChild(btnEnt);
-    }
+    hdr.style.cssText='padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3)';
+    hdr.textContent = conf;
     body.appendChild(hdr);
-    grupos[conf].forEach(function(item){ body.appendChild(renderCorteItemRow(item)); });
+
+    const porSerie = {};
+    const ordenSeries = [];
+    grupos[conf].forEach(function(item){
+      const s = item.serie||'';
+      if(!porSerie[s]){ porSerie[s]=[]; ordenSeries.push(s); }
+      porSerie[s].push(item);
+    });
+
+    ordenSeries.forEach(function(serie){
+      porSerie[serie].forEach(function(item){ body.appendChild(renderCorteItemRow(item)); });
+      if(conf!=='Sin confeccion asociada'){
+        body.appendChild(renderCorteEntregaCard(pedido, conf, serie, porSerie[serie]));
+      }
+    });
   });
+}
+
+function renderCorteEntregaCard(pedido, conf, serie, items){
+  const entregasVinculadas = loadEntregas().filter(function(e){
+    return e.origenCorte && e.origenCorte.pedidoId===pedido.id && e.conf===conf && e.origenCorte.serie===serie;
+  });
+  const wrap = document.createElement('div');
+  wrap.style.cssText='margin:0 16px 14px';
+
+  if(!entregasVinculadas.length){
+    const btn = document.createElement('button');
+    btn.textContent = '+ Enviar '+serie+' a Entregas';
+    btn.style.cssText='padding:8px 14px;border-radius:20px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid #0a84ff;background:rgba(10,132,255,0.1);color:#0a84ff';
+    btn.onclick=(function(c,s){ return function(){ enviarCorteAEntregas(corteDetalleId, c, s); }; })(conf, serie);
+    wrap.appendChild(btn);
+    return wrap;
+  }
+
+  entregasVinculadas.forEach(function(ent){
+    const card = document.createElement('div');
+    card.style.cssText='padding:12px;background:rgba(10,132,255,0.06);border:1px solid rgba(10,132,255,0.25);border-radius:var(--rad-sm);margin-bottom:8px';
+    const hdr = document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:4px';
+    const titulo = document.createElement('span');
+    titulo.style.cssText='font-size:12px;font-weight:700;color:#0a84ff';
+    titulo.textContent = 'Entrega · '+serie;
+    const btnEstado = document.createElement('button');
+    const completado = ent.estado==='completado';
+    btnEstado.textContent = completado ? 'Entregado' : 'Marcar entregado';
+    btnEstado.style.cssText='padding:4px 10px;border-radius:20px;font-size:11px;font-family:inherit;cursor:pointer;border:1px solid '+(completado?'#30d158':'var(--border2)')+';background:'+(completado?'rgba(48,209,88,0.15)':'none')+';color:'+(completado?'#30d158':'var(--txt2)');
+    btnEstado.onclick=(function(entId){ return function(){ toggleEstadoEntregaDesdeCorte(entId); }; })(ent.id);
+    hdr.appendChild(titulo);
+    hdr.appendChild(btnEstado);
+    const detalle = document.createElement('div');
+    detalle.style.cssText='font-size:12px;color:var(--txt2)';
+    detalle.textContent = (ent.fentrega?'Entrega: '+ent.fentrega:'Sin fecha')+(ent.materiales?' · '+ent.materiales:'');
+    const btnVer = document.createElement('button');
+    btnVer.className='btn-secondary';
+    btnVer.textContent='Ver / editar en Entregas';
+    btnVer.style.cssText='margin-top:8px;padding:6px 12px;font-size:12px;width:auto';
+    btnVer.onclick=function(){ openFormEntrega(ent); };
+    card.appendChild(hdr);
+    card.appendChild(detalle);
+    card.appendChild(btnVer);
+    wrap.appendChild(card);
+  });
+  return wrap;
 }
 
 function renderCorteItemRow(item){
@@ -1466,13 +1515,32 @@ function renderCorteItemRow(item){
     return row;
 }
 
-function toggleEntregaConfeccion(pedidoId, confeccion){
-  const pedidos = loadCorte();
-  const pedido = pedidos.find(function(p){ return p.id===pedidoId; });
+function enviarCorteAEntregas(pedidoId, confeccion, serie){
+  const pedido = loadCorte().find(function(p){ return p.id===pedidoId; });
   if(!pedido) return;
-  if(!pedido.entregado) pedido.entregado = {};
-  pedido.entregado[confeccion] = !pedido.entregado[confeccion];
-  saveCorte(pedidos);
+  const items = pedido.items.filter(function(i){ return i.serie===serie && (confeccionDeSerie(i.serie)||'')===confeccion; });
+  if(!items.length) return;
+  const notaPrep = loadPrep()[clavePrep(confeccion, serie)] || '';
+  const entrega = {
+    id: uid(), conf: confeccion, tela: serie, estado: 'pendiente',
+    fentrega: new Date().toISOString().slice(0,10), frecogida: '',
+    lineas: items.map(function(i){ return { talla:i.tamano, uds:String(i.unidades) }; }),
+    materiales: notaPrep, obs: '', creado: new Date().toISOString(),
+    origenCorte: { pedidoId: pedido.id, serie: serie, cliente: pedido.cliente, numeroPedido: pedido.numeroPedido }
+  };
+  const entregas = loadEntregas();
+  entregas.unshift(entrega);
+  saveEntregas(entregas);
+  toast('Enviado a Entregas');
+  renderCorteDetalle();
+}
+
+function toggleEstadoEntregaDesdeCorte(entregaId){
+  const entregas = loadEntregas();
+  const ent = entregas.find(function(e){ return e.id===entregaId; });
+  if(!ent) return;
+  ent.estado = ent.estado==='completado' ? 'pendiente' : 'completado';
+  saveEntregas(entregas);
   renderCorteDetalle();
 }
 
@@ -2961,16 +3029,20 @@ function syncFirestore() {
     notas: loadNotas().map(n => ({id:String(n.id||''),txt:String(n.txt||''),done:Boolean(n.done),fecha:String(n.fecha||''),hora:String(n.hora||'')})),
     pedidos: loadPedidos().map(p => ({id:String(p.id||''),nombre:String(p.nombre||''),fecha:String(p.fecha||''),margen:Number(p.margen)||0,pieza:Number(p.pieza)||0,lineas:(p.lineas||[]).map(l=>({id:String(l.id||''),nombre:String(l.nombre||''),talla:String(l.talla||''),uds:String(l.uds||'')}))  })),
     entregas: (loadEntregas()||[]).map(function(e){ return {
-      id:String(e.id||''), conf:String(e.conf||''), estado:String(e.estado||'pendiente'),
+      id:String(e.id||''), conf:String(e.conf||''), tela:String(e.tela||''), estado:String(e.estado||'pendiente'),
       fentrega:String(e.fentrega||''), frecogida:String(e.frecogida||''),
       materiales:String(e.materiales||''), obs:String(e.obs||''),
       creado:String(e.creado||''),
-      lineas:(e.lineas||[]).map(function(l){ return {talla:String(l.talla||''),uds:String(l.uds||'')}; })
+      lineas:(e.lineas||[]).map(function(l){ return {talla:String(l.talla||''),uds:String(l.uds||'')}; }),
+      origenCorte: e.origenCorte ? {
+        pedidoId:String(e.origenCorte.pedidoId||''), serie:String(e.origenCorte.serie||''),
+        cliente:String(e.origenCorte.cliente||''), numeroPedido:String(e.origenCorte.numeroPedido||'')
+      } : null
     }; }),
     prep: loadPrep(),
     corte: loadCorte().map(function(p){ return {
       id:String(p.id||''), cliente:String(p.cliente||''), numeroPedido:String(p.numeroPedido||''), fecha:String(p.fecha||''),
-      textoOriginal:String(p.textoOriginal||''), entregado:Object.assign({},p.entregado||{}),
+      textoOriginal:String(p.textoOriginal||''),
       items:(p.items||[]).map(function(i){ return {
         id:String(i.id||''), serie:String(i.serie||''), tamano:String(i.tamano||''),
         unidades:Number(i.unidades)||0, cajas:Number(i.cajas)||0,
@@ -3761,6 +3833,12 @@ function renderEntregas() {
     const conf = document.createElement('div');
     conf.className = 'entrega-conf';
     conf.textContent = (ent.conf || 'Sin nombre') + (ent.tela ? ' - ' + ent.tela : '');
+    if(ent.origenCorte && ent.origenCorte.pedidoId){
+      const tagOrigen = document.createElement('span');
+      tagOrigen.style.cssText='font-size:10px;background:rgba(10,132,255,0.15);color:#0a84ff;padding:2px 7px;border-radius:6px;margin-left:6px;font-weight:600';
+      tagOrigen.textContent = ent.origenCorte.cliente+(ent.origenCorte.numeroPedido?' #'+ent.origenCorte.numeroPedido:'');
+      conf.appendChild(tagOrigen);
+    }
     const chip = document.createElement('div');
     chip.className = 'entrega-chip';
     if (ent.estado === 'proceso') { chip.className += ' chip-proceso'; chip.textContent = 'En proceso'; }
