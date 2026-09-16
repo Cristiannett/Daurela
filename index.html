@@ -1501,33 +1501,53 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
 
 function renderCorteItemRow(item){
     const completo = corteLineaCompleta(item);
+    const total = Number(item.unidades)||0;
     const cortadas = item.cortadas||0;
-    const restan = Math.max((Number(item.unidades)||0)-cortadas, 0);
+    const restan = Math.max(total-cortadas, 0);
+    const pct = total>0 ? Math.min(100, Math.round(cortadas/total*100)) : 0;
+
     const row = document.createElement('div');
     row.style.cssText='padding:14px 16px;border-bottom:1px solid var(--border)';
 
     const top = document.createElement('div');
-    top.style.cssText='display:flex;align-items:center;gap:12px';
+    top.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px';
+    const txt = document.createElement('div');
+    txt.style.cssText='font-size:14px;font-weight:600;'+(completo?'color:var(--txt2);text-decoration:line-through':'color:var(--txt)');
+    txt.textContent = corteTituloLinea(item);
     const check = document.createElement('div');
     check.style.cssText='width:24px;height:24px;border-radius:7px;border:1.5px solid '+(completo?'#30d158':'var(--border3)')+';background:'+(completo?'#30d158':'transparent')+';flex-shrink:0;display:flex;align-items:center;justify-content:center';
     if(completo){ check.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'; }
-    const info = document.createElement('div');
-    info.style.cssText='flex:1';
-    const txt = document.createElement('div');
-    txt.style.cssText='font-size:15px;'+(completo?'color:var(--txt2);text-decoration:line-through':'color:var(--txt)');
-    txt.textContent = corteTituloLinea(item);
-    const progreso = document.createElement('div');
-    progreso.style.cssText='font-size:12px;color:'+(completo?'#30d158':'var(--txt2)')+';margin-top:2px';
-    progreso.textContent = completo ? 'Completo' : (cortadas+'/'+item.unidades+' cortadas · quedan '+restan);
-    info.appendChild(txt);
-    info.appendChild(progreso);
+    top.appendChild(txt);
     top.appendChild(check);
-    top.appendChild(info);
     row.appendChild(top);
+
+    if(completo){
+      const badgeCompleto = document.createElement('div');
+      badgeCompleto.style.cssText='display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#30d158';
+      badgeCompleto.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Completo · '+total+' uds';
+      row.appendChild(badgeCompleto);
+    } else {
+      const track = document.createElement('div');
+      track.style.cssText='height:8px;border-radius:4px;background:var(--bg3);overflow:hidden;margin-bottom:10px';
+      const fill = document.createElement('div');
+      fill.style.cssText='height:100%;border-radius:4px;background:#30d158;width:'+pct+'%;transition:width 0.2s ease';
+      track.appendChild(fill);
+      row.appendChild(track);
+
+      const stats = document.createElement('div');
+      stats.style.cssText='display:flex;gap:24px';
+      const statCortadas = document.createElement('div');
+      statCortadas.innerHTML='<div style="font-size:22px;font-weight:700;color:#30d158;line-height:1.1">'+cortadas+'</div><div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.4px;margin-top:1px">Cortadas</div>';
+      const statFaltan = document.createElement('div');
+      statFaltan.innerHTML='<div style="font-size:22px;font-weight:700;color:#ff9f0a;line-height:1.1">'+restan+'</div><div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.4px;margin-top:1px">Faltan</div>';
+      stats.appendChild(statCortadas);
+      stats.appendChild(statFaltan);
+      row.appendChild(stats);
+    }
 
     if(!completo){
       const accion = document.createElement('div');
-      accion.style.cssText='display:flex;gap:8px;margin-top:10px;margin-left:36px';
+      accion.style.cssText='display:flex;gap:8px;margin-top:12px';
       const inputCant = document.createElement('input');
       inputCant.type='number';
       inputCant.setAttribute('inputmode','numeric');
@@ -1553,7 +1573,7 @@ function renderCorteItemRow(item){
       row.appendChild(accion);
 
       const motivos = document.createElement('div');
-      motivos.style.cssText='display:flex;gap:6px;margin-top:8px;margin-left:36px;flex-wrap:wrap';
+      motivos.style.cssText='display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
       ['Sin tela','Falta tiempo','Otro'].forEach(function(opt){
         const b = document.createElement('button');
         b.textContent = opt;
@@ -1565,7 +1585,7 @@ function renderCorteItemRow(item){
       row.appendChild(motivos);
       if(item.motivo){
         const motivoTxt = document.createElement('div');
-        motivoTxt.style.cssText='margin-top:6px;margin-left:36px;font-size:12px;color:var(--txt2)';
+        motivoTxt.style.cssText='margin-top:6px;font-size:12px;color:var(--txt2)';
         motivoTxt.textContent = item.motivo;
         row.appendChild(motivoTxt);
       }
@@ -1573,7 +1593,7 @@ function renderCorteItemRow(item){
       const btnDeshacer = document.createElement('button');
       btnDeshacer.className='btn-secondary';
       btnDeshacer.textContent='Deshacer';
-      btnDeshacer.style.cssText='margin-top:8px;margin-left:36px;padding:6px 12px;font-size:12px;width:auto';
+      btnDeshacer.style.cssText='margin-top:8px;padding:6px 12px;font-size:12px;width:auto';
       btnDeshacer.onclick=(function(itemId){ return function(){ resetearCortadas(corteDetalleId, itemId); }; })(item.id);
       row.appendChild(btnDeshacer);
     }
