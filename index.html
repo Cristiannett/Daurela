@@ -1124,8 +1124,8 @@ function corteLineaCompleta(item){
 }
 
 function corteTituloLinea(item){
-  let t = (item.serie||'')+' | '+(item.tamano||'')+' | '+(item.unidades||0);
-  if(item.cajas) t += ' | '+item.cajas;
+  let t = (item.serie||'')+' | '+(item.tamano||'')+' | '+(item.unidades||0)+' uds';
+  if(item.cajas) t += ' | '+item.cajas+' cajas';
   return t;
 }
 
