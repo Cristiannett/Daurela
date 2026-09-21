@@ -1524,7 +1524,7 @@ function renderCorteItemRow(item){
     if(completo){
       const badgeCompleto = document.createElement('div');
       badgeCompleto.style.cssText='display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#30d158';
-      badgeCompleto.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Completo · '+total+' uds';
+      badgeCompleto.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Completo · '+cortadas+' uds'+(cortadas>total?' (pedidas '+total+')':'');
       row.appendChild(badgeCompleto);
     } else {
       const track = document.createElement('div');
@@ -1636,7 +1636,7 @@ function agregarCortadas(pedidoId, lineaId, cantidad){
   const item = pedido.items.find(function(i){ return i.id===lineaId; });
   if(!item) return;
   const total = Number(item.unidades)||0;
-  item.cortadas = Math.min((item.cortadas||0)+cantidad, total);
+  item.cortadas = (item.cortadas||0)+cantidad;
   if(item.cortadas>=total) item.motivo='';
   saveCorte(pedidos);
   renderCorteDetalle();
@@ -3960,7 +3960,21 @@ function openFormEntrega(ent) {
   if (titulo) titulo.textContent = ent ? 'Editar entrega' : 'Nueva entrega';
   document.getElementById('ent-conf').value = ent ? (ent.conf||'') : '';
   entCambiaConf();
-  document.getElementById('ent-tela').value = ent ? (ent.tela||'') : '';
+  const selTela = document.getElementById('ent-tela');
+  const telaGuardada = ent ? (ent.tela||'') : '';
+  selTela.value = telaGuardada;
+  if(selTela.value !== telaGuardada && telaGuardada){
+    const opciones = Array.prototype.slice.call(selTela.options);
+    const match = opciones.find(function(o){ return o.value.toLowerCase()===telaGuardada.toLowerCase(); });
+    if(match) selTela.value = match.value;
+    else {
+      const opt = document.createElement('option');
+      opt.value = telaGuardada;
+      opt.textContent = telaGuardada;
+      selTela.appendChild(opt);
+      selTela.value = telaGuardada;
+    }
+  }
   document.getElementById('ent-estado').value = ent ? (ent.estado||'pendiente') : 'pendiente';
   document.getElementById('ent-fentrega').value = ent ? (ent.fentrega||'') : '';
   document.getElementById('ent-frecogida').value = ent ? (ent.frecogida||'') : '';
@@ -3977,17 +3991,20 @@ function cancelEntrega() { go('s-entregas'); }
 function guardarEntrega() {
   const conf = document.getElementById('ent-conf').value;
   if (!conf) { toast('Selecciona una confeccion'); return; }
+  const tela = document.getElementById('ent-tela').value;
+  if (!tela) { toast('Selecciona una tela'); return; }
   const ent = {
     id: entEditando ? entEditando.id : uid(),
     conf: conf,
-    tela: document.getElementById('ent-tela').value,
+    tela: tela,
     estado: document.getElementById('ent-estado').value,
     fentrega: document.getElementById('ent-fentrega').value,
     frecogida: document.getElementById('ent-frecogida').value,
     lineas: entLineas.filter(function(l){ return l.talla || l.uds; }),
     materiales: document.getElementById('ent-materiales').value.trim(),
     obs: document.getElementById('ent-obs').value.trim(),
-    creado: entEditando ? entEditando.creado : new Date().toISOString()
+    creado: entEditando ? entEditando.creado : new Date().toISOString(),
+    origenCorte: entEditando ? (entEditando.origenCorte||null) : null
   };
   const entregas = loadEntregas();
   if (entEditando) {
