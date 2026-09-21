@@ -1117,7 +1117,29 @@ let corteLineasActuales = [];
 let filtroCorteActual = 'pedidos';
 let corteDetalleId = null;
 
-function corteLineaVacia(){ return { serie:'', tamano:'', unidades:'', cajas:'' }; }
+function corteLineaVacia(){ return { serie:'', tamano:'', unidades:'', cajas:'', tipo:'' }; }
+
+const CORTE_TIPOS_KEY = 'corte_tipos_v1';
+function loadCorteTipos(){
+  try{
+    const d = localStorage.getItem(CORTE_TIPOS_KEY);
+    if(d) return JSON.parse(d);
+  }catch(e){}
+  const def = ['Funda de almohada','Protector de colchon'];
+  localStorage.setItem(CORTE_TIPOS_KEY, JSON.stringify(def));
+  return def;
+}
+function agregarCorteTipo(){
+  const nombre = prompt('Nombre de la nueva categoria:');
+  if(!nombre || !nombre.trim()) return null;
+  const limpio = nombre.trim();
+  const tipos = loadCorteTipos();
+  if(tipos.indexOf(limpio)===-1){
+    tipos.push(limpio);
+    localStorage.setItem(CORTE_TIPOS_KEY, JSON.stringify(tipos));
+  }
+  return limpio;
+}
 
 function corteLineaCompleta(item){
   return (Number(item.unidades)||0) > 0 && item.cortadas >= (Number(item.unidades)||0);
@@ -1214,8 +1236,27 @@ function renderCorteLineas(){
     fila2.appendChild(inCajas);
     fila2.appendChild(btnDel);
 
+    const fila3 = document.createElement('div');
+    fila3.style.cssText='display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
+    loadCorteTipos().forEach(function(tipoOpt){
+      const b = document.createElement('button');
+      b.type='button';
+      b.textContent = tipoOpt;
+      const activo = linea.tipo===tipoOpt;
+      b.style.cssText='padding:5px 12px;border-radius:20px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid '+(activo?'#64d2ff':'var(--border2)')+';background:'+(activo?'rgba(100,210,255,0.15)':'none')+';color:'+(activo?'#64d2ff':'var(--txt2)');
+      b.onclick=(function(i,t){ return function(){ corteUpdateLinea(i,'tipo', linea.tipo===t?'':t); renderCorteLineas(); }; })(idx, tipoOpt);
+      fila3.appendChild(b);
+    });
+    const btnMasTipo = document.createElement('button');
+    btnMasTipo.type='button';
+    btnMasTipo.textContent='+';
+    btnMasTipo.style.cssText='padding:5px 12px;border-radius:20px;font-size:12px;font-family:inherit;cursor:pointer;border:1px dashed var(--border3);background:none;color:var(--txt3)';
+    btnMasTipo.onclick=(function(i){ return function(){ const nuevo=agregarCorteTipo(); if(nuevo){ corteUpdateLinea(i,'tipo',nuevo); renderCorteLineas(); } }; })(idx);
+    fila3.appendChild(btnMasTipo);
+
     card.appendChild(fila1);
     card.appendChild(fila2);
+    card.appendChild(fila3);
     wrap.appendChild(card);
   });
 }
@@ -1234,7 +1275,7 @@ function guardarPedidoCorte(){
     id: uid(), cliente: cliente, numeroPedido: numeroPedido, fecha: fecha, textoOriginal: textoOriginal,
     items: lineasValidas.map(function(l){ return {
       id: uid(), serie:(l.serie||'').trim(), tamano:(l.tamano||'').trim(),
-      unidades:Number(l.unidades)||0, cajas:Number(l.cajas)||0,
+      unidades:Number(l.unidades)||0, cajas:Number(l.cajas)||0, tipo:(l.tipo||'').trim(),
       cortadas: 0, motivo: ''
     }; })
   };
@@ -1324,6 +1365,12 @@ function renderCorte(){
     txt.className='li-name';
     txt.textContent = corteTituloLinea(par.item);
     info.appendChild(txt);
+    if(par.item.tipo){
+      const tipoBadge = document.createElement('span');
+      tipoBadge.style.cssText='display:inline-block;margin-top:2px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(100,210,255,0.15);color:#64d2ff';
+      tipoBadge.textContent = par.item.tipo;
+      info.appendChild(tipoBadge);
+    }
     const progreso = document.createElement('div');
     progreso.className='li-sub';
     progreso.textContent = (par.item.cortadas||0)+'/'+par.item.unidades+' cortadas';
@@ -1431,7 +1478,7 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
     hdr.appendChild(btnEstado);
     const tallas = document.createElement('div');
     tallas.style.cssText='font-size:12px;color:var(--txt2)';
-    tallas.textContent = (ent.lineas||[]).map(function(l){ return l.talla+': '+l.uds+' uds'; }).join(' · ');
+    tallas.textContent = (ent.lineas||[]).map(function(l){ return l.talla+': '+l.uds+' uds'+(l.tipo?' ('+l.tipo+')':''); }).join(' · ');
     const detalle = document.createElement('div');
     detalle.style.cssText='font-size:12px;color:var(--txt2);margin-top:2px';
     detalle.textContent = (ent.fentrega?'Entrega: '+ent.fentrega:'Sin fecha')+(ent.materiales?' · '+ent.materiales:'');
@@ -1510,14 +1557,22 @@ function renderCorteItemRow(item){
     row.style.cssText='padding:14px 16px;border-bottom:1px solid var(--border)';
 
     const top = document.createElement('div');
-    top.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px';
+    top.style.cssText='display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px';
+    const titleWrap = document.createElement('div');
     const txt = document.createElement('div');
     txt.style.cssText='font-size:14px;font-weight:600;'+(completo?'color:var(--txt2);text-decoration:line-through':'color:var(--txt)');
     txt.textContent = corteTituloLinea(item);
+    titleWrap.appendChild(txt);
+    if(item.tipo){
+      const tipoBadge = document.createElement('span');
+      tipoBadge.style.cssText='display:inline-block;margin-top:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(100,210,255,0.15);color:#64d2ff';
+      tipoBadge.textContent = item.tipo;
+      titleWrap.appendChild(tipoBadge);
+    }
     const check = document.createElement('div');
-    check.style.cssText='width:24px;height:24px;border-radius:7px;border:1.5px solid '+(completo?'#30d158':'var(--border3)')+';background:'+(completo?'#30d158':'transparent')+';flex-shrink:0;display:flex;align-items:center;justify-content:center';
+    check.style.cssText='width:24px;height:24px;border-radius:7px;border:1.5px solid '+(completo?'#30d158':'var(--border3)')+';background:'+(completo?'#30d158':'transparent')+';flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px';
     if(completo){ check.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'; }
-    top.appendChild(txt);
+    top.appendChild(titleWrap);
     top.appendChild(check);
     row.appendChild(top);
 
@@ -1609,7 +1664,10 @@ function enviarCorteAEntregas(pedidoId, confeccion, serie, cantidadesPorTamano){
   const entrega = {
     id: uid(), conf: confeccion, tela: serie, estado: 'pendiente',
     fentrega: new Date().toISOString().slice(0,10), frecogida: '',
-    lineas: tamanos.map(function(t){ return { talla:t, uds:String(cantidadesPorTamano[t]) }; }),
+    lineas: tamanos.map(function(t){
+      const itemMatch = pedido.items.find(function(i){ return i.serie===serie && i.tamano===t; });
+      return { talla:t, uds:String(cantidadesPorTamano[t]), tipo:(itemMatch&&itemMatch.tipo)||'' };
+    }),
     materiales: notaPrep, obs: '', creado: new Date().toISOString(),
     origenCorte: { pedidoId: pedido.id, serie: serie, cliente: pedido.cliente, numeroPedido: pedido.numeroPedido }
   };
@@ -3123,7 +3181,7 @@ function syncFirestore() {
       fentrega:String(e.fentrega||''), frecogida:String(e.frecogida||''),
       materiales:String(e.materiales||''), obs:String(e.obs||''),
       creado:String(e.creado||''),
-      lineas:(e.lineas||[]).map(function(l){ return {talla:String(l.talla||''),uds:String(l.uds||'')}; }),
+      lineas:(e.lineas||[]).map(function(l){ return {talla:String(l.talla||''),uds:String(l.uds||''),tipo:String(l.tipo||'')}; }),
       origenCorte: e.origenCorte ? {
         pedidoId:String(e.origenCorte.pedidoId||''), serie:String(e.origenCorte.serie||''),
         cliente:String(e.origenCorte.cliente||''), numeroPedido:String(e.origenCorte.numeroPedido||'')
@@ -3135,7 +3193,7 @@ function syncFirestore() {
       textoOriginal:String(p.textoOriginal||''),
       items:(p.items||[]).map(function(i){ return {
         id:String(i.id||''), serie:String(i.serie||''), tamano:String(i.tamano||''),
-        unidades:Number(i.unidades)||0, cajas:Number(i.cajas)||0,
+        unidades:Number(i.unidades)||0, cajas:Number(i.cajas)||0, tipo:String(i.tipo||''),
         cortadas:Number(i.cortadas)||0, motivo:String(i.motivo||'')
       }; })
     }; }),
@@ -3861,7 +3919,7 @@ function entCambiaConf() {
 }
 
 function entAddLinea() {
-  entLineas.push({ talla:'', uds:'' });
+  entLineas.push({ talla:'', uds:'', tipo:'' });
   renderEntLineas();
 }
 
@@ -3879,8 +3937,11 @@ function renderEntLineas() {
   if (!wrap) return;
   wrap.innerHTML = '';
   entLineas.forEach(function(l, idx) {
+    const outer = document.createElement('div');
+    outer.style.cssText = 'margin-bottom:6px';
     const row = document.createElement('div');
     row.className = 'ent-linea';
+    row.style.marginBottom = '4px';
     const inTalla = document.createElement('input');
     inTalla.type = 'text';
     inTalla.placeholder = 'Talla (ej: 90x200)';
@@ -3901,7 +3962,21 @@ function renderEntLineas() {
     row.appendChild(inTalla);
     row.appendChild(inUds);
     row.appendChild(btnDel);
-    wrap.appendChild(row);
+
+    const tipoRow = document.createElement('div');
+    tipoRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+    loadCorteTipos().forEach(function(tipoOpt){
+      const b = document.createElement('button');
+      b.type='button';
+      b.textContent = tipoOpt;
+      const activo = l.tipo===tipoOpt;
+      b.style.cssText='padding:4px 10px;border-radius:20px;font-size:11px;font-family:inherit;cursor:pointer;border:1px solid '+(activo?'#64d2ff':'var(--border2)')+';background:'+(activo?'rgba(100,210,255,0.15)':'none')+';color:'+(activo?'#64d2ff':'var(--txt2)');
+      b.onclick=(function(i,t){ return function(){ entUpdateLinea(i,'tipo', l.tipo===t?'':t); renderEntLineas(); }; })(idx, tipoOpt);
+      tipoRow.appendChild(b);
+    });
+    outer.appendChild(row);
+    outer.appendChild(tipoRow);
+    wrap.appendChild(outer);
   });
 }
 
@@ -3937,6 +4012,18 @@ function renderEntregas() {
     header.appendChild(conf);
     header.appendChild(chip);
     item.appendChild(header);
+    const tiposUnicos = Array.from(new Set((ent.lineas||[]).map(function(l){ return l.tipo; }).filter(Boolean)));
+    if(tiposUnicos.length){
+      const tiposWrap = document.createElement('div');
+      tiposWrap.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;margin-top:4px';
+      tiposUnicos.forEach(function(t){
+        const tipoBadge = document.createElement('span');
+        tipoBadge.style.cssText='display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(100,210,255,0.15);color:#64d2ff';
+        tipoBadge.textContent = t;
+        tiposWrap.appendChild(tipoBadge);
+      });
+      item.appendChild(tiposWrap);
+    }
     const meta = document.createElement('div');
     meta.className = 'entrega-meta';
     let metaTxt = '';
@@ -3948,7 +4035,7 @@ function renderEntregas() {
     if (ent.lineas && ent.lineas.length) {
       const tallas = document.createElement('div');
       tallas.style.cssText = 'font-size:13px;color:var(--txt2);margin-top:2px';
-      tallas.textContent = ent.lineas.map(function(l){ return l.talla + (l.uds ? ': ' + l.uds + ' uds' : ''); }).join('  ·  ');
+      tallas.textContent = ent.lineas.map(function(l){ return l.talla + (l.uds ? ': ' + l.uds + ' uds' : '') + (l.tipo && tiposUnicos.length>1 ? ' ('+l.tipo+')' : ''); }).join('  ·  ');
       item.appendChild(tallas);
     }
     el.appendChild(item);
