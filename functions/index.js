@@ -200,7 +200,8 @@ exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) =
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 1024,
+        max_tokens: 4096,
+        thinking: { type: "disabled" },
         system:
           "Extraes datos de un mensaje de pedido de un cliente de un taller textil (puede venir como texto " +
           "normal, o como una tabla pegada con tabulaciones, espacios o guiones separando columnas, con " +
@@ -247,8 +248,8 @@ exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) =
       numeroPedido = String(parsed.numeroPedido || "").trim();
     }
   } catch (e) {
-    console.error("No se pudo parsear la respuesta de extraerPedido:", textoRespuesta);
-    items = [];
+    console.error("No se pudo parsear la respuesta de extraerPedido. stop_reason:", json.stop_reason, "texto:", textoRespuesta);
+    throw new HttpsError("internal", "El pedido es demasiado largo o la respuesta llego incompleta. Prueba a pegarlo en dos partes.");
   }
   items = items
     .map(function (i) {
