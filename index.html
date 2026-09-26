@@ -959,6 +959,7 @@ onAuthStateChanged(auth, function(user) {
   <div class="filtro-bar">
     <button class="filtro-btn activo" id="filtro-corte-pedidos" onclick="setFiltroCorte('pedidos')">Pedidos</button>
     <button class="filtro-btn" id="filtro-corte-pendientes" onclick="setFiltroCorte('pendientes')">Pendientes</button>
+    <button class="filtro-btn" id="filtro-corte-completados" onclick="setFiltroCorte('completados')">Completados</button>
   </div>
   <div id="lst-corte" style="padding-bottom:120px"></div>
 </div>
@@ -1299,12 +1300,19 @@ function renderCorte(){
   if(!el) return;
   const pedidos = loadCorte();
   el.innerHTML='';
-  if(filtroCorteActual==='pedidos'){
-    if(!pedidos.length){
-      el.innerHTML = '<div class="empty-state"><p>Sin pedidos todavia.<br>Pulsa <strong>+</strong> para anadir el primero.</p></div>';
+  if(filtroCorteActual==='pedidos' || filtroCorteActual==='completados'){
+    const esCompletados = filtroCorteActual==='completados';
+    const listaFiltrada = pedidos.filter(function(p){
+      const completo = p.items.every(function(i){ return corteLineaCompleta(i); });
+      return esCompletados ? completo : !completo;
+    });
+    if(!listaFiltrada.length){
+      el.innerHTML = esCompletados
+        ? '<div class="empty-state"><p>Todavia no hay pedidos completados.</p></div>'
+        : '<div class="empty-state"><p>Sin pedidos todavia.<br>Pulsa <strong>+</strong> para anadir el primero.</p></div>';
       return;
     }
-    pedidos.forEach(function(p){
+    listaFiltrada.forEach(function(p){
       const pendientes = p.items.filter(function(i){ return !corteLineaCompleta(i); }).length;
       const item = document.createElement('div');
       item.className='list-item';
