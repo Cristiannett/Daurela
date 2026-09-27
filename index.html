@@ -364,7 +364,7 @@ body.font-xl{font-size:22px}
 .recogidas-panel p,.recogida-editor p{font-size:12px;color:var(--txt2);line-height:1.5}
 .recogidas-panel summary,.recogida-editor summary{cursor:pointer;padding:12px 0;min-height:44px;font-size:14px;font-weight:600}
 .recogidas-panel label,.recogida-editor label{display:block;font-size:13px;margin:10px 0}
-.recogidas-panel input,.recogidas-panel select,.recogida-editor input:not([type=checkbox]){display:block;width:100%;min-width:0;min-height:44px;padding:10px;border:1px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--txt);font:inherit;font-size:16px;margin:6px 0}
+.recogidas-panel input,.recogidas-panel select,.recogida-editor select,.recogida-editor input:not([type=checkbox]){display:block;width:100%;min-width:0;min-height:44px;padding:10px;border:1px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--txt);font:inherit;font-size:16px;margin:6px 0}
 .recogida-editor{border-top:1px solid var(--border);margin-top:12px;cursor:default}
 .recogida-linea{padding:10px 0;border-bottom:1px solid var(--border)}
 .recogida-linea input[type=checkbox]{margin-right:8px;width:20px;height:20px;vertical-align:middle}
@@ -2357,6 +2357,13 @@ function validarCopia(data){
   if(data.prep&&!Object.values(data.prep).every(texto))throw Error('Preparacion no valida');
   lista(data.inventarios,i=>texto(i.mesKey)&&objeto(i.zonas)&&Object.values(i.zonas).every(z=>objeto(z)&&Array.isArray(z.telas)&&z.telas.every(t=>objeto(t)&&texto(t.nombre)&&(texto(t.metros)||numero(t.metros)))),'inventarios');
   (data.entregas||[]).forEach(e=>{
+    if(e.seguimiento){
+      const x=e.seguimiento;
+      if(typeof x.archivada!=='boolean'||typeof x.desde!=='string'||!Number.isFinite(Date.parse(x.desde)))throw Error('Histórico no válido');
+      if(x.cantidadesRecuperadas&&(!Array.isArray(x.cantidadesRecuperadas)||x.cantidadesRecuperadas.some(l=>!l||typeof l.id!=='string'||!Number.isSafeInteger(l.cantidad)||l.cantidad<0)))throw Error('Pendientes iniciales no válidos');
+    }
+    if(e.referenciaHistorica&&(typeof e.referenciaHistorica.entregaId!=='string'||typeof e.referenciaHistorica.desde!=='string'))throw Error('Referencia histórica no válida');
+    if(e.recogidasHistoricas&&(!Array.isArray(e.recogidasHistoricas)||e.recogidasHistoricas.some(r=>!r||typeof r.id!=='string'||typeof r.lineaId!=='string'||!Number.isSafeInteger(r.cantidad)||r.cantidad<=0||typeof r.fecha!=='string'||!Number.isFinite(Date.parse(r.fecha)))))throw Error('Recogida histórica no válida');
     if(!e.recepcion)return;
     if(e.recepcion.version!==1||!Array.isArray(e.recepcion.lineas))throw Error('Registro de recogidas no válido');
     const ids=new Set();
@@ -3994,10 +4001,11 @@ function resumenRecepcion(e){
     const recibidas=Number(r.recibidas)||0,saldo=Number(r.saldo)||0;
     return {...l,recibidas,saldo,motivo:r.motivo||'',pendientes:Math.max(0,l.enviadas-recibidas-saldo)};
   });
-  const historica=!e.recepcion&&e.estado==='completado';
+  const archivada=Boolean(e.seguimiento&&e.seguimiento.archivada);
+  const historica=archivada||(!e.recepcion&&e.estado==='completado');
   const recibidas=lineas.reduce((n,l)=>n+l.recibidas,0),saldo=lineas.reduce((n,l)=>n+l.saldo,0),pendientes=lineas.reduce((n,l)=>n+l.pendientes,0);
-  const estado=historica?'completadas':lineas.length&&pendientes===0?'completadas':recibidas||saldo?'pendientes':'activas';
-  return {lineas,recibidas,saldo,pendientes,historica,estado};
+  const estado=archivada?'historico':historica?'completadas':lineas.length&&pendientes===0?'completadas':recibidas||saldo?'pendientes':'activas';
+  return {lineas,recibidas,saldo,pendientes,historica,archivada,estado};
 }
 function actualizarEstadoRecepcion(e){
   const r=resumenRecepcion(e);e.estado=r.estado==='completadas'?'completado':r.estado==='pendientes'?'pendiente':'proceso';
@@ -4045,6 +4053,7 @@ function registrarRecogida(key,cantidad){
   }catch(error){toast(error.message);}
 }
 function corregirRecepcion(entrega,filas){
+  if(entrega.seguimiento&&entrega.seguimiento.archivada)throw Error('Usa las opciones del histórico para esta entrega.');
   const actual=resumenRecepcion(entrega);
   if(filas.length!==actual.lineas.length)throw Error('Las líneas han cambiado. Vuelve a abrir la entrega.');
   const lineas=actual.lineas.map(l=>{
@@ -4057,6 +4066,7 @@ function corregirRecepcion(entrega,filas){
   const resultado={...entrega,recepcion:{version:1,lineas}};actualizarEstadoRecepcion(resultado);return resultado;
 }
 function formularioRecepcion(ent){
+  if(resumenRecepcion(ent).archivada)return formularioHistorico(ent);
   const detalle=document.createElement('details');detalle.className='recogida-editor';detalle.onclick=event=>event.stopPropagation();
   const sum=document.createElement('summary');sum.textContent='Corregir recibidas / cerrar saldos';detalle.appendChild(sum);
   const r=resumenRecepcion(ent);
@@ -4090,14 +4100,87 @@ function formularioRecepcion(ent){
     }catch(error){toast(error.message);}
   };detalle.appendChild(save);return detalle;
 }
+function archivarSeguimiento(entregas,fecha){
+  return entregas.map(e=>e.seguimiento&&e.seguimiento.archivada?e:{...e,seguimiento:{...(e.seguimiento||{}),archivada:true,desde:fecha}});
+}
+function limiteHistorico(e,linea){
+  const registradas=(e.recogidasHistoricas||[]).filter(r=>r.lineaId===linea.id).reduce((n,r)=>n+r.cantidad,0);
+  const recuperadas=(e.seguimiento&&e.seguimiento.cantidadesRecuperadas||[]).find(r=>r.id===linea.id);
+  return Math.max(0,linea.enviadas-registradas-(recuperadas?recuperadas.cantidad:0));
+}
+function recuperarPendienteHistorico(entregas,id,filas,nuevoId,fecha){
+  const copia=JSON.parse(JSON.stringify(entregas));const original=copia.find(e=>e.id===id);
+  if(!original||!original.seguimiento||!original.seguimiento.archivada)throw Error('Esta entrega no pertenece al histórico.');
+  if(original.seguimiento.recuperadaId)throw Error('Ya recuperaste esta entrega. Gestiona sus recibidas o saldos en el seguimiento.');
+  nuevoId=id+'-pendiente-'+original.seguimiento.desde;
+  if(copia.some(e=>e.id===nuevoId))throw Error('Identificador duplicado. Vuelve a intentarlo.');
+  const lineas=resumenRecepcion(original).lineas;
+  if(filas.length!==lineas.length||new Set(filas.map(r=>r.id)).size!==lineas.length)throw Error('Revisa todas las tallas.');
+  const nuevas=lineas.map(l=>{const r=filas.find(x=>x.id===l.id);if(!r||!Number.isSafeInteger(r.cantidad)||r.cantidad<0||r.cantidad>limiteHistorico(original,l))throw Error('Pendiente no válido para la talla '+l.talla);return {talla:l.talla,tipo:l.tipo,uds:String(r.cantidad)};}).filter(l=>Number(l.uds)>0);
+  if(!nuevas.length)throw Error('Indica al menos una unidad pendiente conocida.');
+  original.seguimiento.recuperadaId=nuevoId;original.seguimiento.cantidadesRecuperadas=filas.map(r=>({id:r.id,cantidad:r.cantidad}));
+  const activa={id:nuevoId,conf:original.conf,tela:original.tela,estado:'proceso',fentrega:original.fentrega||'',creado:fecha,frecogida:'',lineas:nuevas,materiales:original.materiales||'',obs:original.obs||'',recepcion:{version:1,lineas:[]},origenCorte:null,
+    referenciaHistorica:{entregaId:id,desde:fecha,origenCorte:original.origenCorte||original.referenciaHistorica&&original.referenciaHistorica.origenCorte||null}};
+  copia.unshift(activa);return copia;
+}
+function anotarRecogidaHistorica(entregas,id,lineaId,cantidad,registroId,fecha){
+  const copia=JSON.parse(JSON.stringify(entregas));const e=copia.find(x=>x.id===id);
+  if(!e||!e.seguimiento||!e.seguimiento.archivada)throw Error('Entrega histórica no disponible.');
+  const l=resumenRecepcion(e).lineas.find(x=>x.id===lineaId);
+  if(!l||!Number.isSafeInteger(cantidad)||cantidad<=0||cantidad>limiteHistorico(e,l))throw Error('Revisa la cantidad: no puede superar las unidades antiguas sin asignar.');
+  e.recogidasHistoricas=e.recogidasHistoricas||[];e.recogidasHistoricas.push({id:registroId,lineaId,cantidad,fecha});return copia;
+}
+function panelInicioSeguimiento(entregas){
+  const panel=document.createElement('details');const title=document.createElement('summary');title.textContent='Empezar seguimiento desde hoy';panel.appendChild(title);
+  const texto=document.createElement('p');texto.textContent='Aparta las entregas actuales en Histórico sin revisar. No se borran ni se dan por recibidas. Los nuevos envíos empezarán una cuenta limpia.';panel.appendChild(texto);
+  const pendientes=entregas.filter(e=>!resumenRecepcion(e).archivada);
+  const previo=document.createElement('button');previo.className='btn-secondary';previo.textContent='Ver las '+pendientes.length+' entregas que pasarían al histórico';previo.disabled=!pendientes.length;
+  previo.onclick=()=>{
+    const actuales=loadEntregas();const candidatos=actuales.filter(e=>!resumenRecepcion(e).archivada);
+    vista.innerHTML='';const heading=document.createElement('p');heading.textContent='Se archivarán '+candidatos.length+' entregas. Revisa la lista antes de confirmar:';vista.appendChild(heading);
+    const list=document.createElement('ul');candidatos.forEach(e=>{const li=document.createElement('li');li.textContent=[e.conf,e.tela,e.origenCorte&&e.origenCorte.numeroPedido?'#'+e.origenCorte.numeroPedido:'Sin número',fechaLegible(e.fentrega)].join(' · ');list.appendChild(li);});vista.appendChild(list);
+    const confirmar=document.createElement('button');confirmar.className='btn-primary';confirmar.textContent='Confirmar: empezar desde ahora';confirmar.disabled=!candidatos.length;
+    confirmar.onclick=()=>{
+      const ahora=loadEntregas();if(!iguales(ahora,actuales)){toast('Han cambiado las entregas. Revisa de nuevo la vista previa.');return;}
+      try{guardarRecuperacion(datosTaller());const archivadas=archivarSeguimiento(ahora,new Date().toISOString());saveEntregas(archivadas);filtroEntregas='activas';renderEntregas();
+        ofrecerDeshacer('Seguimiento iniciado. Entregas anteriores en Histórico.',()=>{if(!iguales(loadEntregas(),archivadas)){toast('Ya hay cambios nuevos. Conservamos el histórico.');return;}saveEntregas(ahora);renderEntregas();});
+      }catch(error){toast('No se pudo preparar la copia de recuperación. No se ha iniciado el seguimiento.');}
+    };vista.appendChild(confirmar);
+  };
+  const vista=document.createElement('div');panel.appendChild(previo);panel.appendChild(vista);return panel;
+}
+function formularioHistorico(ent){
+  const panel=document.createElement('div');panel.className='recogida-editor';panel.onclick=event=>event.stopPropagation();
+  const r=resumenRecepcion(ent);
+  const intro=document.createElement('p');intro.textContent='Histórico sin revisar desde '+fechaLegible(ent.seguimiento.desde.slice(0,10))+'. No cuenta como pendiente ni como recibido en el seguimiento actual.';panel.appendChild(intro);
+  if(ent.seguimiento.recuperadaId){const nota=document.createElement('p');nota.textContent='Ya se recuperaron cantidades de esta entrega. Se muestran como «Pendiente al iniciar» en el seguimiento.';panel.appendChild(nota);}
+  else{
+    const details=document.createElement('details');const title=document.createElement('summary');title.textContent='Recuperar cantidades pendientes conocidas';details.appendChild(title);
+    const campos=[];r.lineas.forEach(l=>{const label=document.createElement('label');label.textContent='Pendiente al iniciar · '+l.talla+(l.tipo?' · '+l.tipo:'');const input=document.createElement('input');input.type='number';input.min='0';input.max=String(limiteHistorico(ent,l));input.step='1';input.value='0';label.appendChild(input);campos.push({id:l.id,input});details.appendChild(label);});
+    const button=document.createElement('button');button.className='btn-primary';button.textContent='Incorporar solo estas cantidades';button.onclick=()=>{
+      try{const actuales=loadEntregas();if(!iguales(actuales.find(e=>e.id===ent.id),ent))throw Error('El histórico ha cambiado. Vuelve a abrirlo.');const filas=campos.map(c=>({id:c.id,cantidad:c.input.value.trim()===''?NaN:Number(c.input.value)}));saveEntregas(recuperarPendienteHistorico(actuales,ent.id,filas,uid(),new Date().toISOString()));filtroEntregas='activas';renderEntregas();toast('Pendientes incorporados sin inventar recibidas anteriores');}catch(error){toast(error.message);}
+    };details.appendChild(button);panel.appendChild(details);
+  }
+  const recogida=document.createElement('details'),title=document.createElement('summary');title.textContent='Registrar recogida del histórico';recogida.appendChild(title);
+  const nota=document.createElement('p');nota.textContent='Solo para género antiguo sin incorporar al seguimiento. No descuenta unidades de los pedidos nuevos ni de lo recuperado.';recogida.appendChild(nota);
+  const select=document.createElement('select');select.setAttribute('aria-label','Talla del histórico');r.lineas.forEach(l=>{const opt=document.createElement('option');opt.value=l.id;opt.textContent=l.talla+(l.tipo?' · '+l.tipo:'');select.appendChild(opt);});recogida.appendChild(select);
+  const label=document.createElement('label');label.textContent='Unidades recogidas del histórico';const cant=document.createElement('input');cant.type='number';cant.min='1';cant.step='1';label.appendChild(cant);recogida.appendChild(label);
+  const btn=document.createElement('button');btn.className='btn-primary';btn.textContent='Guardar solo en el histórico';btn.onclick=()=>{
+    try{saveEntregas(anotarRecogidaHistorica(loadEntregas(),ent.id,select.value,Number(cant.value),uid(),new Date().toISOString()));renderEntregas();toast('Recogida histórica anotada. No afecta a pedidos nuevos.');}catch(error){toast(error.message);}
+  };recogida.appendChild(btn);panel.appendChild(recogida);
+  (ent.recogidasHistoricas||[]).forEach(registro=>{const line=r.lineas.find(l=>l.id===registro.lineaId);const fila=document.createElement('p');fila.textContent=fechaLegible(registro.fecha.slice(0,10))+' · '+(line?line.talla:'')+' · '+registro.cantidad+' uds históricas';const quitar=document.createElement('button');quitar.className='btn-secondary';quitar.textContent='Anular anotación';quitar.onclick=()=>{if(!confirm('Anular esta recogida histórica?'))return;const actuales=loadEntregas(),e=actuales.find(x=>x.id===ent.id);if(!e)return;e.recogidasHistoricas=(e.recogidasHistoricas||[]).filter(x=>x.id!==registro.id);saveEntregas(actuales);renderEntregas();};fila.appendChild(quitar);panel.appendChild(fila);});
+  return panel;
+}
+
 function renderPanelRecogidas(){
   const el=document.getElementById('ent-recogidas-panel'),tabs=document.getElementById('ent-tabs');if(!el||!tabs)return;
   el.innerHTML='';tabs.innerHTML='';const entregas=loadEntregas();
-  [['activas','Activas'],['completadas','Completadas'],['pendientes','Pendientes']].forEach(([key,label])=>{
+  [['activas','Activas'],['completadas','Completadas'],['pendientes','Pendientes'],['historico','Histórico']].forEach(([key,label])=>{
     const b=document.createElement('button');b.className='filtro-btn'+(filtroEntregas===key?' activo':'');b.textContent=label+' ('+entregas.filter(e=>resumenRecepcion(e).estado===key).length+')';b.setAttribute('aria-pressed',String(filtroEntregas===key));b.onclick=()=>{filtroEntregas=key;renderEntregas();};tabs.appendChild(b);
   });
-  const historicas=entregas.filter(e=>resumenRecepcion(e).historica).length;
+  const historicas=entregas.filter(e=>resumenRecepcion(e).historica&&!resumenRecepcion(e).archivada).length;
   if(historicas){const aviso=document.createElement('p');aviso.textContent=historicas+' entregas antiguas completadas sin cantidades recibidas. Revísalas en Completadas; no se incluyen en el total pendiente.';el.appendChild(aviso);}
+  el.appendChild(panelInicioSeguimiento(entregas));
   const grupos=gruposRecogida(entregas);
   const totals=new Map();grupos.forEach(g=>totals.set(g.conf,(totals.get(g.conf)||0)+g.pendientes));
   const p=document.createElement('p');p.textContent=totals.size?[...totals].map(([conf,n])=>conf+': '+n+' uds por recibir').join(' · '):'No hay unidades pendientes de recibir.';el.appendChild(p);
@@ -4128,22 +4211,24 @@ function renderEntregas() {
     const recepcion=resumenRecepcion(ent);
     const item = document.createElement('div');
     item.className = 'entrega-item';
-    item.onclick = (function(e){ return function(){ openFormEntrega(e); }; })(ent);
+    item.onclick = (function(e){ return function(){ if(!resumenRecepcion(e).archivada)openFormEntrega(e); }; })(ent);
     const header = document.createElement('div');
     header.className = 'entrega-header';
     const conf = document.createElement('div');
     conf.className = 'entrega-conf';
     conf.textContent = ent.tela || 'Entrega';
     const confeccion=document.createElement('span');confeccion.className='entrega-destino';confeccion.textContent=ent.conf||'Sin confección';conf.appendChild(confeccion);
-    if(ent.origenCorte && ent.origenCorte.pedidoId){
+    const referenciaPedido=ent.origenCorte||(ent.referenciaHistorica&&ent.referenciaHistorica.origenCorte);
+    if(referenciaPedido && referenciaPedido.pedidoId){
       const tagOrigen = document.createElement('span');
       tagOrigen.className='entrega-origen';
-      tagOrigen.textContent = ent.origenCorte.cliente+(ent.origenCorte.numeroPedido?' #'+ent.origenCorte.numeroPedido:'');
+      tagOrigen.textContent = referenciaPedido.cliente+(referenciaPedido.numeroPedido?' #'+referenciaPedido.numeroPedido:'');
       conf.appendChild(tagOrigen);
     }
     const chip = document.createElement('div');
     chip.className = 'entrega-chip estado-chip';
-    if (recepcion.estado === 'activas') { chip.className += ' estado-proceso'; chip.textContent = 'En proceso'; }
+    if (recepcion.archivada) { chip.textContent='Sin revisar'; }
+    else if (recepcion.estado === 'activas') { chip.className += ' estado-proceso'; chip.textContent = 'En proceso'; }
     else if (recepcion.estado === 'completadas') { chip.className += ' estado-completado'; chip.textContent = 'Completado'; }
     else { chip.className += ' estado-pendiente'; chip.textContent = 'Pendiente'; }
     header.appendChild(conf);
@@ -4169,7 +4254,7 @@ function renderEntregas() {
     meta.textContent = metaTxt;
     if(metaTxt)item.appendChild(meta);
     const total=document.createElement('div');total.className='pedido-unidades';
-    total.textContent=(ent.lineas||[]).reduce((n,l)=>n+(Number(l.uds)||0),0)+' uds en esta entrega';item.appendChild(total);
+    total.textContent=(ent.lineas||[]).reduce((n,l)=>n+(Number(l.uds)||0),0)+(ent.referenciaHistorica?' uds pendientes al iniciar':' uds en esta entrega');item.appendChild(total);
     if (ent.lineas && ent.lineas.length) {
       const tallas = document.createElement('div');
       tallas.style.cssText = 'font-size:13px;color:var(--txt2);margin-top:2px';
@@ -4177,7 +4262,7 @@ function renderEntregas() {
       item.appendChild(tallas);
     }
     const balance=document.createElement('p');balance.className='entrega-balance';
-    balance.textContent=recepcion.historica?'Completada anteriormente · recibidas sin registrar':recepcion.recibidas+' recibidas · '+recepcion.pendientes+' pendientes'+(recepcion.saldo?' · '+recepcion.saldo+' de saldo':'');item.appendChild(balance);
+    balance.textContent=recepcion.archivada?'Fuera del seguimiento actual':recepcion.historica?'Completada anteriormente · recibidas sin registrar':recepcion.recibidas+' recibidas · '+recepcion.pendientes+' pendientes'+(recepcion.saldo?' · '+recepcion.saldo+' de saldo':'');item.appendChild(balance);
     const lineasRecibidas=document.createElement('div');lineasRecibidas.className='entrega-meta';
     if(!recepcion.historica)lineasRecibidas.textContent=recepcion.lineas.map(l=>l.talla+(l.tipo?' '+l.tipo:'')+': '+l.recibidas+' recibidas / '+l.enviadas+' enviadas'+(l.saldo?' · saldo '+l.saldo+' ('+l.motivo+')':'')).join(' · ');
     item.appendChild(lineasRecibidas);item.appendChild(formularioRecepcion(ent));
@@ -4185,6 +4270,7 @@ function renderEntregas() {
   });
 }
 function openFormEntrega(ent) {
+  if(ent&&resumenRecepcion(ent).archivada){filtroEntregas='historico';go('s-entregas');return;}
   entEditando = ent || null;
   const titulo = document.getElementById('entrega-form-titulo');
   if (titulo) titulo.textContent = ent ? 'Editar entrega' : 'Nueva entrega';
@@ -4232,6 +4318,9 @@ function guardarEntrega() {
     tela: tela,
     estado: entEditando ? entEditando.estado : 'proceso',
     recepcion: entEditando ? (entEditando.recepcion||null) : {version:1,lineas:[]},
+    referenciaHistorica:entEditando?entEditando.referenciaHistorica||null:null,
+    seguimiento:entEditando?entEditando.seguimiento||null:null,
+    recogidasHistoricas:entEditando?entEditando.recogidasHistoricas||[]:[],
     fentrega: document.getElementById('ent-fentrega').value,
     frecogida: document.getElementById('ent-frecogida').value,
     lineas: entLineas.filter(function(l){ return l.talla || l.uds; }),
@@ -4241,6 +4330,7 @@ function guardarEntrega() {
     origenCorte: entEditando ? (entEditando.origenCorte||null) : null
   };
   if(!ent.lineas.length||ent.lineas.some(l=>!String(l.talla||'').trim()||!Number.isSafeInteger(Number(l.uds))||Number(l.uds)<=0)){toast('Indica talla y unidades enteras en cada línea.');return;}
+  if(entEditando&&entEditando.referenciaHistorica&&(ent.conf!==entEditando.conf||ent.tela!==entEditando.tela||!iguales(ent.lineas,entEditando.lineas))){toast('La cantidad pendiente inicial queda fija. Corrige recibidas o cierra saldos para ajustar su seguimiento.');return;}
   if(entEditando&&entEditando.recepcion){
     const anterior=resumenRecepcion(entEditando),nuevo=resumenRecepcion(ent);
     if(anterior.lineas.some(l=>l.recibidas+l.saldo>0&&((ent.conf!==entEditando.conf||ent.tela!==entEditando.tela)||!nuevo.lineas.some(n=>n.id===l.id&&n.enviadas>=l.recibidas+l.saldo)))){toast('Corrige primero las recogidas o saldos de las líneas que quieres cambiar.');return;}
@@ -4261,6 +4351,7 @@ function guardarEntrega() {
 }
 function eliminarEntrega() {
   if(!entEditando)return;
+  if(entEditando.referenciaHistorica||entEditando.seguimiento&&entEditando.seguimiento.archivada){toast('Este registro conserva el histórico. Puedes cerrar sus saldos, pero no eliminarlo.');return;}
   const actual=loadEntregas().find(e=>e.id===entEditando.id);
   if(!iguales(actual,entEditando)){toast('La entrega ha cambiado. Vuelve a abrirla antes de eliminar.');return;}
   const balance=resumenRecepcion(entEditando);

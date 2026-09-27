@@ -28,3 +28,13 @@ Inicio con fecha e iconos uniformes. Tarjetas de pedidos con unidades pendientes
 - Las entregas antiguas completadas conservan su estado, pero no se inventan sus recibidas. Se muestran con aviso y no se incluyen en el pendiente de fabrica hasta que se revisen.
 - Se bloquean cambios de tela/talla o reducciones que invaliden recibidas o saldos. Para eliminar una entrega con recogidas hay que corregirlas primero.
 - Pruebas adicionales: node tests/recepciones.cjs (sin datos reales).
+
+## Empezar desde hoy
+
+En Entregas, desplegar Empezar seguimiento desde hoy, revisar la lista y confirmar. Hasta esa confirmacion no se archiva ningun dato. Guarda una copia previa de recuperacion y ofrece Deshacer mientras no haya cambios posteriores.
+
+Las entregas existentes pasan a Historico sin revisar mediante seguimiento.archivada; conservan cantidades y estado anterior, pero quedan fuera de los totales y del reparto de recogidas. No equivale a completarlas.
+
+Recuperar pendientes conocidos crea un registro de apertura etiquetado Pendiente al iniciar, ligado al historico con referenciaHistorica. No lleva origenCorte para no duplicar lo enviado desde Corte. La cantidad inicial queda fija y el resto se gestiona con recibidas/saldos. Cada entrada historica puede recuperarse una vez; el identificador es estable para evitar duplicados entre dispositivos.
+
+Las recogidas historicas se anotan por separado y pueden anularse. No descuentan pedidos activos y no pueden consumir unidades recuperadas para seguimiento. Los nuevos metadatos quedan incluidos en JSON y sincronizacion.
