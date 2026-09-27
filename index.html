@@ -3922,12 +3922,12 @@ function renderEntregas() {
     return;
   }
   el.innerHTML = '';
-  entregas.sort((a,b)=>(a.conf||'').localeCompare(b.conf||'')||String(b.creado||'').localeCompare(String(a.creado||'')));
+  entregas.sort((a,b)=>String(a.fentrega||'9999-12-31').localeCompare(String(b.fentrega||'9999-12-31'))||String(b.creado||'').localeCompare(String(a.creado||'')));
   let grupoActual=null;
   entregas.forEach(function(ent) {
-    if(grupoActual!==ent.conf){
-      grupoActual=ent.conf;
-      const grupo=document.createElement('h2');grupo.className='entrega-grupo';grupo.textContent=ent.conf||'Sin confeccion';el.appendChild(grupo);
+    if(grupoActual!==(ent.fentrega||'')){
+      grupoActual=ent.fentrega||'';
+      const grupo=document.createElement('h2');grupo.className='entrega-grupo';grupo.textContent=ent.fentrega?ent.fentrega.split('-').reverse().join('/'):'Sin fecha de entrega';el.appendChild(grupo);
     }
     const item = document.createElement('div');
     item.className = 'entrega-item';
