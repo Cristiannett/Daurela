@@ -11,7 +11,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiIHJ4PSIyMzAiIGZpbGw9IiMwYTBhMGEiLz48dGV4dCB4PSI1MTIiIHk9IjcyMCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSBOZXVlLEhlbHZldGljYSxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjY4MCIgZm9udC13ZWlnaHQ9IjgwMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMjAiPkQ8L3RleHQ+PC9zdmc+">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiIHJ4PSIyMzAiIGZpbGw9IiMwYTBhMGEiLz48dGV4dCB4PSI1MTIiIHk9IjcyMCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSBOZXVlLEhlbHZldGljYSxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjY4MCIgZm9udC13ZWlnaHQ9IjgwMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMjAiPkQ8L3RleHQ+PC9zdmc+">
 <meta name="apple-mobile-web-app-title" content="Daurela">
-<title><span class="app-name">Daurela</span></title>
+<title>Daurela</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 :root{
@@ -327,6 +327,39 @@ body.font-xl{font-size:22px}
 .corte-hoja-anadir{border:0;border-radius:10px;background:var(--txt);color:var(--bg);font:inherit;font-size:14px;font-weight:600;padding:10px;cursor:pointer}
 .corte-hoja-completar{grid-column:1/-1;justify-self:end;border:0;background:none;color:var(--txt2);font:inherit;font-size:12px;padding:6px 0;cursor:pointer}
 @media(max-width:360px){.corte-hoja-cifras{gap:8px}.corte-hoja-cifra>strong{font-size:25px}.corte-hoja-cifra.talla>strong{font-size:21px}}
+/* Acabado visual de inicio, pedidos y entregas */
+:root{--estado-pendiente:#ffb347;--estado-proceso:#64b5ff;--estado-completado:#65d897}
+.home-date{display:block;font-size:12px;font-weight:400;letter-spacing:0;color:var(--txt2);margin-top:4px;white-space:normal}
+#s-cli>.topbar{padding-top:20px;padding-bottom:20px;align-items:center}
+#s-cli .topbar h1{font-size:25px;line-height:1.25}
+#s-cli .home-grid{gap:24px 12px;padding:18px 20px 100px;max-width:540px;margin:auto}
+#s-cli .home-btn{gap:10px;min-width:0;min-height:100px}
+#s-cli .home-icon{width:68px;height:68px;border-radius:20px;box-shadow:none}
+#s-cli .home-icon svg{width:29px;height:29px}
+#s-cli .home-btn>span:not(.badge){font-size:13px;color:var(--txt);font-weight:500}
+#s-cli #weather-widget{border:0!important;border-radius:18px!important}
+#lst-corte .corte-pedido-card{margin:12px 16px;padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--bg2);align-items:center;gap:10px}
+#lst-corte .corte-pedido-card .li-name{font-size:18px;white-space:normal;overflow-wrap:anywhere;letter-spacing:-.3px}
+#lst-corte .corte-pedido-card .li-sub{margin-top:5px;font-size:12px}
+#lst-corte .corte-pedido-card .pedido-unidades{font-size:23px;margin:17px 0 12px;font-variant-numeric:tabular-nums}
+.corte-pedido-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--txt2)}
+.estado-chip{display:inline-block;padding:5px 9px;border-radius:7px;font-size:11px;font-weight:600;line-height:1.4;letter-spacing:0;text-transform:none;overflow-wrap:anywhere;max-width:100%}
+.estado-pendiente{color:var(--estado-pendiente);background:rgba(255,159,10,.12)}
+.estado-proceso{color:var(--estado-proceso);background:rgba(10,132,255,.12)}
+.estado-completado{color:var(--estado-completado);background:rgba(48,209,88,.12)}
+.corte-hoja-cabecera>.estado-chip{max-width:42%;flex-shrink:0}
+.corte-hoja-cifra.cortadas>strong{color:var(--estado-completado)}
+.corte-hoja-progreso>span{background:var(--estado-completado)}
+.entrega-grupo{padding:24px 18px 10px;font-size:14px;font-weight:600;color:var(--txt2);text-transform:none}
+.entrega-item{margin:0 16px 12px;padding:17px;border:1px solid var(--border);border-radius:16px;background:var(--bg2)}
+.entrega-item:active{background:var(--bg3)}
+.entrega-header{align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.entrega-conf{min-width:120px;overflow-wrap:anywhere;font-size:18px}
+.entrega-destino{display:block;font-size:13px;font-weight:400;color:var(--txt2);margin-top:3px}
+.entrega-origen{display:block;font-size:12px;font-weight:500;color:var(--txt2);margin-top:7px}
+.entrega-item .pedido-unidades{font-size:21px;font-variant-numeric:tabular-nums;margin:12px 0 7px}
+.entrega-meta{margin-top:8px;font-size:12px}
+@media(max-width:360px){#s-cli .home-grid{gap:20px 8px;padding-left:14px;padding-right:14px}#s-cli .home-icon{width:62px;height:62px}#lst-corte .corte-pedido-card,.entrega-item{margin-left:12px;margin-right:12px;padding:15px}}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -394,7 +427,7 @@ onAuthStateChanged(auth, function(user) {
 <!-- CLIENTES -->
 <div id="s-cli" class="screen active">
   <div class="topbar" style="border-bottom:none">
-    <h1><span class="app-name" id="logo-daurela" oncontextmenu="return false">Daurela</span></h1>
+    <h1><span class="app-name" id="logo-daurela" oncontextmenu="return false">Daurela</span><span id="home-date" class="home-date"></span></h1>
     <span id="auth-status" style="font-size:12px;color:var(--txt3);display:none;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
     <button class="btn-icon" id="auth-btn" onclick="loginGoogle()" aria-label="Cuenta Google">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -1310,6 +1343,18 @@ function setFiltroCorte(f){
   renderCorte();
 }
 
+function fechaLegible(valor){
+  if(!valor)return 'Sin fecha';
+  const partes=String(valor).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!partes)return String(valor);
+  const anio=Number(partes[1]),mes=Number(partes[2]),dia=Number(partes[3]);
+  const fecha=new Date(anio,mes-1,dia,12);
+  if(fecha.getFullYear()!==anio||fecha.getMonth()!==mes-1||fecha.getDate()!==dia)return String(valor);
+  const opciones={day:'numeric',month:'long'};
+  if(anio!==new Date().getFullYear())opciones.year='numeric';
+  return fecha.toLocaleDateString('es-ES',opciones);
+}
+
 function renderCorte(){
   const el = document.getElementById('lst-corte');
   if(!el) return;
@@ -1330,7 +1375,9 @@ function renderCorte(){
     listaFiltrada.forEach(function(p){
       const pendientes = p.items.filter(function(i){ return !corteLineaCompleta(i); }).length;
       const item = document.createElement('div');
-      item.className='list-item';
+      item.className='list-item corte-pedido-card';
+      item.setAttribute('role','button');item.tabIndex=0;
+      item.onkeydown=function(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();item.click();}};
       item.onclick=(function(id){ return function(){ abrirPedidoCorte(id); }; })(p.id);
       const info = document.createElement('div');
       info.className='li-info';
@@ -1339,23 +1386,24 @@ function renderCorte(){
       nombre.textContent = p.numeroPedido?'Pedido #'+p.numeroPedido:p.cliente;
       const sub = document.createElement('div');
       sub.className='li-sub';
-      sub.textContent = p.cliente+' - '+p.fecha+' - '+pendientes+' lineas pendientes';
+      sub.textContent = p.cliente+' · '+fechaLegible(p.fecha);
       const unidadesPendientes=p.items.reduce((n,i)=>n+Math.max(0,Number(i.unidades)-(Number(i.cortadas)||0)),0);
-      const contador=document.createElement('div');contador.className='pedido-unidades';contador.textContent=unidadesPendientes+' uds por cortar';
+      const contador=document.createElement('div');contador.className='pedido-unidades';contador.textContent=pendientes?unidadesPendientes+' uds por cortar':'Corte terminado';
       info.appendChild(nombre);
       info.appendChild(sub);
       info.appendChild(contador);
+      const estadoPedido=document.createElement('span');
+      const enCurso=p.items.some(i=>(Number(i.cortadas)||0)>0);
+      estadoPedido.className='estado-chip '+(!pendientes?'estado-completado':enCurso?'estado-proceso':'estado-pendiente');
+      estadoPedido.textContent=!pendientes?'Completado':enCurso?'En corte':'Pendiente';
+      const detallePedido=document.createElement('div');detallePedido.className='corte-pedido-meta';
+      const lineas=document.createElement('span');lineas.textContent=pendientes?pendientes+' líneas pendientes':p.items.length+' líneas terminadas';
+      detallePedido.appendChild(estadoPedido);detallePedido.appendChild(lineas);info.appendChild(detallePedido);
       const chevron = document.createElement('div');
       chevron.className='chevron';
       chevron.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg>';
       item.appendChild(info);
       item.appendChild(chevron);
-      if(pendientes===0){
-        const badge = document.createElement('span');
-        badge.style.cssText='font-size:11px;color:#30d158;font-weight:600;margin-right:8px';
-        badge.textContent='Completo';
-        item.insertBefore(badge, chevron);
-      }
       el.appendChild(item);
     });
     return;
@@ -1602,8 +1650,8 @@ function renderCorteItemRow(item){
     const subtitulo=document.createElement('p');subtitulo.className='corte-hoja-sub';
     subtitulo.textContent=[item.tipo,confeccionDeSerie(item.serie)].filter(Boolean).join(' · ');
     titleWrap.appendChild(txt);if(subtitulo.textContent)titleWrap.appendChild(subtitulo);
-    const estado=document.createElement('span');estado.className='corte-hoja-estado'+(completo?' terminado':item.motivo?' bloqueado':'');
-    estado.textContent=completo?'Terminado':item.motivo||'En corte';
+    const estado=document.createElement('span');estado.className='estado-chip '+(completo?'estado-completado':item.motivo||!cortadas?'estado-pendiente':'estado-proceso');
+    estado.textContent=completo?'Terminado':item.motivo||(cortadas?'En corte':'Pendiente');
     top.appendChild(titleWrap);top.appendChild(estado);row.appendChild(top);
     const stats=document.createElement('div');stats.className='corte-hoja-cifras';
     [['Talla',item.tamano||'—','talla'],['Cortadas · uds',cortadas,'cortadas'],['Faltan · uds',restan,'faltan']].forEach(function(d){
@@ -1993,6 +2041,8 @@ function renderSearch(){
 
 // ── CLIENTES ────────────────────────────────────────────
 function renderCli(){
+  const fechaInicio=document.getElementById('home-date');
+  if(fechaInicio)fechaInicio.textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
   cliPage=1;
   const q=(document.getElementById('q-cli').value||'').toLowerCase();
   let list=db.clientes.filter(c=>c.nombre.toLowerCase().includes(q));
@@ -3930,7 +3980,7 @@ function renderEntregas() {
   entregas.forEach(function(ent) {
     if(grupoActual!==(ent.fentrega||'')){
       grupoActual=ent.fentrega||'';
-      const grupo=document.createElement('h2');grupo.className='entrega-grupo';grupo.textContent=ent.fentrega?ent.fentrega.split('-').reverse().join('/'):'Sin fecha de entrega';el.appendChild(grupo);
+      const grupo=document.createElement('h2');grupo.className='entrega-grupo';grupo.textContent=ent.fentrega?fechaLegible(ent.fentrega):'Sin fecha de entrega';el.appendChild(grupo);
     }
     const item = document.createElement('div');
     item.className = 'entrega-item';
@@ -3939,18 +3989,19 @@ function renderEntregas() {
     header.className = 'entrega-header';
     const conf = document.createElement('div');
     conf.className = 'entrega-conf';
-    conf.textContent = (ent.conf || 'Sin nombre') + (ent.tela ? ' - ' + ent.tela : '');
+    conf.textContent = ent.tela || 'Entrega';
+    const confeccion=document.createElement('span');confeccion.className='entrega-destino';confeccion.textContent=ent.conf||'Sin confección';conf.appendChild(confeccion);
     if(ent.origenCorte && ent.origenCorte.pedidoId){
       const tagOrigen = document.createElement('span');
-      tagOrigen.style.cssText='display:block;width:fit-content;margin-top:6px;font-size:13px;background:rgba(10,132,255,0.15);color:#0a84ff;padding:2px 7px;border-radius:6px;margin-left:6px;font-weight:600';
+      tagOrigen.className='entrega-origen';
       tagOrigen.textContent = ent.origenCorte.cliente+(ent.origenCorte.numeroPedido?' #'+ent.origenCorte.numeroPedido:'');
       conf.appendChild(tagOrigen);
     }
     const chip = document.createElement('div');
-    chip.className = 'entrega-chip';
-    if (ent.estado === 'proceso') { chip.className += ' chip-proceso'; chip.textContent = 'En proceso'; }
-    else if (ent.estado === 'completado') { chip.className += ' chip-completado'; chip.textContent = 'Completado'; }
-    else { chip.className += ' chip-pendiente'; chip.textContent = 'Pendiente'; }
+    chip.className = 'entrega-chip estado-chip';
+    if (ent.estado === 'proceso') { chip.className += ' estado-proceso'; chip.textContent = 'En proceso'; }
+    else if (ent.estado === 'completado') { chip.className += ' estado-completado'; chip.textContent = 'Completado'; }
+    else { chip.className += ' estado-pendiente'; chip.textContent = 'Pendiente'; }
     header.appendChild(conf);
     header.appendChild(chip);
     item.appendChild(header);
@@ -3969,11 +4020,10 @@ function renderEntregas() {
     const meta = document.createElement('div');
     meta.className = 'entrega-meta';
     let metaTxt = '';
-    if (ent.fentrega) metaTxt += 'Entrega: ' + ent.fentrega;
-    if (ent.frecogida) metaTxt += (metaTxt ? '  ·  ' : '') + 'Recogida: ' + ent.frecogida;
+    if (ent.frecogida) metaTxt += (metaTxt ? '  ·  ' : '') + 'Recogida: ' + fechaLegible(ent.frecogida);
     if (ent.cantidad) metaTxt += (metaTxt ? '  ·  ' : '') + ent.cantidad + ' uds';
     meta.textContent = metaTxt;
-    item.appendChild(meta);
+    if(metaTxt)item.appendChild(meta);
     const total=document.createElement('div');total.className='pedido-unidades';
     total.textContent=(ent.lineas||[]).reduce((n,l)=>n+(Number(l.uds)||0),0)+' uds en esta entrega';item.appendChild(total);
     if (ent.lineas && ent.lineas.length) {

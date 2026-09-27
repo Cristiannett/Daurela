@@ -14,3 +14,7 @@
 Ejecutar: node tests/workflow.cjs
 
 Pruebas con almacenamiento, DOM y Firestore simulados, sin acceso a datos reales. Cubren sincronizacion, conflictos, desconexion, restauracion, categorias, cantidades parciales y deshacer. No sustituyen una prueba visual en movil ni una integracion con Firebase desplegado.
+
+## Acabado visual
+
+Inicio con fecha e iconos uniformes. Tarjetas de pedidos con unidades pendientes y estado. Entregas con fechas legibles y tarjetas separando tela, confeccion y referencia. Colores compartidos: naranja pendiente, azul en proceso y verde completado. El orden sigue siendo de mas reciente a mas antiguo, sin fecha al final.
