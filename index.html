@@ -3922,7 +3922,7 @@ function renderEntregas() {
     return;
   }
   el.innerHTML = '';
-  entregas.sort((a,b)=>String(a.fentrega||'9999-12-31').localeCompare(String(b.fentrega||'9999-12-31'))||String(b.creado||'').localeCompare(String(a.creado||'')));
+  entregas.sort((a,b)=>String(b.fentrega||'').localeCompare(String(a.fentrega||''))||String(b.creado||'').localeCompare(String(a.creado||'')));
   let grupoActual=null;
   entregas.forEach(function(ent) {
     if(grupoActual!==(ent.fentrega||'')){
