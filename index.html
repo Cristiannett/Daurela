@@ -360,6 +360,17 @@ body.font-xl{font-size:22px}
 .entrega-item .pedido-unidades{font-size:21px;font-variant-numeric:tabular-nums;margin:12px 0 7px}
 .entrega-meta{margin-top:8px;font-size:12px}
 @media(max-width:360px){#s-cli .home-grid{gap:20px 8px;padding-left:14px;padding-right:14px}#s-cli .home-icon{width:62px;height:62px}#lst-corte .corte-pedido-card,.entrega-item{margin-left:12px;margin-right:12px;padding:15px}}
+.recogidas-panel{margin:14px 16px;padding:14px;border-radius:14px;background:var(--bg2);color:var(--txt)}
+.recogidas-panel p,.recogida-editor p{font-size:12px;color:var(--txt2);line-height:1.5}
+.recogidas-panel summary,.recogida-editor summary{cursor:pointer;padding:12px 0;min-height:44px;font-size:14px;font-weight:600}
+.recogidas-panel label,.recogida-editor label{display:block;font-size:13px;margin:10px 0}
+.recogidas-panel input,.recogidas-panel select,.recogida-editor input:not([type=checkbox]){display:block;width:100%;min-width:0;min-height:44px;padding:10px;border:1px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--txt);font:inherit;font-size:16px;margin:6px 0}
+.recogida-editor{border-top:1px solid var(--border);margin-top:12px;cursor:default}
+.recogida-linea{padding:10px 0;border-bottom:1px solid var(--border)}
+.recogida-linea input[type=checkbox]{margin-right:8px;width:20px;height:20px;vertical-align:middle}
+.entrega-balance{font-size:14px;font-weight:600;line-height:1.5}
+#ent-tabs{flex-wrap:wrap}
+#lst-entregas{padding-bottom:130px}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -761,7 +772,7 @@ onAuthStateChanged(auth, function(user) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
     </button>
   </div>
-  <div id="lst-entregas"></div>
+  <div id="ent-recogidas-panel" class="recogidas-panel"></div><div id="ent-tabs" class="filtro-bar"></div><div id="lst-entregas"></div>
 </div>
 
 <div id="s-prep" class="screen">
@@ -796,7 +807,7 @@ onAuthStateChanged(auth, function(user) {
       </select>
     </div>
     <div id="ent-prep-info" style="display:none"></div>
-    <div class="fg"><label>Estado</label>
+    <div class="fg"><label>Estado automático según las recogidas</label>
       <select id="ent-estado" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
         <option value="pendiente">Pendiente</option>
         <option value="proceso">En proceso</option>
@@ -1554,8 +1565,8 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
     titulo.style.cssText='font-size:12px;font-weight:700;color:#0a84ff';
     titulo.textContent = 'Entrega · '+serie;
     const btnEstado = document.createElement('button');
-    const completado = ent.estado==='completado';
-    btnEstado.textContent = completado ? 'Entregado' : 'Marcar entregado';
+    const completado = resumenRecepcion(ent).estado==='completadas';
+    btnEstado.textContent = completado ? 'Ver completada' : 'Ver recogidas';
     btnEstado.style.cssText='padding:4px 10px;border-radius:20px;font-size:11px;font-family:inherit;cursor:pointer;border:1px solid '+(completado?'#30d158':'var(--border2)')+';background:'+(completado?'rgba(48,209,88,0.15)':'none')+';color:'+(completado?'#30d158':'var(--txt2)');
     btnEstado.onclick=(function(entId){ return function(){ toggleEstadoEntregaDesdeCorte(entId); }; })(ent.id);
     hdr.appendChild(titulo);
@@ -1728,7 +1739,7 @@ function enviarCorteAEntregas(pedidoId,confeccion,serie,cantidadesPorTamano){
   const info=corteRestantePorTamano(pedido,confeccion,serie,pedido.items.filter(i=>i.serie===serie));
   const keys=Object.keys(cantidadesPorTamano||{});
   if(info.ambiguo||!keys.length||keys.some(k=>!Number.isInteger(cantidadesPorTamano[k])||cantidadesPorTamano[k]<=0||cantidadesPorTamano[k]>(info.restante[k]||0))){toast('Las cantidades han cambiado. Revisa el pedido.');renderCorteDetalle();return;}
-  const entrega={id:uid(),conf:confeccion,tela:serie,estado:'pendiente',fentrega:new Date().toISOString().slice(0,10),frecogida:'',
+  const entrega={id:uid(),conf:confeccion,tela:serie,estado:'proceso',recepcion:{version:1,lineas:[]},fentrega:new Date().toISOString().slice(0,10),frecogida:'',
     lineas:keys.map(k=>{const [talla,tipo]=JSON.parse(k);return {talla,tipo,uds:String(cantidadesPorTamano[k])};}),
     materiales:loadPrep()[clavePrep(confeccion,serie)]||'',obs:'',creado:new Date().toISOString(),
     origenCorte:{pedidoId:pedido.id,serie,cliente:pedido.cliente,numeroPedido:pedido.numeroPedido||''}};
@@ -1741,12 +1752,8 @@ function enviarCorteAEntregas(pedidoId,confeccion,serie,cantidadesPorTamano){
 }
 
 function toggleEstadoEntregaDesdeCorte(entregaId){
-  const entregas = loadEntregas();
-  const ent = entregas.find(function(e){ return e.id===entregaId; });
-  if(!ent) return;
-  ent.estado = ent.estado==='completado' ? 'pendiente' : 'completado';
-  saveEntregas(entregas);
-  renderCorteDetalle();
+  const ent=loadEntregas().find(e=>e.id===entregaId);if(!ent)return;
+  filtroEntregas=resumenRecepcion(ent).estado;go('s-entregas');
 }
 
 function agregarCortadas(pedidoId,lineaId,cantidad){
@@ -2349,6 +2356,14 @@ function validarCopia(data){
   if(data.fichajes)for(const v of Object.values(data.fichajes))if(!objeto(v)||(v.norm!==undefined&&!numero(v.norm))||(v.extra!==undefined&&!numero(v.extra)))throw Error('Fichaje no valido');
   if(data.prep&&!Object.values(data.prep).every(texto))throw Error('Preparacion no valida');
   lista(data.inventarios,i=>texto(i.mesKey)&&objeto(i.zonas)&&Object.values(i.zonas).every(z=>objeto(z)&&Array.isArray(z.telas)&&z.telas.every(t=>objeto(t)&&texto(t.nombre)&&(texto(t.metros)||numero(t.metros)))),'inventarios');
+  (data.entregas||[]).forEach(e=>{
+    if(!e.recepcion)return;
+    if(e.recepcion.version!==1||!Array.isArray(e.recepcion.lineas))throw Error('Registro de recogidas no válido');
+    const ids=new Set();
+    e.recepcion.lineas.forEach(r=>{if(!r||typeof r.id!=='string'||ids.has(r.id)||!Number.isSafeInteger(r.recibidas)||r.recibidas<0||!Number.isSafeInteger(r.saldo)||r.saldo<0||typeof r.motivo!=='string')throw Error('Cantidad recibida o saldo no válido');ids.add(r.id);});
+    const lineas=resumenRecepcion(e).lineas;
+    if(e.recepcion.lineas.some(r=>r.recibidas+r.saldo>0&&!lineas.some(l=>l.id===r.id&&l.enviadas>=r.recibidas+r.saldo)))throw Error('Recogidas mayores que el género enviado');
+  });
   return normalizarRemoto(data);
 }
 function importar(e){
@@ -3966,12 +3981,140 @@ function renderEntLineas() {
   });
 }
 
+// Recogidas por cantidades: reparto FIFO entre entregas compatibles.
+let filtroEntregas='activas';
+function normalizarGrupo(v){return String(v||'').trim().toLocaleLowerCase('es');}
+function claveLineaRecogida(l){return JSON.stringify([normalizarGrupo(l.talla),normalizarGrupo(l.tipo)]);}
+function claveGrupoRecogida(e,l){return JSON.stringify([normalizarGrupo(e.conf),normalizarGrupo(e.tela),normalizarGrupo(l.talla),normalizarGrupo(l.tipo)]);}
+function resumenRecepcion(e){
+  const grupos=new Map();
+  (e.lineas||[]).forEach(l=>{const id=claveLineaRecogida(l);if(!grupos.has(id))grupos.set(id,{id,talla:l.talla,tipo:l.tipo||'',enviadas:0});grupos.get(id).enviadas+=Number(l.uds)||0;});
+  const lineas=[...grupos.values()].map(l=>{
+    const r=(e.recepcion&&e.recepcion.lineas||[]).find(x=>x.id===l.id)||{};
+    const recibidas=Number(r.recibidas)||0,saldo=Number(r.saldo)||0;
+    return {...l,recibidas,saldo,motivo:r.motivo||'',pendientes:Math.max(0,l.enviadas-recibidas-saldo)};
+  });
+  const historica=!e.recepcion&&e.estado==='completado';
+  const recibidas=lineas.reduce((n,l)=>n+l.recibidas,0),saldo=lineas.reduce((n,l)=>n+l.saldo,0),pendientes=lineas.reduce((n,l)=>n+l.pendientes,0);
+  const estado=historica?'completadas':lineas.length&&pendientes===0?'completadas':recibidas||saldo?'pendientes':'activas';
+  return {lineas,recibidas,saldo,pendientes,historica,estado};
+}
+function actualizarEstadoRecepcion(e){
+  const r=resumenRecepcion(e);e.estado=r.estado==='completadas'?'completado':r.estado==='pendientes'?'pendiente':'proceso';
+}
+function gruposRecogida(entregas){
+  const grupos=new Map();
+  entregas.forEach(e=>{const r=resumenRecepcion(e);if(r.historica)return;r.lineas.forEach(l=>{
+    if(l.pendientes<=0)return;
+    const key=claveGrupoRecogida(e,l);
+    if(!grupos.has(key))grupos.set(key,{key,conf:e.conf,tela:e.tela,talla:l.talla,tipo:l.tipo,pendientes:0});
+    grupos.get(key).pendientes+=l.pendientes;
+  });});
+  return [...grupos.values()].sort((a,b)=>[a.conf,a.tela,a.talla,a.tipo].join(' ').localeCompare([b.conf,b.tela,b.talla,b.tipo].join(' '),'es',{numeric:true}));
+}
+function repartirRecogida(entregas,key,cantidad,fecha){
+  if(!Number.isSafeInteger(cantidad)||cantidad<=0)throw Error('Introduce unidades enteras mayores que cero.');
+  const copia=JSON.parse(JSON.stringify(entregas));
+  const candidatos=[];
+  copia.forEach(e=>{const r=resumenRecepcion(e);if(r.historica)return;r.lineas.forEach(l=>{if(l.pendientes>0&&claveGrupoRecogida(e,l)===key)candidatos.push({e,l});});});
+  candidatos.sort((a,b)=>String(a.e.fentrega||a.e.creado||'9999').localeCompare(String(b.e.fentrega||b.e.creado||'9999'))||String(a.e.creado||'').localeCompare(String(b.e.creado||''))||String(a.e.id).localeCompare(String(b.e.id)));
+  if(cantidad>candidatos.reduce((n,x)=>n+x.l.pendientes,0))throw Error('La cantidad supera lo pendiente. Revisa el género seleccionado.');
+  let restante=cantidad;const asignaciones=[];
+  candidatos.forEach(({e,l})=>{
+    if(!restante)return;
+    const n=Math.min(restante,l.pendientes);restante-=n;
+    if(!e.recepcion)e.recepcion={version:1,lineas:[]};
+    let r=e.recepcion.lineas.find(x=>x.id===l.id);
+    if(!r){r={id:l.id,recibidas:0,saldo:0,motivo:''};e.recepcion.lineas.push(r);}
+    r.recibidas=(Number(r.recibidas)||0)+n;r.actualizado=fecha;e.frecogida=fecha.slice(0,10);actualizarEstadoRecepcion(e);
+    asignaciones.push({entregaId:e.id,numeroPedido:e.origenCorte&&e.origenCorte.numeroPedido||'',cantidad:n});
+  });
+  return {entregas:copia,asignaciones};
+}
+function registrarRecogida(key,cantidad){
+  try{
+    const antes=loadEntregas();const resultado=repartirRecogida(antes,key,cantidad,new Date().toISOString());
+    saveEntregas(resultado.entregas);
+    filtroEntregas=resultado.asignaciones.some(a=>resumenRecepcion(resultado.entregas.find(e=>e.id===a.entregaId)).estado==='pendientes')?'pendientes':'completadas';renderEntregas();
+    const resumen=resultado.asignaciones.map(a=>(a.numeroPedido?'#'+a.numeroPedido:'Entrega')+': '+a.cantidad+' uds').join(' · ');
+    ofrecerDeshacer('Recogida registrada. '+resumen,()=>{
+      const actuales=loadEntregas();const ids=new Set(resultado.asignaciones.map(a=>a.entregaId));
+      if([...ids].some(id=>!iguales(actuales.find(e=>e.id===id),resultado.entregas.find(e=>e.id===id)))){toast('Las entregas han cambiado. Corrige las recibidas desde su ficha.');return;}
+      saveEntregas(actuales.map(e=>ids.has(e.id)?antes.find(x=>x.id===e.id):e));renderEntregas();
+    });
+  }catch(error){toast(error.message);}
+}
+function corregirRecepcion(entrega,filas){
+  const actual=resumenRecepcion(entrega);
+  if(filas.length!==actual.lineas.length)throw Error('Las líneas han cambiado. Vuelve a abrir la entrega.');
+  const lineas=actual.lineas.map(l=>{
+    const f=filas.find(x=>x.id===l.id);
+    if(!f||!Number.isSafeInteger(f.recibidas)||f.recibidas<0||f.recibidas>l.enviadas)throw Error('Las recibidas deben estar entre 0 y '+l.enviadas+'.');
+    const saldo=f.cerrar?l.enviadas-f.recibidas:0;
+    if(saldo&&!String(f.motivo||'').trim())throw Error('Indica el motivo del saldo antes de cerrar.');
+    return {id:l.id,recibidas:f.recibidas,saldo,motivo:saldo?String(f.motivo).trim():'',actualizado:new Date().toISOString()};
+  });
+  const resultado={...entrega,recepcion:{version:1,lineas}};actualizarEstadoRecepcion(resultado);return resultado;
+}
+function formularioRecepcion(ent){
+  const detalle=document.createElement('details');detalle.className='recogida-editor';detalle.onclick=event=>event.stopPropagation();
+  const sum=document.createElement('summary');sum.textContent='Corregir recibidas / cerrar saldos';detalle.appendChild(sum);
+  const r=resumenRecepcion(ent);
+  const aviso=document.createElement('p');aviso.textContent=r.historica?'Entrega antigua: no hay cantidades recibidas registradas. Indica los totales reales; no se han deducido del estado anterior.':'Indica el total recibido hasta hoy de esta entrega, no solo la última recogida.';detalle.appendChild(aviso);
+  if(!r.historica&&r.pendientes>0){
+    const todo=document.createElement('button');todo.className='btn-secondary';todo.textContent='Recogido todo lo pendiente ('+r.pendientes+' uds)';
+    todo.onclick=()=>{
+      if(!confirm('Registrar como recibidas las '+r.pendientes+' unidades pendientes de esta entrega?'))return;
+      const entregas=loadEntregas(),idx=entregas.findIndex(e=>e.id===ent.id);
+      if(idx<0||!iguales(entregas[idx],ent)){toast('La entrega ha cambiado. Vuelve a abrirla.');return;}
+      const nueva=corregirRecepcion(ent,r.lineas.map(l=>({id:l.id,recibidas:l.enviadas-l.saldo,cerrar:l.saldo>0,motivo:l.motivo})));
+      nueva.frecogida=new Date().toISOString().slice(0,10);entregas[idx]=nueva;saveEntregas(entregas);filtroEntregas='completadas';renderEntregas();
+      ofrecerDeshacer('Entrega recibida por completo',()=>{const actuales=loadEntregas();const i=actuales.findIndex(e=>e.id===ent.id);if(i<0||!iguales(actuales[i],nueva)){toast('La entrega ha cambiado. Revisa las cantidades.');return;}actuales[i]=ent;saveEntregas(actuales);renderEntregas();});
+    };detalle.appendChild(todo);
+  }
+  const campos=[];
+  r.lineas.forEach(l=>{
+    const row=document.createElement('div');row.className='recogida-linea';
+    const label=document.createElement('label');label.textContent='Talla '+l.talla+(l.tipo?' · '+l.tipo:'')+' · '+l.enviadas+' enviadas';
+    const input=document.createElement('input');input.type='number';input.min='0';input.max=String(l.enviadas);input.step='1';input.value=String(l.recibidas);input.setAttribute('aria-label','Total recibido talla '+l.talla);label.appendChild(input);row.appendChild(label);
+    const cerrar=document.createElement('label');const check=document.createElement('input');check.type='checkbox';check.checked=l.saldo>0;cerrar.appendChild(check);const text=document.createElement('span');text.textContent='Cerrar la diferencia como saldo';cerrar.appendChild(text);row.appendChild(cerrar);
+    const motivo=document.createElement('input');motivo.placeholder='Motivo del saldo';motivo.value=l.motivo;motivo.setAttribute('aria-label','Motivo del saldo talla '+l.talla);row.appendChild(motivo);
+    campos.push({id:l.id,input,check,motivo});detalle.appendChild(row);
+  });
+  const save=document.createElement('button');save.className='btn-primary';save.textContent='Guardar recibidas';save.onclick=()=>{
+    try{
+      const entregas=loadEntregas(),idx=entregas.findIndex(e=>e.id===ent.id);
+      if(idx<0||!iguales(entregas[idx],ent))throw Error('La entrega ha cambiado. Ciérrala y vuelve a abrirla.');
+      const filas=campos.map(c=>({id:c.id,recibidas:c.input.value.trim()===''?NaN:Number(c.input.value),cerrar:c.check.checked,motivo:c.motivo.value}));
+      entregas[idx]=corregirRecepcion(ent,filas);saveEntregas(entregas);filtroEntregas=resumenRecepcion(entregas[idx]).estado;renderEntregas();toast('Recibidas actualizadas');
+    }catch(error){toast(error.message);}
+  };detalle.appendChild(save);return detalle;
+}
+function renderPanelRecogidas(){
+  const el=document.getElementById('ent-recogidas-panel'),tabs=document.getElementById('ent-tabs');if(!el||!tabs)return;
+  el.innerHTML='';tabs.innerHTML='';const entregas=loadEntregas();
+  [['activas','Activas'],['completadas','Completadas'],['pendientes','Pendientes']].forEach(([key,label])=>{
+    const b=document.createElement('button');b.className='filtro-btn'+(filtroEntregas===key?' activo':'');b.textContent=label+' ('+entregas.filter(e=>resumenRecepcion(e).estado===key).length+')';b.setAttribute('aria-pressed',String(filtroEntregas===key));b.onclick=()=>{filtroEntregas=key;renderEntregas();};tabs.appendChild(b);
+  });
+  const historicas=entregas.filter(e=>resumenRecepcion(e).historica).length;
+  if(historicas){const aviso=document.createElement('p');aviso.textContent=historicas+' entregas antiguas completadas sin cantidades recibidas. Revísalas en Completadas; no se incluyen en el total pendiente.';el.appendChild(aviso);}
+  const grupos=gruposRecogida(entregas);
+  const totals=new Map();grupos.forEach(g=>totals.set(g.conf,(totals.get(g.conf)||0)+g.pendientes));
+  const p=document.createElement('p');p.textContent=totals.size?[...totals].map(([conf,n])=>conf+': '+n+' uds por recibir').join(' · '):'No hay unidades pendientes de recibir.';el.appendChild(p);
+  const detalles=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Registrar recogida';detalles.appendChild(summary);
+  const label=document.createElement('label');label.textContent='Confección, tela, talla y categoría';const select=document.createElement('select');select.setAttribute('aria-label','Género recogido');
+  grupos.forEach(g=>{const opt=document.createElement('option');opt.value=g.key;opt.textContent=[g.conf,g.tela,g.talla,g.tipo||'Sin categoría'].join(' · ')+' — quedan '+g.pendientes+' uds';select.appendChild(opt);});label.appendChild(select);detalles.appendChild(label);
+  const inputLabel=document.createElement('label');inputLabel.textContent='Unidades recogidas';const input=document.createElement('input');input.type='number';input.min='1';input.step='1';input.setAttribute('inputmode','numeric');inputLabel.appendChild(input);detalles.appendChild(inputLabel);
+  const boton=document.createElement('button');boton.className='btn-primary';boton.textContent='Registrar y repartir entre las más antiguas';boton.disabled=!grupos.length;boton.onclick=()=>registrarRecogida(select.value,Number(input.value));detalles.appendChild(boton);
+  const nota=document.createElement('p');nota.textContent='Solo se reparten piezas de la misma confección, tela, talla y categoría. Los pedidos conservan su referencia.';detalles.appendChild(nota);el.appendChild(detalles);
+}
 function renderEntregas() {
+  renderPanelRecogidas();
   const el = document.getElementById('lst-entregas');
   if (!el) return;
-  const entregas = loadEntregas();
+  const entregas = loadEntregas().filter(e=>resumenRecepcion(e).estado===filtroEntregas);
   if (!entregas.length) {
-    el.innerHTML = '<div class="empty-state"><p>Sin entregas.<br>Pulsa + para crear la primera.</p></div>';
+    el.innerHTML = '<div class="empty-state"><p>No hay entregas en esta pestaña.</p></div>';
     return;
   }
   el.innerHTML = '';
@@ -3982,6 +4125,7 @@ function renderEntregas() {
       grupoActual=ent.fentrega||'';
       const grupo=document.createElement('h2');grupo.className='entrega-grupo';grupo.textContent=ent.fentrega?fechaLegible(ent.fentrega):'Sin fecha de entrega';el.appendChild(grupo);
     }
+    const recepcion=resumenRecepcion(ent);
     const item = document.createElement('div');
     item.className = 'entrega-item';
     item.onclick = (function(e){ return function(){ openFormEntrega(e); }; })(ent);
@@ -3999,8 +4143,8 @@ function renderEntregas() {
     }
     const chip = document.createElement('div');
     chip.className = 'entrega-chip estado-chip';
-    if (ent.estado === 'proceso') { chip.className += ' estado-proceso'; chip.textContent = 'En proceso'; }
-    else if (ent.estado === 'completado') { chip.className += ' estado-completado'; chip.textContent = 'Completado'; }
+    if (recepcion.estado === 'activas') { chip.className += ' estado-proceso'; chip.textContent = 'En proceso'; }
+    else if (recepcion.estado === 'completadas') { chip.className += ' estado-completado'; chip.textContent = 'Completado'; }
     else { chip.className += ' estado-pendiente'; chip.textContent = 'Pendiente'; }
     header.appendChild(conf);
     header.appendChild(chip);
@@ -4032,6 +4176,11 @@ function renderEntregas() {
       tallas.textContent = ent.lineas.map(function(l){ return l.talla + (l.uds ? ': ' + l.uds + ' uds' : '') + (l.tipo && tiposUnicos.length>1 ? ' ('+l.tipo+')' : ''); }).join('  ·  ');
       item.appendChild(tallas);
     }
+    const balance=document.createElement('p');balance.className='entrega-balance';
+    balance.textContent=recepcion.historica?'Completada anteriormente · recibidas sin registrar':recepcion.recibidas+' recibidas · '+recepcion.pendientes+' pendientes'+(recepcion.saldo?' · '+recepcion.saldo+' de saldo':'');item.appendChild(balance);
+    const lineasRecibidas=document.createElement('div');lineasRecibidas.className='entrega-meta';
+    if(!recepcion.historica)lineasRecibidas.textContent=recepcion.lineas.map(l=>l.talla+(l.tipo?' '+l.tipo:'')+': '+l.recibidas+' recibidas / '+l.enviadas+' enviadas'+(l.saldo?' · saldo '+l.saldo+' ('+l.motivo+')':'')).join(' · ');
+    item.appendChild(lineasRecibidas);item.appendChild(formularioRecepcion(ent));
     el.appendChild(item);
   });
 }
@@ -4056,7 +4205,10 @@ function openFormEntrega(ent) {
       selTela.value = telaGuardada;
     }
   }
-  document.getElementById('ent-estado').value = ent ? (ent.estado||'pendiente') : 'pendiente';
+  const estadoRecepcion=ent?resumenRecepcion(ent).estado:'activas';
+  document.getElementById('ent-estado').value=estadoRecepcion==='completadas'?'completado':estadoRecepcion==='pendientes'?'pendiente':'proceso';
+  document.getElementById('ent-estado').disabled=true;
+  document.getElementById('ent-estado').setAttribute('aria-label','Estado automático según las recogidas');
   document.getElementById('ent-fentrega').value = ent ? (ent.fentrega||'') : '';
   document.getElementById('ent-frecogida').value = ent ? (ent.frecogida||'') : '';
   entLineas = (ent && ent.lineas) ? JSON.parse(JSON.stringify(ent.lineas)) : [];
@@ -4078,7 +4230,8 @@ function guardarEntrega() {
     id: entEditando ? entEditando.id : uid(),
     conf: conf,
     tela: tela,
-    estado: document.getElementById('ent-estado').value,
+    estado: entEditando ? entEditando.estado : 'proceso',
+    recepcion: entEditando ? (entEditando.recepcion||null) : {version:1,lineas:[]},
     fentrega: document.getElementById('ent-fentrega').value,
     frecogida: document.getElementById('ent-frecogida').value,
     lineas: entLineas.filter(function(l){ return l.talla || l.uds; }),
@@ -4087,7 +4240,14 @@ function guardarEntrega() {
     creado: entEditando ? entEditando.creado : new Date().toISOString(),
     origenCorte: entEditando ? (entEditando.origenCorte||null) : null
   };
+  if(!ent.lineas.length||ent.lineas.some(l=>!String(l.talla||'').trim()||!Number.isSafeInteger(Number(l.uds))||Number(l.uds)<=0)){toast('Indica talla y unidades enteras en cada línea.');return;}
+  if(entEditando&&entEditando.recepcion){
+    const anterior=resumenRecepcion(entEditando),nuevo=resumenRecepcion(ent);
+    if(anterior.lineas.some(l=>l.recibidas+l.saldo>0&&((ent.conf!==entEditando.conf||ent.tela!==entEditando.tela)||!nuevo.lineas.some(n=>n.id===l.id&&n.enviadas>=l.recibidas+l.saldo)))){toast('Corrige primero las recogidas o saldos de las líneas que quieres cambiar.');return;}
+  }
+  if(ent.recepcion)actualizarEstadoRecepcion(ent);
   const entregas = loadEntregas();
+  if(entEditando&&!iguales(entregas.find(e=>e.id===entEditando.id),entEditando)){toast("La entrega ha cambiado. Vuelve a abrirla antes de editar.");return;}
   if (entEditando) {
     const idx = entregas.findIndex(function(e){ return e.id === entEditando.id; });
     if (idx !== -1) entregas[idx] = ent;
@@ -4100,7 +4260,12 @@ function guardarEntrega() {
   renderEntregas();
 }
 function eliminarEntrega() {
-  if (!entEditando || !confirm('Eliminar esta entrega?')) return;
+  if(!entEditando)return;
+  const actual=loadEntregas().find(e=>e.id===entEditando.id);
+  if(!iguales(actual,entEditando)){toast('La entrega ha cambiado. Vuelve a abrirla antes de eliminar.');return;}
+  const balance=resumenRecepcion(entEditando);
+  if(balance.recibidas||balance.saldo){toast('Corrige primero las recibidas y saldos a cero antes de eliminar la entrega.');return;}
+  if(!confirm('Eliminar esta entrega?'))return;
   saveEntregas(loadEntregas().filter(function(e){ return e.id !== entEditando.id; }));
   toast('Entrega eliminada');
   go('s-entregas');

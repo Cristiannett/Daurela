@@ -18,3 +18,13 @@ Pruebas con almacenamiento, DOM y Firestore simulados, sin acceso a datos reales
 ## Acabado visual
 
 Inicio con fecha e iconos uniformes. Tarjetas de pedidos con unidades pendientes y estado. Entregas con fechas legibles y tarjetas separando tela, confeccion y referencia. Colores compartidos: naranja pendiente, azul en proceso y verde completado. El orden sigue siendo de mas reciente a mas antiguo, sin fecha al final.
+
+## Recogidas parciales
+
+- Al enviar desde Corte se crea una entrega en proceso con recepcion version 1. El estado se calcula a partir de las cantidades recibidas y saldos: Activas sin recogidas, Pendientes parcialmente cubiertas, Completadas totalmente cubiertas.
+- Registrar recogida agrupa por confeccion, tela, talla y categoria (espacios extremos y mayusculas se normalizan). Reparte por fecha de envio ascendente, despues creacion e identificador. No mezcla categorias vacias con categorias conocidas. Es una asignacion contable, no una identificacion fisica del pedido.
+- Cada entrega guarda sus cantidades recibidas en recepcion.lineas identificadas por talla/categoria. El JSON y la sincronizacion incluyen este campo. No se modifican las cantidades enviadas.
+- Corregir recibidas permite cambiar el total acumulado por entrega y cerrar diferencias como saldo con motivo obligatorio. Al reabrir un saldo o reducir recibidas vuelve a quedar pendiente. Una correccion no redistribuye recogidas antiguas de otras entregas.
+- Las entregas antiguas completadas conservan su estado, pero no se inventan sus recibidas. Se muestran con aviso y no se incluyen en el pendiente de fabrica hasta que se revisen.
+- Se bloquean cambios de tela/talla o reducciones que invaliden recibidas o saldos. Para eliminar una entrega con recogidas hay que corregirlas primero.
+- Pruebas adicionales: node tests/recepciones.cjs (sin datos reales).

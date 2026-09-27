@@ -1,0 +1,29 @@
+// Tests only: synthetic data, no Firebase connection.
+const fs=require('node:fs'),Module=require('node:module'),assert=require('node:assert/strict'),path=require('node:path');
+const file=path.join(__dirname,'workflow.cjs');let source=fs.readFileSync(file,'utf8');source=source.slice(0,source.lastIndexOf('main().catch'))+';module.exports=fixture;';const mod=new Module(file);mod._compile(source,file);const f=mod.exports(),c=f.ctx;
+const make=(id,uds,fecha,talla='135',tipo='Protector',conf='Mamoud')=>({id,conf,tela:'Lisboa',estado:'proceso',fentrega:fecha,creado:fecha+'T12:00:00Z',lineas:[{talla,tipo,uds:String(uds)}],recepcion:{version:1,lineas:[]},origenCorte:{pedidoId:'p'+id,numeroPedido:id}});
+const key=e=>c.claveGrupoRecogida(e,e.lineas[0]);let checks=0;
+function test(label,fn){fn();checks++;console.log('OK '+label);}
+const a=make('45',300,'2026-09-01'),b=make('46',50,'2026-09-10');
+let rows=[b,a];const clone=JSON.stringify(rows);
+let r=c.repartirRecogida(rows,key(a),40,'2026-09-27T12:00:00Z');
+test('40 received against oldest shipment, 310 remain',()=>{assert.equal(c.resumenRecepcion(r.entregas.find(e=>e.id==='45')).recibidas,40);assert.equal(c.resumenRecepcion(r.entregas.find(e=>e.id==='45')).estado,'pendientes');assert.equal(c.gruposRecogida(r.entregas)[0].pendientes,310);assert.equal(JSON.stringify(rows),clone);});
+r=c.repartirRecogida(r.entregas,key(a),260,'2026-09-28T12:00:00Z');
+test('300 total completes 45, leaves 46 active',()=>{assert.equal(c.resumenRecepcion(r.entregas.find(e=>e.id==='45')).estado,'completadas');assert.equal(c.resumenRecepcion(r.entregas.find(e=>e.id==='46')).estado,'activas');assert.equal(c.gruposRecogida(r.entregas)[0].pendientes,50);});
+r=c.repartirRecogida(r.entregas,key(a),20,'2026-09-29T12:00:00Z');test('320 received leaves 30 pending on 46',()=>assert.equal(c.gruposRecogida(r.entregas)[0].pendientes,30));
+r=c.repartirRecogida(r.entregas,key(a),30,'2026-09-30T12:00:00Z');test('350 received completes both',()=>assert.equal(c.gruposRecogida(r.entregas).length,0));
+test('single pickup spans shipments',()=>{const result=c.repartirRecogida(rows,key(a),320,'2026-09-27');assert.deepEqual(Array.from(result.asignaciones,x=>x.cantidad),[300,20]);});
+test('different sizes, categories and factories are never mixed',()=>{const all=[a,make('s',40,'2026-08-01','150'),make('t',40,'2026-08-01','135','Funda'),make('c',40,'2026-08-01','135','Protector','Mercedes')];const result=c.repartirRecogida(all,key(a),20,'2026-09-27');assert.equal(result.asignaciones.length,1);assert.equal(result.asignaciones[0].entregaId,'45');});
+test('excess, negative, zero and fractional quantities rejected',()=>{for(const n of [351,-1,0,1.5])assert.throws(()=>c.repartirRecogida(rows,key(a),n,'2026-09-27'));});
+const hundred=make('100',100,'2026-09-01'),lineId=c.resumenRecepcion(hundred).lineas[0].id;
+const closed=c.corregirRecepcion(hundred,[{id:lineId,recibidas:98,cerrar:true,motivo:'2 de saldo'}]);
+test('close 98 of 100 preserves sent quantity and saldo',()=>{const x=c.resumenRecepcion(closed);assert.equal(x.estado,'completadas');assert.equal(x.recibidas,98);assert.equal(x.saldo,2);assert.equal(closed.lineas[0].uds,'100');});
+test('correcting receipt and reopening restores pending quantity',()=>{const x=c.resumenRecepcion(c.corregirRecepcion(closed,[{id:lineId,recibidas:95,cerrar:false,motivo:''}]));assert.equal(x.estado,'pendientes');assert.equal(x.pendientes,5);});
+test('saldo needs reason; overreceipt rejected',()=>{assert.throws(()=>c.corregirRecepcion(hundred,[{id:lineId,recibidas:98,cerrar:true,motivo:''}]));assert.throws(()=>c.corregirRecepcion(hundred,[{id:lineId,recibidas:101,cerrar:false,motivo:''}]));});
+test('legacy completed shipment is not invented as received',()=>{const old={...hundred,recepcion:undefined,estado:'completado'};assert.equal(c.resumenRecepcion(old).historica,true);assert.equal(c.resumenRecepcion(old).recibidas,0);assert.equal(c.gruposRecogida([old]).length,0);});
+test('multiple lines must all finish',()=>{const multi={...hundred,lineas:[...hundred.lineas,{talla:'150',tipo:'Protector',uds:'20'}]};const result=c.repartirRecogida([multi],key(hundred),100,'2026-09-27');assert.equal(c.resumenRecepcion(result.entregas[0]).estado,'pendientes');});
+test('empty category remains separate',()=>{const none=make('none',10,'2026-08-01','135','');const result=c.repartirRecogida([a,none],key(a),10,'2026-09-27');assert.equal(result.asignaciones[0].entregaId,'45');});
+test('receipt correction survives JSON backup',()=>{c.aplicarDatos({entregas:[closed]});const data={...c.datosTaller(),version:3};const restored=c.validarCopia(JSON.parse(JSON.stringify(data)));assert.equal(c.resumenRecepcion(restored.entregas[0]).saldo,2);});
+test('invalid receipt backup rejected',()=>{const data={...c.datosTaller(),version:3};data.entregas=JSON.parse(JSON.stringify([closed]));data.entregas[0].recepcion.lineas[0].recibidas=999;assert.throws(()=>c.validarCopia(data));});
+test('tab rendering and total update',()=>{c.aplicarDatos({entregas:[a,b]});c.renderEntregas();assert.match(f.els.get('ent-tabs').textContent,/Activas \(2\)/);assert.match(f.els.get('ent-recogidas-panel').textContent,/350 uds/);c.registrarRecogida(key(a),40);assert.match(f.els.get('ent-tabs').textContent,/Pendientes \(1\)/);assert.match(f.els.get('ent-recogidas-panel').textContent,/310 uds/);});
+console.log(checks+' reception checks passed.');
