@@ -1,4 +1,4 @@
-const CACHE = 'daurela-202608111027';
+const CACHE = 'daurela-20260927-workflow-v3';
 const ASSETS = ['/Daurela/'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

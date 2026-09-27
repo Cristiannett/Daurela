@@ -287,11 +287,27 @@ body.font-xl{font-size:22px}
 
 .ent-linea{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .ent-linea input{padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none}
+/* Controles de trabajo y entregas */
+.work-toolbar{position:sticky;top:0;z-index:5;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border)}
+.work-toolbar button{margin:0;min-height:44px}
+.work-toolbar button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.pedido-unidades{font-size:18px;font-weight:700;margin:8px 0;color:var(--txt)}
+.corte-terminadas{margin:16px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.corte-terminadas summary{padding:14px;cursor:pointer;color:var(--txt2);font-weight:600}
+.entrega-grupo{padding:14px 16px 6px;margin:0;font-size:17px;color:var(--txt)}
+.entrega-aviso{padding:12px;border:1px solid #ff9f0a;border-radius:10px;color:var(--txt);font-size:14px}
+#corte-detalle-body{padding-bottom:130px!important}
+#corte-detalle-body button{min-height:44px}
+#corte-detalle-body input{min-height:44px;min-width:0}
+#undo-panel{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:16px;right:16px;z-index:500;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border:1px solid var(--border2);border-radius:14px;background:var(--bg2);color:var(--txt);box-shadow:0 4px 24px #0005}
+#undo-panel[hidden]{display:none}
+#undo-panel button{padding:10px;border:0;border-radius:8px;background:var(--bg3);color:var(--txt);font:inherit;font-weight:700;min-height:44px}
+@media(max-width:400px){#corte-detalle-body button{padding-left:9px!important;padding-right:9px!important}.entrega-header{flex-wrap:wrap}}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 const firebaseConfig = {
   apiKey: "AIzaSyD6fFNWuxNGoJ0KCEBRLL7HDPWhkGeiJQU",
@@ -310,7 +326,7 @@ window._fireAuth = auth;
 window._fireDB = db_fire;
 window._fireProvider = provider;
 window._fireFunctions = functions_fire;
-window._fireFns = { signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot, httpsCallable };
+window._fireFns = { signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot, runTransaction, httpsCallable };
 onAuthStateChanged(auth, function(user) {
   if(user){
     window._fireUser = user;
@@ -321,6 +337,7 @@ onAuthStateChanged(auth, function(user) {
     window.initFirestore && window.initFirestore();
   } else {
     window._fireUser = null;
+    window.initFirestore && window.initFirestore();
     var btn = document.getElementById('auth-btn');
     if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
     var status = document.getElementById('auth-status');
@@ -597,36 +614,9 @@ onAuthStateChanged(auth, function(user) {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <span style="font-size:15px;font-weight:600">Exportar datos</span>
       </div>
-      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Descarga un <strong>.json</strong> con todos los datos o subelo automaticamente a GitHub.</p>
-      <button class="btn-primary" onclick="exportar()" style="margin-top:0">Descargar copia (.json)</button>
+      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Descarga un <strong>.json</strong> con todos los apartados de tu taller.</p>
+      <p id="sync-details" role="status" style="font-size:13px;color:var(--txt2)"></p><button class="btn-secondary" onclick="exportarRecuperacion()">Descargar copia de recuperacion</button><button class="btn-primary" onclick="exportar()" style="margin-top:0">Descargar copia (.json)</button>
       <button class="btn-secondary" onclick="exportarCSV()">Exportar a Excel (.csv)</button>
-    </div>
-
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.8"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
-        <span style="font-size:15px;font-weight:600">Copia automatica en GitHub</span>
-      </div>
-      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:12px">Sube la copia directamente a tu repositorio con un toque. El token se guarda solo en tu movil.</p>
-      <div class="fg" style="margin-bottom:10px">
-        <label>Token de GitHub</label>
-        <div style="display:flex;gap:8px">
-          <input id="gh-token" type="password" placeholder="ghp_..." style="flex:1;border:1px solid var(--border2);border-radius:var(--rad-sm);padding:11px 13px;font-size:15px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none" oninput="guardarToken()">
-          <button class="btn-sm" onclick="toggleToken()" style="margin-top:0;flex-shrink:0">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-        </div>
-      </div>
-      <div class="fg" style="margin-bottom:10px">
-        <label>Usuario GitHub</label>
-        <input id="gh-user" type="text" placeholder="Cristiannett" style="width:100%;border:1px solid var(--border2);border-radius:var(--rad-sm);padding:11px 13px;font-size:15px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none" oninput="guardarToken()">
-      </div>
-      <div class="fg" style="margin-bottom:14px">
-        <label>Repositorio</label>
-        <input id="gh-repo" type="text" placeholder="Daurela" style="width:100%;border:1px solid var(--border2);border-radius:var(--rad-sm);padding:11px 13px;font-size:15px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none" oninput="guardarToken()">
-      </div>
-      <button class="btn-primary" onclick="exportarGitHub()" style="margin-top:0">Subir copia a GitHub</button>
-      <div id="gh-msg" style="margin-top:10px;font-size:13px;display:none;border-radius:var(--rad-sm);padding:10px 12px"></div>
     </div>
 
     <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rad);padding:16px">
@@ -634,7 +624,7 @@ onAuthStateChanged(auth, function(user) {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span style="font-size:15px;font-weight:500">Restaurar datos</span>
       </div>
-      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Selecciona un <strong>.json</strong> exportado antes. <span style="color:var(--danger);font-weight:500">Reemplaza los datos actuales.</span></p>
+      <p style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Selecciona un <strong>.json</strong> exportado antes. <span style="color:var(--danger);font-weight:500">Reemplaza los apartados incluidos en la copia.</span></p>
       <button class="btn-secondary" onclick="document.getElementById('import-input').click()" style="margin-top:0">Seleccionar archivo</button>
       <input id="import-input" type="file" accept=".json,application/json" style="display:none" onchange="importar(event)">
       <div id="import-msg" style="margin-top:10px;font-size:13px;display:none"></div>
@@ -999,7 +989,7 @@ onAuthStateChanged(auth, function(user) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
     </button>
   </div>
-  <div id="corte-detalle-body" style="padding-bottom:24px"></div>
+  <div class="work-toolbar"><button id="corte-work-toggle" class="btn-secondary" onclick="toggleModoCorte()" aria-pressed="false">Modo trabajo: solo pendientes</button></div><div id="corte-detalle-body" style="padding-bottom:24px"></div>
 </div>
 
 <!-- CHATBOT -->
@@ -1045,8 +1035,7 @@ function persist(){
   try{
     const data=JSON.stringify(db);
     localStorage.setItem(KEY,data);
-    clearTimeout(_syncDebounce);
-    _syncDebounce=setTimeout(syncFirestore, 1500);
+    programarSync();
     // Comprobar uso aproximado
     let total=0;
     for(let k in localStorage) if(localStorage.hasOwnProperty(k)) total+=localStorage[k].length*2;
@@ -1095,11 +1084,13 @@ function go(id, addHistory){
   if(addHistory) history.pushState({screen:id}, '', '');
   actualizarFab();
   if(id==='s-cli') { actualizarBadges(); actualizarAcumExtraHome(); }
+  actualizarEstadoGuardado();
   const bar=document.getElementById('nota-input-bar-global');
   if(bar) bar.style.display=id==='s-notas'?'flex':'none';
   const chatBar=document.getElementById('chat-input-bar-global');
   if(chatBar) chatBar.style.display=id==='s-chatbot'?'flex':'none';
   if(id==='s-notas') renderNotas();
+  if(id==='s-fichaje'){renderFichaje();cargarConfigFichaje();}
   if(id==='s-entregas') renderEntregas();
   if(id==='s-almacen') initAlmacen();
   if(id==='s-almacen-historial') renderHistorialAlmacen();
@@ -1112,7 +1103,7 @@ function go(id, addHistory){
 // ── CORTE (pedidos digitalizados) ──────────────────────────
 const CORTE_KEY = 'corte_v1';
 function loadCorte(){ try{ const d=localStorage.getItem(CORTE_KEY); return d?JSON.parse(d):[]; }catch(e){ return []; } }
-function saveCorte(arr){ localStorage.setItem(CORTE_KEY, JSON.stringify(arr)); clearTimeout(_syncDebounce); _syncDebounce=setTimeout(syncFirestore, 1500); actualizarBadges(); }
+function saveCorte(arr){ localStorage.setItem(CORTE_KEY, JSON.stringify(arr)); programarSync(); actualizarBadges(); }
 
 let corteLineasActuales = [];
 let filtroCorteActual = 'pedidos';
@@ -1137,7 +1128,7 @@ function agregarCorteTipo(){
   const tipos = loadCorteTipos();
   if(tipos.indexOf(limpio)===-1){
     tipos.push(limpio);
-    localStorage.setItem(CORTE_TIPOS_KEY, JSON.stringify(tipos));
+    localStorage.setItem(CORTE_TIPOS_KEY, JSON.stringify(tipos)); programarSync();
   }
   return limpio;
 }
@@ -1309,7 +1300,7 @@ function renderCorte(){
     if(!listaFiltrada.length){
       el.innerHTML = esCompletados
         ? '<div class="empty-state"><p>Todavia no hay pedidos completados.</p></div>'
-        : '<div class="empty-state"><p>Sin pedidos todavia.<br>Pulsa <strong>+</strong> para anadir el primero.</p></div>';
+        : '<div class="empty-state"><p>No hay pedidos pendientes.<br>Los terminados estan en Completados.</p></div>';
       return;
     }
     listaFiltrada.forEach(function(p){
@@ -1321,12 +1312,15 @@ function renderCorte(){
       info.className='li-info';
       const nombre = document.createElement('div');
       nombre.className='li-name';
-      nombre.textContent = p.cliente+(p.numeroPedido?' · #'+p.numeroPedido:'');
+      nombre.textContent = p.numeroPedido?'Pedido #'+p.numeroPedido:p.cliente;
       const sub = document.createElement('div');
       sub.className='li-sub';
-      sub.textContent = p.fecha+' · '+(p.items.length-pendientes)+'/'+p.items.length+' cortadas';
+      sub.textContent = p.cliente+' - '+p.fecha+' - '+pendientes+' lineas pendientes';
+      const unidadesPendientes=p.items.reduce((n,i)=>n+Math.max(0,Number(i.unidades)-(Number(i.cortadas)||0)),0);
+      const contador=document.createElement('div');contador.className='pedido-unidades';contador.textContent=unidadesPendientes+' uds por cortar';
       info.appendChild(nombre);
       info.appendChild(sub);
+      info.appendChild(contador);
       const chevron = document.createElement('div');
       chevron.className='chevron';
       chevron.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg>';
@@ -1402,13 +1396,23 @@ function abrirPedidoCorte(id){
   renderCorteDetalle();
 }
 
+let modoTrabajoCorte=false;
+function toggleModoCorte(){modoTrabajoCorte=!modoTrabajoCorte;renderCorteDetalle();}
+try{window.toggleModoCorte=toggleModoCorte;}catch(e){}
 function renderCorteDetalle(){
   const pedido = loadCorte().find(function(p){ return p.id===corteDetalleId; });
   const titulo = document.getElementById('corte-detalle-titulo');
   const body = document.getElementById('corte-detalle-body');
-  if(!pedido || !body) return;
+  if(!body)return;
+  if(!pedido){body.textContent='Este pedido ya no esta disponible.';return;}
   if(titulo) titulo.textContent = pedido.cliente+(pedido.numeroPedido?' · #'+pedido.numeroPedido:'')+' · '+pedido.fecha;
   body.innerHTML='';
+  const toggle=document.getElementById('corte-work-toggle');
+  if(toggle){toggle.textContent=modoTrabajoCorte?'Ver todo el pedido':'Modo trabajo: solo pendientes';toggle.setAttribute('aria-pressed',String(modoTrabajoCorte));}
+  const completadas=document.createElement('details');
+  const summary=document.createElement('summary');
+  summary.textContent='Lineas terminadas ('+pedido.items.filter(corteLineaCompleta).length+')';
+  completadas.className='corte-terminadas';completadas.appendChild(summary);
 
   const grupos = {};
   const ordenGrupos = [];
@@ -1433,34 +1437,34 @@ function renderCorteDetalle(){
     });
 
     ordenSeries.forEach(function(serie){
-      porSerie[serie].forEach(function(item){ body.appendChild(renderCorteItemRow(item)); });
+      porSerie[serie].forEach(function(item){
+        const target=modoTrabajoCorte&&corteLineaCompleta(item)?completadas:body;
+        target.appendChild(renderCorteItemRow(item));
+      });
       if(conf!=='Sin confeccion asociada'){
         body.appendChild(renderCorteEntregaCard(pedido, conf, serie, porSerie[serie]));
       }
     });
   });
+  if(modoTrabajoCorte&&completadas.children.length>1)body.appendChild(completadas);
 }
 
-function corteRestantePorTamano(pedido, conf, serie, items){
-  const entregasVinculadas = loadEntregas().filter(function(e){
-    return e.origenCorte && e.origenCorte.pedidoId===pedido.id && e.conf===conf && e.origenCorte.serie===serie;
-  });
-  const enviadoPorTamano = {};
-  entregasVinculadas.forEach(function(e){
-    (e.lineas||[]).forEach(function(l){
-      enviadoPorTamano[l.talla] = (enviadoPorTamano[l.talla]||0) + (parseInt(l.uds,10)||0);
-    });
-  });
-  const cortadasPorTamano = {};
-  items.forEach(function(i){
-    cortadasPorTamano[i.tamano] = (cortadasPorTamano[i.tamano]||0) + (i.cortadas||0);
-  });
-  const restante = {};
-  Object.keys(cortadasPorTamano).forEach(function(t){
-    const r = cortadasPorTamano[t] - (enviadoPorTamano[t]||0);
-    if(r>0) restante[t] = r;
-  });
-  return { restante: restante, entregasVinculadas: entregasVinculadas };
+function claveCorteEntrega(tamano,tipo){return JSON.stringify([String(tamano||''),String(tipo||'')]);}
+function corteRestantePorTamano(pedido,conf,serie,items){
+  const entregasVinculadas=loadEntregas().filter(e=>e.origenCorte&&e.origenCorte.pedidoId===pedido.id&&e.conf===conf&&e.origenCorte.serie===serie);
+  const cantidades={};const etiquetas={};let ambiguo=false;
+  items.forEach(i=>{const k=claveCorteEntrega(i.tamano,i.tipo);cantidades[k]=(cantidades[k]||0)+(Number(i.cortadas)||0);etiquetas[k]=i.tamano+(i.tipo?' - '+i.tipo:'');});
+  entregasVinculadas.forEach(e=>(e.lineas||[]).forEach(l=>{
+    let k=claveCorteEntrega(l.talla,l.tipo);
+    if(!Object.hasOwn(cantidades,k)){
+      const candidatas=Object.keys(cantidades).filter(key=>JSON.parse(key)[0]===String(l.talla));
+      if(!l.tipo&&candidatas.length===1)k=candidatas[0];
+      else {ambiguo=true;return;}
+    }
+    cantidades[k]-=Number(l.uds)||0;
+  }));
+  const restante={};Object.keys(cantidades).forEach(k=>{if(cantidades[k]>0)restante[k]=cantidades[k];});
+  return {restante,etiquetas,entregasVinculadas,ambiguo};
 }
 
 function renderCorteEntregaCard(pedido, conf, serie, items){
@@ -1502,6 +1506,11 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
     wrap.appendChild(card);
   });
 
+  if(info.ambiguo){
+    const aviso=document.createElement('p');aviso.className='entrega-aviso';
+    aviso.textContent='Revisa la talla y categoria de las entregas anteriores antes de enviar mas unidades.';
+    wrap.appendChild(aviso);return wrap;
+  }
   const tamanos = Object.keys(info.restante);
   if(tamanos.length){
     const form = document.createElement('div');
@@ -1515,8 +1524,8 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
       const row = document.createElement('div');
       row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px';
       const lbl = document.createElement('span');
-      lbl.style.cssText='font-size:13px;color:var(--txt2);width:60px;flex-shrink:0';
-      lbl.textContent = t;
+      lbl.style.cssText='font-size:13px;color:var(--txt2);min-width:90px;flex:1;overflow-wrap:anywhere';
+      lbl.textContent = info.etiquetas[t];
       const inp = document.createElement('input');
       inp.type='number';
       inp.setAttribute('inputmode','numeric');
@@ -1569,7 +1578,7 @@ function renderCorteItemRow(item){
     const titleWrap = document.createElement('div');
     const txt = document.createElement('div');
     txt.style.cssText='font-size:14px;font-weight:600;'+(completo?'color:var(--txt2);text-decoration:line-through':'color:var(--txt)');
-    txt.textContent = corteTituloLinea(item);
+    txt.textContent = item.serie+' | '+item.tamano+' | '+item.unidades+' uds pedidas'+(item.cajas?' | '+item.cajas+' cajas':'');
     titleWrap.appendChild(txt);
     if(item.tipo){
       const tipoBadge = document.createElement('span');
@@ -1600,9 +1609,9 @@ function renderCorteItemRow(item){
       const stats = document.createElement('div');
       stats.style.cssText='display:flex;gap:24px';
       const statCortadas = document.createElement('div');
-      statCortadas.innerHTML='<div style="font-size:22px;font-weight:700;color:#30d158;line-height:1.1">'+cortadas+'</div><div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.4px;margin-top:1px">Cortadas</div>';
+      statCortadas.innerHTML='<div style="font-size:22px;font-weight:700;color:#30d158;line-height:1.1">'+cortadas+' uds</div><div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.4px;margin-top:1px">Cortadas</div>';
       const statFaltan = document.createElement('div');
-      statFaltan.innerHTML='<div style="font-size:22px;font-weight:700;color:#ff9f0a;line-height:1.1">'+restan+'</div><div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.4px;margin-top:1px">Faltan</div>';
+      statFaltan.innerHTML='<div style="font-size:22px;font-weight:700;color:#ff9f0a;line-height:1.1">'+restan+' uds</div><div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.4px;margin-top:1px">Faltan</div>';
       stats.appendChild(statCortadas);
       stats.appendChild(statFaltan);
       row.appendChild(stats);
@@ -1614,7 +1623,7 @@ function renderCorteItemRow(item){
       const inputCant = document.createElement('input');
       inputCant.type='number';
       inputCant.setAttribute('inputmode','numeric');
-      inputCant.placeholder='Cantidad';
+      inputCant.placeholder='Uds';inputCant.min='1';inputCant.step='1';inputCant.setAttribute('aria-label','Unidades cortadas de '+item.serie+' '+item.tamano);
       inputCant.style.cssText='width:90px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rad-sm);font-size:13px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none';
       const btnAdd = document.createElement('button');
       btnAdd.className='btn-secondary';
@@ -1655,7 +1664,7 @@ function renderCorteItemRow(item){
     } else {
       const btnDeshacer = document.createElement('button');
       btnDeshacer.className='btn-secondary';
-      btnDeshacer.textContent='Deshacer';
+      btnDeshacer.textContent='Reiniciar corte';
       btnDeshacer.style.cssText='margin-top:8px;padding:6px 12px;font-size:12px;width:auto';
       btnDeshacer.onclick=(function(itemId){ return function(){ resetearCortadas(corteDetalleId, itemId); }; })(item.id);
       row.appendChild(btnDeshacer);
@@ -1663,27 +1672,21 @@ function renderCorteItemRow(item){
     return row;
 }
 
-function enviarCorteAEntregas(pedidoId, confeccion, serie, cantidadesPorTamano){
-  const pedido = loadCorte().find(function(p){ return p.id===pedidoId; });
-  if(!pedido) return;
-  const tamanos = Object.keys(cantidadesPorTamano||{});
-  if(!tamanos.length) return;
-  const notaPrep = loadPrep()[clavePrep(confeccion, serie)] || '';
-  const entrega = {
-    id: uid(), conf: confeccion, tela: serie, estado: 'pendiente',
-    fentrega: new Date().toISOString().slice(0,10), frecogida: '',
-    lineas: tamanos.map(function(t){
-      const itemMatch = pedido.items.find(function(i){ return i.serie===serie && i.tamano===t; });
-      return { talla:t, uds:String(cantidadesPorTamano[t]), tipo:(itemMatch&&itemMatch.tipo)||'' };
-    }),
-    materiales: notaPrep, obs: '', creado: new Date().toISOString(),
-    origenCorte: { pedidoId: pedido.id, serie: serie, cliente: pedido.cliente, numeroPedido: pedido.numeroPedido }
-  };
-  const entregas = loadEntregas();
-  entregas.unshift(entrega);
-  saveEntregas(entregas);
-  toast('Enviado a Entregas');
-  renderCorteDetalle();
+function enviarCorteAEntregas(pedidoId,confeccion,serie,cantidadesPorTamano){
+  const pedido=loadCorte().find(p=>p.id===pedidoId);if(!pedido)return;
+  const info=corteRestantePorTamano(pedido,confeccion,serie,pedido.items.filter(i=>i.serie===serie));
+  const keys=Object.keys(cantidadesPorTamano||{});
+  if(info.ambiguo||!keys.length||keys.some(k=>!Number.isInteger(cantidadesPorTamano[k])||cantidadesPorTamano[k]<=0||cantidadesPorTamano[k]>(info.restante[k]||0))){toast('Las cantidades han cambiado. Revisa el pedido.');renderCorteDetalle();return;}
+  const entrega={id:uid(),conf:confeccion,tela:serie,estado:'pendiente',fentrega:new Date().toISOString().slice(0,10),frecogida:'',
+    lineas:keys.map(k=>{const [talla,tipo]=JSON.parse(k);return {talla,tipo,uds:String(cantidadesPorTamano[k])};}),
+    materiales:loadPrep()[clavePrep(confeccion,serie)]||'',obs:'',creado:new Date().toISOString(),
+    origenCorte:{pedidoId:pedido.id,serie,cliente:pedido.cliente,numeroPedido:pedido.numeroPedido||''}};
+  const entregas=loadEntregas();entregas.unshift(entrega);saveEntregas(entregas);renderCorteDetalle();
+  ofrecerDeshacer('Entrega creada',()=>{
+    const actuales=loadEntregas();const actual=actuales.find(e=>e.id===entrega.id);
+    if(!iguales(actual,entrega)){toast('La entrega ha cambiado. Revisala antes de eliminarla.');return;}
+    saveEntregas(actuales.filter(e=>e.id!==entrega.id));refrescarDatos();toast('Envio deshecho');
+  });
 }
 
 function toggleEstadoEntregaDesdeCorte(entregaId){
@@ -1695,20 +1698,31 @@ function toggleEstadoEntregaDesdeCorte(entregaId){
   renderCorteDetalle();
 }
 
-function agregarCortadas(pedidoId, lineaId, cantidad){
-  const pedidos = loadCorte();
-  const pedido = pedidos.find(function(p){ return p.id===pedidoId; });
-  if(!pedido) return;
-  const item = pedido.items.find(function(i){ return i.id===lineaId; });
-  if(!item) return;
-  const total = Number(item.unidades)||0;
-  item.cortadas = (item.cortadas||0)+cantidad;
-  if(item.cortadas>=total) item.motivo='';
-  saveCorte(pedidos);
-  renderCorteDetalle();
+function agregarCortadas(pedidoId,lineaId,cantidad){
+  if(!Number.isInteger(cantidad)||cantidad<=0){toast('Pon una cantidad valida');return;}
+  const pedidos=loadCorte();const pedido=pedidos.find(p=>p.id===pedidoId);if(!pedido)return;
+  const item=pedido.items.find(i=>i.id===lineaId);if(!item)return;
+  const antes={cortadas:item.cortadas||0,motivo:item.motivo||''};
+  item.cortadas=antes.cortadas+cantidad;if(item.cortadas>=Number(item.unidades))item.motivo='';
+  const despues={cortadas:item.cortadas,motivo:item.motivo||''};
+  saveCorte(pedidos);renderCorteDetalle();
+  ofrecerDeshacer(cantidad+' uds registradas',()=>{
+    const actuales=loadCorte();const p=actuales.find(x=>x.id===pedidoId);const i=p&&p.items.find(x=>x.id===lineaId);
+    if(!i||i.cortadas!==despues.cortadas||(i.motivo||'')!==despues.motivo){toast('La linea ha cambiado. Revisala antes de corregirla.');return;}
+    Object.assign(i,antes);saveCorte(actuales);refrescarDatos();toast('Corte deshecho');
+  });
+}
+let undoTimer=null;
+function ofrecerDeshacer(texto,accion){
+  let panel=document.getElementById('undo-panel');
+  if(!panel){panel=document.createElement('div');panel.id='undo-panel';panel.setAttribute('role','status');document.body.appendChild(panel);}
+  panel.replaceChildren();const label=document.createElement('span');label.textContent=texto;
+  const button=document.createElement('button');button.textContent='Deshacer';button.onclick=()=>{clearTimeout(undoTimer);panel.hidden=true;accion();};
+  panel.append(label,button);panel.hidden=false;clearTimeout(undoTimer);undoTimer=setTimeout(()=>panel.hidden=true,10000);
 }
 
 function resetearCortadas(pedidoId, lineaId){
+  if(!confirm('Poner a cero las unidades cortadas de esta linea?'))return;
   const pedidos = loadCorte();
   const pedido = pedidos.find(function(p){ return p.id===pedidoId; });
   if(!pedido) return;
@@ -1790,7 +1804,7 @@ try{window.setMotivoLinea=setMotivoLinea;}catch(e){}
 // ── PREPARACION ENTREGAS ───────────────────────────────────
 const PREP_KEY = 'prep_v1';
 function loadPrep(){ try{ const d=localStorage.getItem(PREP_KEY); return d?JSON.parse(d):{}; }catch(e){ return {}; } }
-function savePrep(obj){ localStorage.setItem(PREP_KEY, JSON.stringify(obj)); clearTimeout(_syncDebounce); _syncDebounce=setTimeout(syncFirestore, 1500); }
+function savePrep(obj){ localStorage.setItem(PREP_KEY, JSON.stringify(obj)); programarSync(); }
 function clavePrep(conf, tela){ return conf+'|'+tela; }
 
 function initPrep(){ renderPrep(); }
@@ -2222,9 +2236,16 @@ function reorder(srcId,targetId){
 }
 
 // ── BACKUP ───────────────────────────────────────────────
+function exportarRecuperacion(){
+  const copia=localStorage.getItem('daurela_recuperacion_v3');
+  if(!copia){toast('Todavia no hay copia de recuperacion');return;}
+  const url=URL.createObjectURL(new Blob([copia],{type:'application/json'}));
+  const a=document.createElement('a');a.href=url;a.download='daurela-recuperacion.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+try{window.exportarRecuperacion=exportarRecuperacion;}catch(e){}
 function exportar(){
   const fecha=new Date().toISOString().slice(0,10);
-  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
+  const backup={version:3,...datosTaller(),fechaCopia:new Date().toISOString()};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='daurela-backup-'+fecha+'.json';
@@ -2248,36 +2269,54 @@ function exportarCSV(){
   toast('Excel exportado');
 }
 
+function validarCopia(data){
+  if(!data||!Array.isArray(data.clientes))throw Error('Faltan los clientes');
+  if(data.version && ![1,2,3].includes(data.version))throw Error('Version no compatible');
+  for(const key of ['clientes','notas','pedidos','entregas','corte','inventarios','tipos']){
+    if(data[key]!==undefined&&!Array.isArray(data[key]))throw Error('Apartado no valido: '+key);
+    if(data.version===3&&data[key]===undefined)throw Error('Copia incompleta: '+key);
+  }
+  for(const key of ['fichajes','prep'])if(data[key]!==undefined&&(!data[key]||typeof data[key]!=='object'||Array.isArray(data[key])))throw Error('Apartado no valido: '+key);
+  data.clientes.forEach(c=>{if(!c||!c.id||typeof c.nombre!=='string'||!Array.isArray(c.telas))throw Error('Cliente no valido');c.telas.forEach(t=>{if(!t||!t.id||!Array.isArray(t.medidas))throw Error('Tela no valida');});});
+  (data.corte||[]).forEach(p=>{if(!p||!p.id||!Array.isArray(p.items))throw Error('Pedido no valido');p.items.forEach(i=>{if(!i||!i.id||typeof i.serie!=='string'||typeof i.tamano!=='string'||!Number.isFinite(Number(i.unidades)))throw Error('Linea no valida');});});
+  (data.entregas||[]).forEach(e=>{if(!e||!e.id||!Array.isArray(e.lineas))throw Error('Entrega no valida');});
+  if(data.jornada!==undefined&&(!Number.isFinite(Number(data.jornada))||Number(data.jornada)<=0))throw Error('Jornada no valida');
+  const objeto=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+  const texto=x=>typeof x==='string';
+  const numero=x=>x!==null&&x!==''&&Number.isFinite(Number(x))&&Number(x)>=0;
+  const lista=(arr,fn,nombre)=>{if(arr!==undefined)arr.forEach(x=>{if(!objeto(x)||!fn(x))throw Error('Dato no valido en '+nombre);});};
+  if(data.version===3)for(const key of ['fichajes','prep','jornada','fontSize'])if(data[key]===undefined)throw Error('Copia incompleta: '+key);
+  data.clientes.forEach(c=>c.telas.forEach(t=>{if(!texto(t.nombre))throw Error('Nombre de tela no valido');lista(t.medidas,m=>Boolean(m.id)&&texto(m.nombre),'medidas');}));
+  lista(data.notas,n=>Boolean(n.id)&&texto(n.txt),'notas');
+  lista(data.pedidos,p=>Boolean(p.id)&&texto(p.nombre)&&Array.isArray(p.lineas)&&p.lineas.every(objeto),'calculadora');
+  lista(data.entregas,e=>Boolean(e.id)&&texto(e.conf)&&e.lineas.every(l=>objeto(l)&&texto(l.talla)&&numero(l.uds)),'entregas');
+  lista(data.corte,p=>texto(p.cliente)&&p.items.every(i=>numero(i.unidades)&&(i.cortadas===undefined||numero(i.cortadas))),'corte');
+  if(data.tipos&&!data.tipos.every(texto))throw Error('Categorias no validas');
+  if(data.fontSize!==undefined&&!['sm','md','lg','xl'].includes(data.fontSize))throw Error('Tamano de fuente no valido');
+  if(data.fichajes)for(const v of Object.values(data.fichajes))if(!objeto(v)||(v.norm!==undefined&&!numero(v.norm))||(v.extra!==undefined&&!numero(v.extra)))throw Error('Fichaje no valido');
+  if(data.prep&&!Object.values(data.prep).every(texto))throw Error('Preparacion no valida');
+  lista(data.inventarios,i=>texto(i.mesKey)&&objeto(i.zonas)&&Object.values(i.zonas).every(z=>objeto(z)&&Array.isArray(z.telas)&&z.telas.every(t=>objeto(t)&&texto(t.nombre)&&(texto(t.metros)||numero(t.metros)))),'inventarios');
+  return normalizarRemoto(data);
+}
 function importar(e){
   const file=e.target.files[0];if(!file)return;
   const msg=document.getElementById('import-msg');
   const reader=new FileReader();
   reader.onload=ev=>{
     try{
-      const data=JSON.parse(ev.target.result);
-      if(!data.clientes||!Array.isArray(data.clientes))throw new Error();
-      // Migración de versiones antiguas
-      if(!data.version||data.version<2){
-        data.fichajes=data.fichajes||{};
-        data.notas=data.notas||[];
-        data.jornada=data.jornada||6;
-      }
-      if(!confirm('Esto reemplazara todos los datos actuales. Continuar?')){e.target.value='';return;}
-      db={clientes:data.clientes};persist();
-      if(data.fichajes)saveFichajes(data.fichajes);
-      if(data.jornada){localStorage.setItem('fich_jornada',data.jornada);cargarConfigFichaje();}
-      if(data.notas)saveNotas(data.notas);
-      renderCli();renderFichaje();renderNotas();
-      msg.style.display='block';msg.style.color='green';msg.textContent='Restaurado correctamente ('+db.clientes.length+' clientes)';
-      setTimeout(()=>msg.style.display='none',4000);toast('Datos restaurados');
-    }catch(err){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Error: el archivo no es valido.';}
-    e.target.value='';
+      const data=validarCopia(JSON.parse(ev.target.result));
+      if(!confirm('Se reemplazaran los apartados incluidos en la copia. Se guardara una copia de recuperacion de los datos actuales. Continuar?'))return;
+      guardarRecuperacion(datosTaller());
+      aplicarDatos(data);localStorage.setItem('daurela_restore_pending',JSON.stringify(data));programarSync();refrescarDatos();cargarFont();
+      msg.style.display='block';msg.style.color='var(--txt)';msg.textContent='Copia restaurada. Los apartados no incluidos se conservan.';
+      toast('Datos restaurados');
+    }catch(err){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='No se ha restaurado: '+err.message;}
+    finally{e.target.value='';}
   };
   reader.readAsText(file);
 }
 
 
-// ── CALCULADORA ──────────────────────────────────────────
 let calcLineas = [];
 
 function initCalc(){
@@ -2501,108 +2540,6 @@ function toggleOrden(){
 }
 
 
-// ── GITHUB BACKUP ────────────────────────────────────────
-function guardarToken(){
-  localStorage.setItem('gh_token', document.getElementById('gh-token').value);
-  localStorage.setItem('gh_user', document.getElementById('gh-user').value);
-  localStorage.setItem('gh_repo', document.getElementById('gh-repo').value);
-}
-
-function cargarToken(){
-  const t=localStorage.getItem('gh_token');
-  const u=localStorage.getItem('gh_user');
-  const r=localStorage.getItem('gh_repo');
-  if(t)document.getElementById('gh-token').value=t;
-  if(u)document.getElementById('gh-user').value=u;
-  if(r)document.getElementById('gh-repo').value=r;
-}
-
-function toggleToken(){
-  const input=document.getElementById('gh-token');
-  input.type=input.type==='password'?'text':'password';
-}
-
-async function exportarGitHub(){
-  const token=document.getElementById('gh-token').value.trim();
-  const user=document.getElementById('gh-user').value.trim();
-  const repo=document.getElementById('gh-repo').value.trim();
-  const msg=document.getElementById('gh-msg');
-
-  if(!token||!user||!repo){
-    msg.style.display='block';
-    msg.style.background='var(--danger-bg)';
-    msg.style.color='var(--danger)';
-    msg.textContent='Rellena el token, usuario y repositorio.';
-    return;
-  }
-
-  msg.style.display='block';
-  msg.style.background='var(--bg3)';
-  msg.style.color='var(--txt2)';
-  msg.textContent='Subiendo...';
-
-  const fecha=new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
-  const filename='backups/daurela-backup-'+fecha+'.json';
-  const backup={version:2,clientes:db.clientes,fichajes:loadFichajes(),jornada:getJornada(),notas:loadNotas()};
-
-  // Codificar en base64 de forma segura para Unicode
-  const jsonStr=JSON.stringify(backup,null,2);
-  const bytes=new TextEncoder().encode(jsonStr);
-  let binary='';
-  bytes.forEach(b=>binary+=String.fromCharCode(b));
-  const content=btoa(binary);
-
-  try{
-    // Primero comprobar si ya existe el archivo (para hacer update en vez de create)
-    let sha=null;
-    try{
-      const check=await fetch('https://api.github.com/repos/'+user+'/'+repo+'/contents/'+filename,{
-        headers:{
-          'Authorization':'Bearer '+token,
-          'Accept':'application/vnd.github+json',
-          'X-GitHub-Api-Version':'2022-11-28'
-        }
-      });
-      if(check.ok){const d=await check.json();sha=d.sha;}
-    }catch(e){}
-
-    const body={message:'Backup Daurela '+fecha,content:content};
-    if(sha) body.sha=sha;
-
-    const res=await fetch('https://api.github.com/repos/'+user+'/'+repo+'/contents/'+filename,{
-      method:'PUT',
-      headers:{
-        'Authorization':'Bearer '+token,
-        'Accept':'application/vnd.github+json',
-        'X-GitHub-Api-Version':'2022-11-28',
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify(body)
-    });
-
-    if(res.ok){
-      msg.style.background='rgba(52,199,89,0.1)';
-      msg.style.color='#34c759';
-      msg.textContent='Copia subida correctamente a GitHub.';
-      toast('Copia guardada en GitHub');
-    }else{
-      const err=await res.json();
-      msg.style.background='var(--danger-bg)';
-      msg.style.color='var(--danger)';
-      msg.textContent='Error: '+(err.message||'No se pudo subir el archivo.');
-    }
-  }catch(e){
-    msg.style.background='var(--danger-bg)';
-    msg.style.color='var(--danger)';
-    msg.textContent='Error de red. Intentalo de nuevo.';
-    console.error(e);
-  }
-}
-
-
-
-
-
 // ── TIEMPO ───────────────────────────────────────────────
 async function fetchWeather(){
   const iconEl=document.getElementById('weather-icon');
@@ -2687,7 +2624,7 @@ let filtroNotas = 'todas';
 let editandoNota = null;
 
 function loadNotas(){ try{ const d=localStorage.getItem('notas_v1'); return d?JSON.parse(d):[]; }catch(e){return [];} }
-function saveNotas(arr){ localStorage.setItem('notas_v1', JSON.stringify(arr)); clearTimeout(_syncDebounce); _syncDebounce=setTimeout(syncFirestore,1500); }
+function saveNotas(arr){ localStorage.setItem('notas_v1', JSON.stringify(arr)); programarSync(); }
 
 function setFiltroNotas(f){
   filtroNotas=f;
@@ -2930,7 +2867,7 @@ function lanzarConfeti(){
 function setFont(size){
   document.body.className=document.body.className.replace(/font-\w+/g,'').trim();
   document.body.classList.add('font-'+size);
-  localStorage.setItem('font_size',size);
+  localStorage.setItem('font_size',size); programarSync();
   document.querySelectorAll('.font-opt').forEach(b=>b.classList.remove('activo'));
   const btn=document.getElementById('font-'+size);
   if(btn)btn.classList.add('activo');
@@ -2948,11 +2885,11 @@ let fichDiaSeleccionado = null;
 
 function getFichajeKey(){ return 'fichaje_v1'; }
 function loadFichajes(){ try{ const d=localStorage.getItem(getFichajeKey()); return d?JSON.parse(d):{}; }catch(e){return {};} }
-function saveFichajes(data){ localStorage.setItem(getFichajeKey(), JSON.stringify(data)); clearTimeout(_syncDebounce); _syncDebounce=setTimeout(syncFirestore,1500); }
+function saveFichajes(data){ localStorage.setItem(getFichajeKey(), JSON.stringify(data)); programarSync(); }
 function getJornada(){ return parseFloat(localStorage.getItem('fich_jornada'))||6; }
 function guardarConfigFichaje(){
   const v=parseFloat(document.getElementById('fich-jornada').value)||6;
-  localStorage.setItem('fich_jornada',v);
+  localStorage.setItem('fich_jornada',v); programarSync();
   renderFichaje();
 }
 function cargarConfigFichaje(){
@@ -3144,6 +3081,12 @@ let _syncDebounce = null;
 let _lastSave = 0;
 let _syncTimer = null;
 
+let _syncEstado='Guardado en este dispositivo';
+function actualizarEstadoGuardado(txt){
+  if(txt)_syncEstado=txt;
+  const el=document.getElementById('sync-details');
+  if(el)el.textContent=_syncEstado+' - Ultima sincronizacion: '+(_syncAt?new Date(_syncAt).toLocaleString('es-ES'):'todavia no confirmada');
+}
 function showSyncIndicator(txt) {
   const el = document.getElementById('sync-indicator');
   const txtEl = document.getElementById('sync-txt');
@@ -3154,71 +3097,129 @@ function showSyncIndicator(txt) {
   if (dot) {
     dot.style.background = txt === 'Guardado' ? '#30d158' : txt.includes('Error') ? '#ff453a' : '#ff9f0a';
   }
+  actualizarEstadoGuardado(txt);
   clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(() => el.style.display = 'none', 2500);
+  _syncTimer = setTimeout(() => el.style.display = 'none', txt.includes('Error')?7000:3000);
 }
 
-function syncFirestore() {
-  if (!window._fireUser || !window._fireFns || !window._fireDB) return;
-  const _uid = window._fireUser.uid;
-  showSyncIndicator('Sincronizando...');
-  const cliLimpios = db.clientes.map(cli => ({
-    id: cli.id||'', nombre: cli.nombre||'', notas: cli.notas||'',
-    telas: (cli.telas||[]).map(t => ({
-      id: t.id||'', nombre: t.nombre||'', notas: t.notas||'',
-      medidas: (t.medidas||[]).map(m => ({
-        id:m.id||'',nombre:m.nombre||'',tipo:m.tipo||'taco',
-        ta:Number(m.ta)||0,cl:Number(m.cl)||0,obs:m.obs||''
-      }))
-    }))
-  }));
-  const fichajesRaw = loadFichajes();
-  const fichajesLimpios = {};
-  Object.keys(fichajesRaw).forEach(k => {
-    fichajesLimpios[k] = {norm:Number(fichajesRaw[k].norm)||0,extra:Number(fichajesRaw[k].extra)||0,nota:fichajesRaw[k].nota||'',tipo:fichajesRaw[k].tipo||'normal'};
-  });
-  const data = {
-    v:2, ts:Date.now(),
-    clientes: cliLimpios,
-    fichajes: fichajesLimpios,
-    jornada: Number(getJornada()),
-    notas: loadNotas().map(n => ({id:String(n.id||''),txt:String(n.txt||''),done:Boolean(n.done),fecha:String(n.fecha||''),hora:String(n.hora||'')})),
-    pedidos: loadPedidos().map(p => ({id:String(p.id||''),nombre:String(p.nombre||''),fecha:String(p.fecha||''),margen:Number(p.margen)||0,pieza:Number(p.pieza)||0,lineas:(p.lineas||[]).map(l=>({id:String(l.id||''),nombre:String(l.nombre||''),talla:String(l.talla||''),uds:String(l.uds||'')}))  })),
-    entregas: (loadEntregas()||[]).map(function(e){ return {
-      id:String(e.id||''), conf:String(e.conf||''), tela:String(e.tela||''), estado:String(e.estado||'pendiente'),
-      fentrega:String(e.fentrega||''), frecogida:String(e.frecogida||''),
-      materiales:String(e.materiales||''), obs:String(e.obs||''),
-      creado:String(e.creado||''),
-      lineas:(e.lineas||[]).map(function(l){ return {talla:String(l.talla||''),uds:String(l.uds||''),tipo:String(l.tipo||'')}; }),
-      origenCorte: e.origenCorte ? {
-        pedidoId:String(e.origenCorte.pedidoId||''), serie:String(e.origenCorte.serie||''),
-        cliente:String(e.origenCorte.cliente||''), numeroPedido:String(e.origenCorte.numeroPedido||'')
-      } : null
-    }; }),
-    prep: loadPrep(),
-    corte: loadCorte().map(function(p){ return {
-      id:String(p.id||''), cliente:String(p.cliente||''), numeroPedido:String(p.numeroPedido||''), fecha:String(p.fecha||''),
-      textoOriginal:String(p.textoOriginal||''),
-      items:(p.items||[]).map(function(i){ return {
-        id:String(i.id||''), serie:String(i.serie||''), tamano:String(i.tamano||''),
-        unidades:Number(i.unidades)||0, cajas:Number(i.cajas)||0, tipo:String(i.tipo||''),
-        cortadas:Number(i.cortadas)||0, motivo:String(i.motivo||'')
-      }; })
-    }; }),
-    inventarios: (loadInventarios()||[]).map(inv => ({
-      mesKey: String(inv.mesKey||''),
-      titulo: String(inv.titulo||''),
-      zonas: Object.fromEntries(Object.keys(inv.zonas||{}).map(k => [k, {
-        telas: ((inv.zonas[k]||{}).telas||[]).map(t => ({
-          nombre: String(t.nombre||''), metros: '_' + String(t.metros||'')
-        }))
-      }]))
-    }))
-  };
-  _lastSave = data.ts;
-  window._fireFns.setDoc(window._fireFns.doc(window._fireDB,'usuarios',_uid), data)
-    .then(() => showSyncIndicator('Guardado'))
-    .catch(e => { showSyncIndicator('Error sync'); console.error('Sync:', e.code||e.message); });
+// Datos comunes a copias y sincronizacion. No incluye claves ni credenciales.
+function datosTaller(){
+  return {clientes:db.clientes, fichajes:loadFichajes(), jornada:getJornada(), notas:loadNotas(),
+    pedidos:loadPedidos(), entregas:loadEntregas(), prep:loadPrep(), corte:loadCorte(),
+    inventarios:loadInventarios(), tipos:loadCorteTipos(), fontSize:localStorage.getItem('font_size')||'md'};
+}
+function iguales(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
+function mezclarTres(base,local,remoto,conflictos,ruta){
+  if(iguales(local,base)) return remoto;
+  if(iguales(remoto,base)||iguales(local,remoto)) return local;
+  const objeto=x=>x!==null && typeof x==='object' && !Array.isArray(x);
+  if(Array.isArray(local)&&Array.isArray(remoto)){
+    const todos=[...(base||[]),...local,...remoto];
+    const key=todos.length && todos.every(x=>objeto(x)&&x.id) ? 'id' : todos.length && todos.every(x=>objeto(x)&&x.mesKey) ? 'mesKey' : null;
+    if(key){
+      const map=a=>new Map((a||[]).map(x=>[x[key],x]));
+      const bm=map(base),lm=map(local),rm=map(remoto);
+      const orden=iguales((base||[]).map(x=>x[key]),local.map(x=>x[key])) ? [...rm.keys(),...lm.keys()] : [...lm.keys(),...rm.keys()];
+      return [...new Set(orden)].map(id=>mezclarTres(bm.get(id),lm.get(id),rm.get(id),conflictos,ruta+'/'+id)).filter(x=>x!==undefined);
+    }
+  }
+  if(objeto(local)&&objeto(remoto)){
+    const result={};
+    for(const k of new Set([...Object.keys(base||{}),...Object.keys(local),...Object.keys(remoto)])){
+      if(['__proto__','constructor','prototype'].includes(k)) continue;
+      const v=mezclarTres(base&&base[k],local[k],remoto[k],conflictos,ruta+'/'+k);
+      if(v!==undefined)result[k]=v;
+    }
+    return result;
+  }
+  conflictos.push(ruta);
+  // En la primera conexion prima la nube; posteriormente prima el cambio local pendiente.
+  return base===undefined ? remoto : local;
+}
+function normalizarRemoto(data){
+  const result={};
+  for(const k of Object.keys(datosTaller())) if(data[k]!==undefined)result[k]=data[k];
+  if(result.inventarios) result.inventarios=JSON.parse(JSON.stringify(result.inventarios));
+  (result.inventarios||[]).forEach(inv=>Object.values(inv.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>t.metros=String(t.metros||'').replace(/^_/,''))));
+  return result;
+}
+function aplicarDatos(data){
+  const entries={clientes:KEY,fichajes:getFichajeKey(),jornada:'fich_jornada',notas:'notas_v1',pedidos:'pedidos_v1',entregas:ENT_KEY,prep:PREP_KEY,corte:CORTE_KEY,inventarios:ALM_KEY,tipos:CORTE_TIPOS_KEY,fontSize:'font_size'};
+  const anteriores=[];
+  try{
+    for(const [field,key] of Object.entries(entries)){
+      if(data[field]===undefined)continue;
+      anteriores.push([key,localStorage.getItem(key)]);
+      const value=field==='clientes'?{clientes:data[field]}:data[field];
+      localStorage.setItem(key,['jornada','fontSize'].includes(field)?String(value):JSON.stringify(value));
+    }
+  }catch(error){
+    anteriores.reverse().forEach(([key,value])=>{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);});
+    throw error;
+  }
+  if(data.clientes)db={clientes:data.clientes};
+}
+function refrescarDatos(){
+  actualizarBadges();
+  if(curCli){curCli=db.clientes.find(c=>c.id===curCli.id)||null;window.curCli=curCli;}
+  if(curTela){curTela=curCli&&(curCli.telas||[]).find(t=>t.id===curTela.id)||null;window.curTela=curTela;}
+  if(curMed){curMed=curTela&&(curTela.medidas||[]).find(m=>m.id===curMed.id)||null;window.curMed=curMed;}
+  const active=document.querySelector('.screen.active');
+  if(!active)return;
+  const renders={'s-telas':()=>{if(curCli)renderTelas();else go('s-cli',false);},'s-meds':()=>{if(curTela)renderMeds();else go('s-cli',false);},'s-cli':()=>{renderCli();actualizarAcumExtraHome();},'s-corte':renderCorte,'s-corte-detalle':renderCorteDetalle,'s-entregas':renderEntregas,'s-notas':renderNotas,'s-fichaje':renderFichaje};
+  if(renders[active.id])renders[active.id]();
+}
+function guardarRecuperacion(local,remoto){
+  localStorage.setItem('daurela_recuperacion_v3',JSON.stringify({version:3,...local,fechaCopia:new Date().toISOString(),alternativaNube:remoto||null}));
+}
+let _syncBusy=false, _syncAgain=false, _syncUnsubscribe=null, _syncAt=0;
+function programarSync(){
+  showSyncIndicator('Guardado en este dispositivo');
+  clearTimeout(_syncDebounce);_syncDebounce=setTimeout(syncFirestore,1500);
+}
+async function syncFirestore(){
+  if(!window._fireUser||!window._fireFns||!window._fireDB){showSyncIndicator('Guardado local. Inicia sesion para sincronizar');return;}
+  if(_syncBusy){_syncAgain=true;return;}
+  if(!navigator.onLine){showSyncIndicator('Guardado local. Sin conexion');return;}
+  const _uid=window._fireUser.uid;
+  _syncBusy=true;
+  try{
+    const meta=JSON.parse(localStorage.getItem('daurela_sync_v3')||'null');
+    if(meta&&meta.owner!==_uid){showSyncIndicator('Error: los datos locales pertenecen a otra cuenta');return;}
+    const local=JSON.parse(JSON.stringify(datosTaller()));
+    const base=meta?meta.base:undefined;
+    const restoreToken=localStorage.getItem('daurela_restore_pending');
+    const restore=restoreToken?JSON.parse(restoreToken):null;
+    showSyncIndicator('Sincronizando...');
+    const f=window._fireFns;
+    const ref=f.doc(window._fireDB,'usuarios',_uid);
+    const result=await f.runTransaction(window._fireDB,async transaction=>{
+      const snap=await transaction.get(ref);
+      const raw=snap.exists()?snap.data():{};
+      const remoto=normalizarRemoto(raw);
+      const conflictos=[];
+      const merged=mezclarTres(base,local,remoto,conflictos,'');
+      if(restore)Object.keys(restore).forEach(k=>{merged[k]=local[k];});
+      if(conflictos.length)guardarRecuperacion(local,remoto);
+      const changed=!iguales(merged,remoto);
+      const ts=changed?Date.now():(raw.ts||0);
+      if(changed)transaction.set(ref,{...raw,...merged,v:3,ts:ts});
+      return {merged,ts,conflictos};
+    });
+    if(!window._fireUser||window._fireUser.uid!==_uid)return;
+    // Conservar las ediciones hechas mientras la peticion estaba en vuelo.
+    const actual=datosTaller();
+    const pendiente=mezclarTres(local,actual,result.merged,[],'');
+    aplicarDatos(pendiente);
+    _syncAt=Date.now();_lastSave=result.ts;
+    localStorage.setItem('daurela_sync_v3',JSON.stringify({owner:_uid,base:result.merged,at:_syncAt}));
+    if(restoreToken&&localStorage.getItem('daurela_restore_pending')===restoreToken)localStorage.removeItem('daurela_restore_pending');
+    refrescarDatos();
+    if(result.conflictos.length)toast('Habia cambios distintos. Copia de recuperacion disponible en Datos.');
+    if(!iguales(pendiente,result.merged))_syncAgain=true;
+    showSyncIndicator('Guardado');
+  }catch(error){showSyncIndicator('Error de sincronizacion. Datos guardados localmente');console.error('Sync:',error.code||error.message);}
+  finally{_syncBusy=false;if(_syncAgain){_syncAgain=false;programarSync();}}
 }
 
 function loginGoogle() {
@@ -3233,102 +3234,27 @@ function loginGoogle() {
     .catch(() => toast('Error al iniciar sesion'));
 }
 
-function initFirestore() {
-  if (!window._fireUser || !window._fireFns || !window._fireDB) return;
-  const _uid = window._fireUser.uid;
-  window._fireFns.onSnapshot(window._fireFns.doc(window._fireDB,'usuarios',_uid), snap => {
-    if (!snap.exists()) return;
-    const remoto = snap.data();
-    const ts = remoto.ts || remoto.timestamp || 0;
-    if (ts > 0 && ts !== _lastSave) {
-      mergeData(remoto);
-    }
-  });
+function initFirestore(){
+  if(_syncUnsubscribe){_syncUnsubscribe();_syncUnsubscribe=null;}
+  if(!window._fireUser||!window._fireFns||!window._fireDB)return;
+  const _uid=window._fireUser.uid;
+  const meta=JSON.parse(localStorage.getItem('daurela_sync_v3')||'null');
+  _syncAt=meta&&meta.owner===_uid?meta.at:0;
+  _syncUnsubscribe=window._fireFns.onSnapshot(window._fireFns.doc(window._fireDB,'usuarios',_uid),snap=>{
+    if(!window._fireUser||window._fireUser.uid!==_uid||snap.metadata.hasPendingWrites||snap.metadata.fromCache)return;
+    if(!snap.exists()||!_syncAt||snap.data().ts!==_lastSave)syncFirestore();
+  },()=>showSyncIndicator('Error de conexion. Datos guardados localmente'));
+  syncFirestore();
 }
+function mergeData(){return syncFirestore();}
+window.addEventListener('online',()=>syncFirestore());
+window.addEventListener('offline',()=>showSyncIndicator('Guardado local. Sin conexion'));
+window.addEventListener('focus',()=>syncFirestore());
+window.addEventListener('storage',event=>{if(event.key===KEY){load();refrescarDatos();}else if(['corte_v1','entregas_v1','fichaje_v1','notas_v1'].includes(event.key))refrescarDatos();});
 
-function mergeData(remoto) {
-  let cambios = false;
-  if (remoto.clientes && Array.isArray(remoto.clientes)) {
-    const idsLoc = {};
-    db.clientes.forEach(cl => idsLoc[cl.id] = cl);
-    remoto.clientes.forEach(cR => {
-      if (!idsLoc[cR.id]) { db.clientes.push(cR); cambios = true; }
-      else {
-        const cL = idsLoc[cR.id];
-        if (cR.telas) {
-          const idsTL = {};
-          (cL.telas||[]).forEach(t => idsTL[t.id] = t);
-          cR.telas.forEach(tR => {
-            if (!idsTL[tR.id]) { cL.telas = cL.telas||[]; cL.telas.push(tR); cambios = true; }
-            else if (tR.medidas) {
-              const tL = idsTL[tR.id];
-              const idsML = {};
-              (tL.medidas||[]).forEach(m => idsML[m.id] = true);
-              tR.medidas.forEach(mR => { if (!idsML[mR.id]) { tL.medidas = tL.medidas||[]; tL.medidas.push(mR); cambios = true; } });
-            }
-          });
-        }
-      }
-    });
-  }
-  if (remoto.notas && Array.isArray(remoto.notas)) {
-    const nl = loadNotas(); const idsN = {}; nl.forEach(n => idsN[n.id] = true);
-    let nc = false;
-    remoto.notas.forEach(n => { if (!idsN[n.id]) { nl.push(n); nc = true; cambios = true; } });
-    if (nc) saveNotas(nl);
-  }
-  if (remoto.fichajes) {
-    const fl = loadFichajes(); let fc = false;
-    Object.keys(remoto.fichajes).forEach(k => { if (!fl[k]) { fl[k] = remoto.fichajes[k]; fc = true; cambios = true; } });
-    if (fc) saveFichajes(fl);
-  }
-  if (remoto.entregas && Array.isArray(remoto.entregas)) {
-    const entLocales = loadEntregas();
-    const idsEntLocal = {};
-    entLocales.forEach(function(e){ idsEntLocal[e.id] = true; });
-    let entCambios = false;
-    remoto.entregas.forEach(function(e){
-      if (!idsEntLocal[e.id]) { entLocales.push(e); entCambios = true; }
-    });
-    if (entCambios) saveEntregas(entLocales);
-  }
-  if (remoto.inventarios && Array.isArray(remoto.inventarios)) {
-    const invLocales = loadInventarios();
-    const idsInvLocal = {};
-    invLocales.forEach(function(i){ idsInvLocal[i.mesKey] = true; });
-    let invCambios = false;
-    remoto.inventarios.forEach(function(inv){
-      if (!idsInvLocal[inv.mesKey]) { invLocales.push(inv); invCambios = true; }
-    });
-    if (invCambios) saveInventarios(invLocales);
-  }
-  if (remoto.prep && typeof remoto.prep === 'object') {
-    const pl = loadPrep(); let prc = false;
-    Object.keys(remoto.prep).forEach(function(k){ if(!pl[k] && remoto.prep[k]){ pl[k] = remoto.prep[k]; prc = true; cambios = true; } });
-    if (prc) savePrep(pl);
-  }
-  if (remoto.corte && Array.isArray(remoto.corte)) {
-    const cortLocales = loadCorte();
-    const idsCortLocal = {};
-    cortLocales.forEach(function(p){ idsCortLocal[p.id] = true; });
-    let cortCambios = false;
-    remoto.corte.forEach(function(p){
-      if (!idsCortLocal[p.id]) { cortLocales.push(p); cortCambios = true; }
-    });
-    if (cortCambios) saveCorte(cortLocales);
-  }
-  if (remoto.pedidos && Array.isArray(remoto.pedidos)) {
-    const pl = loadPedidos(); const idsP = {}; pl.forEach(p => idsP[p.id] = true);
-    let pc = false;
-    remoto.pedidos.forEach(p => { if (!idsP[p.id]) { pl.push(p); pc = true; cambios = true; } });
-    if (pc) savePedidos(pl);
-  }
-  if (cambios) { persist(); renderCli(); renderFichaje(); actualizarBadges(); }
-}
 
-// ── PEDIDOS ───────────────────────────────────────────────
 function loadPedidos() { try { const d = localStorage.getItem('pedidos_v1'); return d ? JSON.parse(d) : []; } catch(e) { return []; } }
-function savePedidos(arr) { localStorage.setItem('pedidos_v1', JSON.stringify(arr)); }
+function savePedidos(arr) { localStorage.setItem('pedidos_v1', JSON.stringify(arr)); programarSync(); }
 
 function guardarPedido() {
   const lineas = calcLineas.filter(l => parseFloat(l.talla) > 0 && parseInt(l.uds) > 0);
@@ -3424,7 +3350,7 @@ function actualizarBadges() {
   setBadge('badge-notas', notas, false);
   const pedidos = loadPedidos().length;
   setBadge('badge-calc', pedidos, true);
-  const pendientesCorte = loadCorte().reduce(function(acc,p){ return acc + p.items.filter(function(i){ return !i.cortado; }).length; }, 0);
+  const pendientesCorte = loadCorte().reduce(function(acc,p){ return acc + p.items.filter(function(i){ return !corteLineaCompleta(i); }).length; }, 0);
   setBadge('badge-corte', pendientesCorte, false);
 }
 
@@ -3458,7 +3384,7 @@ try{window.cancelForm=cancelForm;}catch(e){}
 try{window.cargarConfigFichaje=cargarConfigFichaje;}catch(e){}
 try{window.cargarFont=cargarFont;}catch(e){}
 try{window.cargarMasCli=cargarMasCli;}catch(e){}
-try{window.cargarToken=cargarToken;}catch(e){}
+
 try{window.dDrop=dDrop;}catch(e){}
 try{window.dDropCli=dDropCli;}catch(e){}
 try{window.dDropTela=dDropTela;}catch(e){}
@@ -3481,13 +3407,13 @@ try{window.eliminarNota=eliminarNota;}catch(e){}
 try{window.exportar=exportar;}catch(e){}
 try{window.exportarCSV=exportarCSV;}catch(e){}
 try{window.exportarFichajeMes=exportarFichajeMes;}catch(e){}
-try{window.exportarGitHub=exportarGitHub;}catch(e){}
+
 try{window.fabGlobalClick=fabGlobalClick;}catch(e){}
 try{window.fetchWeather=fetchWeather;}catch(e){}
 try{window.go=go;}catch(e){}
 try{window.guardarConfigFichaje=guardarConfigFichaje;}catch(e){}
 try{window.guardarFichaje=guardarFichaje;}catch(e){}
-try{window.guardarToken=guardarToken;}catch(e){}
+
 try{window.importar=importar;}catch(e){}
 try{window.initCalc=initCalc;}catch(e){}
 try{window.initEasterEgg=initEasterEgg;}catch(e){}
@@ -3540,7 +3466,7 @@ try{window.tStartTela=tStartTela;}catch(e){}
 try{window.toast=toast;}catch(e){}
 try{window.toggleNota=toggleNota;}catch(e){}
 try{window.toggleOrden=toggleOrden;}catch(e){}
-try{window.toggleToken=toggleToken;}catch(e){}
+
 try{window.uid=uid;}catch(e){}
 
 try{window.loginGoogle=loginGoogle;}catch(e){}
@@ -3588,8 +3514,7 @@ function loadInventarios() {
 }
 function saveInventarios(arr) {
   localStorage.setItem(ALM_KEY, JSON.stringify(arr));
-  clearTimeout(_syncDebounce);
-  _syncDebounce = setTimeout(syncFirestore, 1500);
+  programarSync();
 }
 function initAlmacen() {
   const inventarios = loadInventarios();
@@ -3898,7 +3823,7 @@ function compartirInventarioWhatsApp() {
 // ENTREGAS
 const ENT_KEY = 'entregas_v1';
 function loadEntregas() { try { const d = localStorage.getItem(ENT_KEY); return d ? JSON.parse(d) : []; } catch(e) { return []; } }
-function saveEntregas(arr) { localStorage.setItem(ENT_KEY, JSON.stringify(arr)); clearTimeout(_syncDebounce); _syncDebounce = setTimeout(syncFirestore, 1500); }
+function saveEntregas(arr) { localStorage.setItem(ENT_KEY, JSON.stringify(arr)); programarSync(); }
 let entEditando = null;
 let entLineas = [];
 
@@ -3997,7 +3922,13 @@ function renderEntregas() {
     return;
   }
   el.innerHTML = '';
+  entregas.sort((a,b)=>(a.conf||'').localeCompare(b.conf||'')||String(b.creado||'').localeCompare(String(a.creado||'')));
+  let grupoActual=null;
   entregas.forEach(function(ent) {
+    if(grupoActual!==ent.conf){
+      grupoActual=ent.conf;
+      const grupo=document.createElement('h2');grupo.className='entrega-grupo';grupo.textContent=ent.conf||'Sin confeccion';el.appendChild(grupo);
+    }
     const item = document.createElement('div');
     item.className = 'entrega-item';
     item.onclick = (function(e){ return function(){ openFormEntrega(e); }; })(ent);
@@ -4008,7 +3939,7 @@ function renderEntregas() {
     conf.textContent = (ent.conf || 'Sin nombre') + (ent.tela ? ' - ' + ent.tela : '');
     if(ent.origenCorte && ent.origenCorte.pedidoId){
       const tagOrigen = document.createElement('span');
-      tagOrigen.style.cssText='font-size:10px;background:rgba(10,132,255,0.15);color:#0a84ff;padding:2px 7px;border-radius:6px;margin-left:6px;font-weight:600';
+      tagOrigen.style.cssText='display:block;width:fit-content;margin-top:6px;font-size:13px;background:rgba(10,132,255,0.15);color:#0a84ff;padding:2px 7px;border-radius:6px;margin-left:6px;font-weight:600';
       tagOrigen.textContent = ent.origenCorte.cliente+(ent.origenCorte.numeroPedido?' #'+ent.origenCorte.numeroPedido:'');
       conf.appendChild(tagOrigen);
     }
@@ -4040,6 +3971,8 @@ function renderEntregas() {
     if (ent.cantidad) metaTxt += (metaTxt ? '  ·  ' : '') + ent.cantidad + ' uds';
     meta.textContent = metaTxt;
     item.appendChild(meta);
+    const total=document.createElement('div');total.className='pedido-unidades';
+    total.textContent=(ent.lineas||[]).reduce((n,l)=>n+(Number(l.uds)||0),0)+' uds en esta entrega';item.appendChild(total);
     if (ent.lineas && ent.lineas.length) {
       const tallas = document.createElement('div');
       tallas.style.cssText = 'font-size:13px;color:var(--txt2);margin-top:2px';
@@ -4125,7 +4058,10 @@ function eliminarEntrega() {
 load();
 renderCli();
 initCalc();
-cargarToken();
+// Retirar las credenciales de la antigua copia en GitHub.
+try {
+  ['gh_token', 'gh_user', 'gh_repo'].forEach(function(key){ localStorage.removeItem(key); });
+} catch(e) {}
 history.replaceState({screen:'s-cli'}, '', '');
 mostrarSplash();
 renderFichaje();
@@ -4137,6 +4073,7 @@ initWeather();
 actualizarBadges();
 actualizarAcumExtraHome();
 window.initFirestore = initFirestore;
+if(window._fireUser)initFirestore();
 </script>
 </body>
 </html>
