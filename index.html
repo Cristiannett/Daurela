@@ -303,6 +303,30 @@ body.font-xl{font-size:22px}
 #undo-panel[hidden]{display:none}
 #undo-panel button{padding:10px;border:0;border-radius:8px;background:var(--bg3);color:var(--txt);font:inherit;font-weight:700;min-height:44px}
 @media(max-width:400px){#corte-detalle-body button{padding-left:9px!important;padding-right:9px!important}.entrega-header{flex-wrap:wrap}}
+/* Hoja de trabajo: columnas estables y acciones separadas */
+.corte-hoja{padding:20px 16px;border-bottom:1px solid var(--border2);background:var(--bg)}
+.corte-hoja-cabecera{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.corte-hoja-cabecera>div{min-width:0}
+.corte-hoja-tela{font-size:19px;font-weight:600;line-height:1.3;margin:0;overflow-wrap:anywhere;color:var(--txt)}
+.corte-hoja-sub{font-size:12px;color:var(--txt2);line-height:1.5;margin:5px 0 0;overflow-wrap:anywhere}
+.corte-hoja-estado{font-size:11px;color:#0a84ff;background:rgba(10,132,255,.12);border-radius:7px;padding:5px 8px;max-width:42%;overflow-wrap:anywhere;flex-shrink:0}
+.corte-hoja-estado.terminado{color:#30d158;background:rgba(48,209,88,.12)}
+.corte-hoja-estado.bloqueado{color:#ff9f0a;background:rgba(255,159,10,.12)}
+.corte-hoja-cifras{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0 16px}
+.corte-hoja-cifra{min-width:0}
+.corte-hoja-cifra>span{display:block;font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.corte-hoja-cifra>strong{display:block;font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2;overflow-wrap:anywhere;color:var(--txt)}
+.corte-hoja-cifra.cortadas>strong{color:#30d158}
+.corte-hoja-cifra.faltan>strong{font-weight:700}
+.corte-hoja-cifra.talla>strong{font-size:23px}
+.corte-hoja-progreso{height:5px;border-radius:5px;background:var(--bg3);overflow:hidden}
+.corte-hoja-progreso>span{display:block;height:100%;background:#30d158}
+.corte-hoja-pedido{margin-top:9px}
+.corte-hoja-acciones{display:grid;grid-template-columns:minmax(75px,1fr) minmax(0,2fr);gap:9px;margin-top:17px}
+.corte-hoja-input{width:100%;padding:10px;border:1px solid var(--border2);border-radius:10px;background:var(--bg2);color:var(--txt);font:inherit;font-size:16px}
+.corte-hoja-anadir{border:0;border-radius:10px;background:var(--txt);color:var(--bg);font:inherit;font-size:14px;font-weight:600;padding:10px;cursor:pointer}
+.corte-hoja-completar{grid-column:1/-1;justify-self:end;border:0;background:none;color:var(--txt2);font:inherit;font-size:12px;padding:6px 0;cursor:pointer}
+@media(max-width:360px){.corte-hoja-cifras{gap:8px}.corte-hoja-cifra>strong{font-size:25px}.corte-hoja-cifra.talla>strong{font-size:21px}}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1570,65 +1594,44 @@ function renderCorteItemRow(item){
     const restan = Math.max(total-cortadas, 0);
     const pct = total>0 ? Math.min(100, Math.round(cortadas/total*100)) : 0;
 
-    const row = document.createElement('div');
-    row.style.cssText='padding:14px 16px;border-bottom:1px solid var(--border)';
-
-    const top = document.createElement('div');
-    top.style.cssText='display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px';
-    const titleWrap = document.createElement('div');
-    const txt = document.createElement('div');
-    txt.style.cssText='font-size:14px;font-weight:600;'+(completo?'color:var(--txt2);text-decoration:line-through':'color:var(--txt)');
-    txt.textContent = item.serie+' | '+item.tamano+' | '+item.unidades+' uds pedidas'+(item.cajas?' | '+item.cajas+' cajas':'');
-    titleWrap.appendChild(txt);
-    if(item.tipo){
-      const tipoBadge = document.createElement('span');
-      tipoBadge.style.cssText='display:inline-block;margin-top:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(100,210,255,0.15);color:#64d2ff';
-      tipoBadge.textContent = item.tipo;
-      titleWrap.appendChild(tipoBadge);
-    }
-    const check = document.createElement('div');
-    check.style.cssText='width:24px;height:24px;border-radius:7px;border:1.5px solid '+(completo?'#30d158':'var(--border3)')+';background:'+(completo?'#30d158':'transparent')+';flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px';
-    if(completo){ check.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'; }
-    top.appendChild(titleWrap);
-    top.appendChild(check);
-    row.appendChild(top);
-
-    if(completo){
-      const badgeCompleto = document.createElement('div');
-      badgeCompleto.style.cssText='display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#30d158';
-      badgeCompleto.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Completo · '+cortadas+' uds'+(cortadas>total?' (pedidas '+total+')':'');
-      row.appendChild(badgeCompleto);
-    } else {
-      const track = document.createElement('div');
-      track.style.cssText='height:8px;border-radius:4px;background:var(--bg3);overflow:hidden;margin-bottom:10px';
-      const fill = document.createElement('div');
-      fill.style.cssText='height:100%;border-radius:4px;background:#30d158;width:'+pct+'%;transition:width 0.2s ease';
-      track.appendChild(fill);
-      row.appendChild(track);
-
-      const stats = document.createElement('div');
-      stats.style.cssText='display:flex;gap:24px';
-      const statCortadas = document.createElement('div');
-      statCortadas.innerHTML='<div style="font-size:22px;font-weight:700;color:#30d158;line-height:1.1">'+cortadas+' uds</div><div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.4px;margin-top:1px">Cortadas</div>';
-      const statFaltan = document.createElement('div');
-      statFaltan.innerHTML='<div style="font-size:22px;font-weight:700;color:#ff9f0a;line-height:1.1">'+restan+' uds</div><div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:0.4px;margin-top:1px">Faltan</div>';
-      stats.appendChild(statCortadas);
-      stats.appendChild(statFaltan);
-      row.appendChild(stats);
-    }
+    const row = document.createElement('article');
+    row.className='corte-hoja';
+    const top=document.createElement('div');top.className='corte-hoja-cabecera';
+    const titleWrap=document.createElement('div');
+    const txt=document.createElement('h3');txt.className='corte-hoja-tela';txt.textContent=item.serie||'Sin tela';
+    const subtitulo=document.createElement('p');subtitulo.className='corte-hoja-sub';
+    subtitulo.textContent=[item.tipo,confeccionDeSerie(item.serie)].filter(Boolean).join(' · ');
+    titleWrap.appendChild(txt);if(subtitulo.textContent)titleWrap.appendChild(subtitulo);
+    const estado=document.createElement('span');estado.className='corte-hoja-estado'+(completo?' terminado':item.motivo?' bloqueado':'');
+    estado.textContent=completo?'Terminado':item.motivo||'En corte';
+    top.appendChild(titleWrap);top.appendChild(estado);row.appendChild(top);
+    const stats=document.createElement('div');stats.className='corte-hoja-cifras';
+    [['Talla',item.tamano||'—','talla'],['Cortadas · uds',cortadas,'cortadas'],['Faltan · uds',restan,'faltan']].forEach(function(d){
+      const celda=document.createElement('div');celda.className='corte-hoja-cifra '+d[2];
+      const label=document.createElement('span');label.textContent=d[0];
+      const value=document.createElement('strong');value.textContent=String(d[1]);
+      celda.appendChild(label);celda.appendChild(value);stats.appendChild(celda);
+    });
+    row.appendChild(stats);
+    const track=document.createElement('div');track.className='corte-hoja-progreso';
+    track.setAttribute('role','progressbar');track.setAttribute('aria-label','Corte de '+item.serie+' talla '+item.tamano);
+    track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax',String(total));track.setAttribute('aria-valuenow',String(Math.min(cortadas,total)));
+    const fill=document.createElement('span');fill.style.width=pct+'%';track.appendChild(fill);row.appendChild(track);
+    const meta=document.createElement('p');meta.className='corte-hoja-sub corte-hoja-pedido';
+    meta.textContent=total+' uds pedidas'+(item.cajas?' · '+item.cajas+' cajas':'')+(cortadas>total?' · '+(cortadas-total)+' uds de más':'');
+    row.appendChild(meta);
 
     if(!completo){
       const accion = document.createElement('div');
-      accion.style.cssText='display:flex;gap:8px;margin-top:12px';
+      accion.className='corte-hoja-acciones';
       const inputCant = document.createElement('input');
       inputCant.type='number';
       inputCant.setAttribute('inputmode','numeric');
       inputCant.placeholder='Uds';inputCant.min='1';inputCant.step='1';inputCant.setAttribute('aria-label','Unidades cortadas de '+item.serie+' '+item.tamano);
-      inputCant.style.cssText='width:90px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rad-sm);font-size:13px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none';
+      inputCant.className='corte-hoja-input';
       const btnAdd = document.createElement('button');
-      btnAdd.className='btn-secondary';
-      btnAdd.textContent='Anadir cortadas';
-      btnAdd.style.cssText='margin-top:0;padding:8px 14px;font-size:13px;width:auto';
+      btnAdd.className='corte-hoja-anadir';
+      btnAdd.textContent='Añadir cortadas';
       btnAdd.onclick=(function(itemId,input){ return function(){
         const cant = parseInt(input.value,10);
         if(!cant || cant<=0){ toast('Pon una cantidad valida'); return; }
@@ -1636,8 +1639,8 @@ function renderCorteItemRow(item){
       }; })(item.id, inputCant);
       const btnTodo = document.createElement('button');
       btnTodo.className='btn-secondary';
-      btnTodo.textContent='Todo';
-      btnTodo.style.cssText='margin-top:0;padding:8px 14px;font-size:13px;width:auto';
+      btnTodo.textContent='Completar lo pendiente';
+      btnTodo.className='corte-hoja-completar';
       btnTodo.onclick=(function(itemId,cant){ return function(){ agregarCortadas(corteDetalleId, itemId, cant); }; })(item.id, restan);
       accion.appendChild(inputCant);
       accion.appendChild(btnAdd);

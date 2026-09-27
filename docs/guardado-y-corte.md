@@ -6,6 +6,7 @@
 - Actualizar todos los dispositivos antes de combinar su uso: versiones antiguas siguen usando el guardado anterior.
 - JSON version 3 incluye clientes, todos los fichajes, jornada, notas, calculadora, entregas, preparacion, corte, inventarios, categorias y fuente. No incluye credenciales. Las copias antiguas solo reemplazan sus apartados. La restauracion conserva una copia previa recuperable.
 - Envios parciales se distinguen por talla y categoria. Las entregas antiguas sin categoria solo se atribuyen automaticamente si hay una unica coincidencia. Las ambiguas requieren correccion antes de otro envio.
+- Detalle de Corte con diseno Hoja de trabajo: tela y categoria arriba, columnas Talla / Cortadas / Faltan, progreso discreto y accion principal para anadir unidades.
 - Modo trabajo pliega lineas completadas; las tarjetas muestran lineas pendientes y unidades restantes. Entregas se ordena y agrupa por fecha de entrega descendente, con las entregas sin fecha al final. Deshacer dura 10 segundos y comprueba que nadie haya cambiado el registro.
 
 ## Comprobacion
