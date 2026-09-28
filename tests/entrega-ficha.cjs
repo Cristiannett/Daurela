@@ -1,0 +1,19 @@
+const fs=require('node:fs'),Module=require('node:module'),assert=require('node:assert/strict'),path=require('node:path');
+const file=path.join(__dirname,'workflow.cjs');let source=fs.readFileSync(file,'utf8');source=source.slice(0,source.lastIndexOf('main().catch'))+';module.exports=fixture;';const mod=new Module(file);mod._compile(source,file);const f=mod.exports(),c=f.ctx;
+const e={id:'e1',conf:'Mercedes',tela:'Bamboo',estado:'proceso',fentrega:'2026-09-28',frecogida:'',creado:'2026-09-28',recepcion:{version:1,lineas:[]},lineas:[{talla:'135',tipo:'Protector',uds:'10'},{talla:'150',tipo:'Protector',uds:'20'}]};
+const row=i=>f.els.get('ent-recogida-ficha').children.filter(x=>x.className==='ent-ficha-recogida')[i];
+const toggle=(i,on)=>{const box=row(i).children[0].children[0];box.checked=on;box.onchange();};
+const enter=(i,n)=>{const input=row(i).children[1].children[0];input.value=String(n);input.oninput();};
+let count=0;function test(n,fn){fn();count++;console.log('OK '+n);}
+c.aplicarDatos({entregas:[e,{...e,id:'other'}]});c.openFormEntrega(c.loadEntregas()[0]);toggle(0,true);
+test('checkbox stays unsaved until Guardar',()=>assert.equal(c.resumenRecepcion(c.loadEntregas()[0]).recibidas,0));
+c.guardarEntrega();test('one received line makes delivery pending without affecting other orders',()=>{assert.equal(c.resumenRecepcion(c.loadEntregas()[0]).recibidas,10);assert.equal(c.resumenRecepcion(c.loadEntregas()[0]).estado,'pendientes');assert.equal(c.resumenRecepcion(c.loadEntregas()[1]).recibidas,0);});
+c.openFormEntrega(c.loadEntregas()[0]);enter(1,8);c.guardarEntrega();test('partial received amount is preserved on reopening',()=>{c.openFormEntrega(c.loadEntregas()[0]);assert.equal(row(1).children[1].children[0].value,'8');assert.equal(c.resumenRecepcion(c.loadEntregas()[0]).pendientes,12);});
+toggle(1,true);c.guardarEntrega();test('all lines checked completes delivery and selects completed tab',()=>{assert.equal(c.resumenRecepcion(c.loadEntregas()[0]).estado,'completadas');assert.equal(f.run('filtroEntregas'),'completadas');});
+c.openFormEntrega(c.loadEntregas()[0]);toggle(0,false);c.guardarEntrega();test('unchecking restores pending without deleting the line',()=>{assert.equal(c.resumenRecepcion(c.loadEntregas()[0]).pendientes,10);assert.equal(c.loadEntregas()[0].lineas.length,2);});
+c.openFormEntrega(c.loadEntregas()[0]);enter(0,11);const snapshot=JSON.stringify(c.loadEntregas());c.guardarEntrega();test('excess rejected without save',()=>assert.equal(JSON.stringify(c.loadEntregas()),snapshot));
+c.openFormEntrega(c.loadEntregas()[0]);enter(0,'');c.guardarEntrega();test('blank value rejected without save',()=>assert.equal(JSON.stringify(c.loadEntregas()),snapshot));
+c.openFormEntrega(c.loadEntregas()[0]);toggle(0,true);const latest=c.loadEntregas();latest[0].obs='Changed on another device';c.aplicarDatos({entregas:latest});c.guardarEntrega();test('stale editing does not overwrite remote changes',()=>{assert.equal(c.loadEntregas()[0].obs,'Changed on another device');assert.equal(c.resumenRecepcion(c.loadEntregas()[0]).pendientes,10);});
+const l=c.resumenRecepcion(e).lineas;const withSaldo=c.corregirRecepcion(e,[{id:l[0].id,recibidas:8,cerrar:true,motivo:'2 de saldo'},{id:l[1].id,recibidas:0,cerrar:false,motivo:''}]);c.aplicarDatos({entregas:[withSaldo]});c.openFormEntrega(c.loadEntregas()[0]);toggle(1,true);c.guardarEntrega();test('untouched saldo retained while another line completes',()=>{assert.equal(c.resumenRecepcion(c.loadEntregas()[0]).saldo,2);assert.equal(c.resumenRecepcion(c.loadEntregas()[0]).estado,'completadas');});
+const legacy={...e,recepcion:null,estado:'completado'};c.iniciarRecogidaFicha(legacy);test('legacy state preserved without touching receipt controls',()=>assert.equal(c.aplicarRecogidaFicha(legacy),legacy));
+console.log(count+' delivery-form checks passed.');

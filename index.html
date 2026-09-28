@@ -376,6 +376,16 @@ body.font-xl{font-size:22px}
 #corte-cierre-panel:empty{display:none}
 #corte-cierre-panel p,.corte-anulacion-nota{font-size:13px;color:var(--txt2);line-height:1.5;overflow-wrap:anywhere}
 .corte-anular{font-size:12px;margin-top:6px;padding:8px;background:none}
+#ent-recogida-ficha{margin-bottom:22px;padding:15px;background:var(--bg2);border:1px solid var(--border);border-radius:14px}
+#ent-recogida-ficha:empty{display:none}
+#ent-recogida-ficha h2{margin:0 0 8px;font-size:17px}
+#ent-recogida-ficha p{font-size:13px;line-height:1.5;color:var(--txt2)}
+#ent-recogida-ficha .ent-ficha-balance{font-weight:600;color:var(--txt)}
+.ent-ficha-recogida{border-top:1px solid var(--border2);padding:12px 0 4px}
+.ent-ficha-check{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-size:14px}
+.ent-ficha-check input{width:22px;height:22px;flex-shrink:0;accent-color:var(--estado-completado)}
+.ent-ficha-recogida>label:not(.ent-ficha-check){display:block;font-size:12px;color:var(--txt2);margin-top:8px}
+.ent-ficha-recogida input[type=number]{display:block;width:100%;padding:10px;margin-top:5px;min-height:44px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--txt);font-size:16px}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -798,6 +808,7 @@ onAuthStateChanged(auth, function(user) {
     <h1 id="entrega-form-titulo">Nueva entrega</h1>
   </div>
   <div style="padding:16px">
+    <section id="ent-recogida-ficha" aria-label="Recogido de la confección"></section>
     <div class="fg"><label>Confeccion</label>
       <select id="ent-conf" onchange="entCambiaConf()" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
         <option value="">Seleccionar...</option>
@@ -3943,6 +3954,8 @@ const ENT_KEY = 'entregas_v1';
 function loadEntregas() { try { const d = localStorage.getItem(ENT_KEY); return d ? JSON.parse(d) : []; } catch(e) { return []; } }
 function saveEntregas(arr) { localStorage.setItem(ENT_KEY, JSON.stringify(arr)); programarSync(); }
 let entEditando = null;
+let entRecogidaBorrador={};
+let entRecogidaModificada=false;
 let entLineas = [];
 
 const ENT_TELAS = {
@@ -3981,9 +3994,54 @@ function entDelLinea(idx) {
 
 function entUpdateLinea(idx, field, value) {
   if (entLineas[idx]) entLineas[idx][field] = value;
+  renderRecogidaFicha();
 }
 
+function iniciarRecogidaFicha(ent){
+  entRecogidaBorrador={};entRecogidaModificada=false;
+  if(ent)resumenRecepcion(ent).lineas.forEach(l=>{entRecogidaBorrador[l.id]={recibidas:l.recibidas,saldo:l.saldo,motivo:l.motivo};});
+}
+function aplicarRecogidaFicha(ent){
+  if(!entRecogidaModificada)return ent;
+  const filas=resumenRecepcion(ent).lineas.map(l=>{
+    const r=entRecogidaBorrador[l.id]||{recibidas:0,saldo:0,motivo:''};
+    return {id:l.id,recibidas:r.recibidas,cerrar:r.saldo>0,motivo:r.motivo};
+  });
+  const result=corregirRecepcion(ent,filas);
+  if(resumenRecepcion(result).recibidas>resumenRecepcion(ent).recibidas&&!result.frecogida)result.frecogida=new Date().toISOString().slice(0,10);
+  return result;
+}
+function renderRecogidaFicha(){
+  const panel=document.getElementById('ent-recogida-ficha');if(!panel)return;panel.innerHTML='';
+  if(!entEditando)return;
+  const title=document.createElement('h2');title.textContent='Recogido de la confección';panel.appendChild(title);
+  const ayuda=document.createElement('p');ayuda.textContent='Marca las tallas recibidas por completo o indica el total recogido hasta ahora. Pulsa Guardar al terminar.';panel.appendChild(ayuda);
+  if(resumenRecepcion(entEditando).historica){const aviso=document.createElement('p');aviso.textContent='Entrega antigua sin cantidades registradas. Marca solo lo que sepas que has recibido; el estado anterior no se ha convertido en unidades.';panel.appendChild(aviso);}
+  const lineas=resumenRecepcion({...entEditando,lineas:entLineas}).lineas;
+  const resumen=document.createElement('p');resumen.className='ent-ficha-balance';resumen.setAttribute('aria-live','polite');panel.appendChild(resumen);
+  const refrescarResumen=()=>{
+    let recibidas=0,pendientes=0,saldos=0,invalidas=false;
+    lineas.forEach(l=>{const r=entRecogidaBorrador[l.id]||{recibidas:0,saldo:0};if(!Number.isSafeInteger(r.recibidas)||r.recibidas<0||r.recibidas>l.enviadas)invalidas=true;recibidas+=Number.isFinite(r.recibidas)?r.recibidas:0;saldos+=r.saldo||0;pendientes+=Math.max(0,l.enviadas-(Number.isFinite(r.recibidas)?r.recibidas:0)-(r.saldo||0));});
+    resumen.textContent=invalidas?'Revisa las cantidades recibidas.':recibidas+' uds recibidas · '+pendientes+' pendientes'+(saldos?' · '+saldos+' de saldo':'')+(entRecogidaModificada?' · Sin guardar':'');
+    if(entRecogidaModificada&&!invalidas){const estado=document.getElementById('ent-estado');if(estado)estado.value=lineas.length&&pendientes===0?'completado':recibidas||saldos?'pendiente':'proceso';}
+  };
+  lineas.forEach(l=>{
+    if(!entRecogidaBorrador[l.id])entRecogidaBorrador[l.id]={recibidas:0,saldo:0,motivo:''};
+    const r=entRecogidaBorrador[l.id];
+    const row=document.createElement('div');row.className='ent-ficha-recogida';
+    const label=document.createElement('label');label.className='ent-ficha-check';
+    const check=document.createElement('input');check.type='checkbox';check.checked=r.recibidas===l.enviadas&&l.enviadas>0;
+    const nombre=document.createElement('span');nombre.textContent='Talla '+l.talla+(l.tipo?' · '+l.tipo:'')+' · Recogido todo ('+l.enviadas+' uds)';label.appendChild(check);label.appendChild(nombre);row.appendChild(label);
+    const inputLabel=document.createElement('label');inputLabel.textContent='Total recibido (uds)';const input=document.createElement('input');input.type='number';input.min='0';input.max=String(l.enviadas);input.step='1';input.setAttribute('inputmode','numeric');input.value=Number.isFinite(r.recibidas)?String(r.recibidas):'';inputLabel.appendChild(input);row.appendChild(inputLabel);
+    const estado=document.createElement('p');row.appendChild(estado);
+    const actualizarLinea=()=>{estado.textContent=r.saldo?'Cerrada con '+r.saldo+' uds de saldo · '+r.motivo:r.recibidas===l.enviadas?'Recogida completa':Number.isFinite(r.recibidas)?Math.max(0,l.enviadas-r.recibidas)+' uds por recibir':'Indica una cantidad';};
+    check.onchange=()=>{r.recibidas=check.checked?l.enviadas:0;r.saldo=0;r.motivo='';input.value=String(r.recibidas);entRecogidaModificada=true;actualizarLinea();refrescarResumen();};
+    input.oninput=()=>{r.recibidas=input.value.trim()===''?NaN:Number(input.value);r.saldo=0;r.motivo='';check.checked=r.recibidas===l.enviadas&&l.enviadas>0;entRecogidaModificada=true;actualizarLinea();refrescarResumen();};
+    actualizarLinea();panel.appendChild(row);
+  });refrescarResumen();
+}
 function renderEntLineas() {
+  renderRecogidaFicha();
   const wrap = document.getElementById('ent-lineas-wrap');
   if (!wrap) return;
   wrap.innerHTML = '';
@@ -4315,6 +4373,7 @@ function renderEntregas() {
 function openFormEntrega(ent) {
   if(ent&&resumenRecepcion(ent).archivada){filtroEntregas='historico';go('s-entregas');return;}
   entEditando = ent || null;
+  iniciarRecogidaFicha(entEditando);
   const titulo = document.getElementById('entrega-form-titulo');
   if (titulo) titulo.textContent = ent ? 'Editar entrega' : 'Nueva entrega';
   document.getElementById('ent-conf').value = ent ? (ent.conf||'') : '';
@@ -4355,7 +4414,7 @@ function guardarEntrega() {
   if (!conf) { toast('Selecciona una confeccion'); return; }
   const tela = document.getElementById('ent-tela').value;
   if (!tela) { toast('Selecciona una tela'); return; }
-  const ent = {
+  let ent = {
     id: entEditando ? entEditando.id : uid(),
     conf: conf,
     tela: tela,
@@ -4378,6 +4437,7 @@ function guardarEntrega() {
     const anterior=resumenRecepcion(entEditando),nuevo=resumenRecepcion(ent);
     if(anterior.lineas.some(l=>l.recibidas+l.saldo>0&&((ent.conf!==entEditando.conf||ent.tela!==entEditando.tela)||!nuevo.lineas.some(n=>n.id===l.id&&n.enviadas>=l.recibidas+l.saldo)))){toast('Corrige primero las recogidas o saldos de las líneas que quieres cambiar.');return;}
   }
+  try{ent=aplicarRecogidaFicha(ent);}catch(error){toast(error.message);return;}
   if(ent.recepcion)actualizarEstadoRecepcion(ent);
   const entregas = loadEntregas();
   if(entEditando&&!iguales(entregas.find(e=>e.id===entEditando.id),entEditando)){toast("La entrega ha cambiado. Vuelve a abrirla antes de editar.");return;}
@@ -4388,6 +4448,8 @@ function guardarEntrega() {
     entregas.unshift(ent);
   }
   saveEntregas(entregas);
+  filtroEntregas=resumenRecepcion(ent).estado;
+  entRecogidaModificada=false;
   toast(entEditando ? 'Entrega actualizada' : 'Entrega guardada');
   go('s-entregas');
   renderEntregas();

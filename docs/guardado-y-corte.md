@@ -44,3 +44,9 @@ Las recogidas historicas se anotan por separado y pueden anularse. No descuentan
 Cada linea puede anular sus unidades pendientes con motivo y fecha, sin alterar unidades pedidas ni cortadas. Cerrar pedido con pendientes aplica esta operacion a las lineas no resueltas. Si todas las lineas estan cortadas o anuladas, aparece en Completados como Cerrado con anulaciones. Se pueden reabrir una o todas las lineas anuladas.
 
 Las anuladas no cuentan en el badge ni en Pendientes. Solo las cantidades realmente cortadas siguen disponibles para enviar a Entregas. No se modifican entregas ni recogidas existentes. La anulacion se conserva en JSON y sincronizacion. Pruebas: node tests/corte-anulaciones.cjs.
+
+## Marcado dentro de cada entrega
+
+La ficha muestra Recogido de la confeccion con una casilla por talla/categoria y un campo para el total recibido. Marcar completa esa linea; desmarcar pone sus recibidas a cero, y se puede introducir una cantidad parcial. Los cambios se aplican al pulsar Guardar. El estado y la pestana de destino se actualizan automaticamente.
+
+El marcado solo afecta a esa entrega: no utiliza el reparto FIFO global. Conserva los saldos de las lineas que no se modifican; cambiar la cantidad de una linea con saldo elimina ese cierre para reflejar la nueva cantidad real. Las entregas antiguas conservan su estado si no se tocan los controles de recogida. Pruebas: node tests/entrega-ficha.cjs.
