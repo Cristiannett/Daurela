@@ -38,3 +38,9 @@ Las entregas existentes pasan a Historico sin revisar mediante seguimiento.archi
 Recuperar pendientes conocidos crea un registro de apertura etiquetado Pendiente al iniciar, ligado al historico con referenciaHistorica. No lleva origenCorte para no duplicar lo enviado desde Corte. La cantidad inicial queda fija y el resto se gestiona con recibidas/saldos. Cada entrada historica puede recuperarse una vez; el identificador es estable para evitar duplicados entre dispositivos.
 
 Las recogidas historicas se anotan por separado y pueden anularse. No descuentan pedidos activos y no pueden consumir unidades recuperadas para seguimiento. Los nuevos metadatos quedan incluidos en JSON y sincronizacion.
+
+## Anulaciones de corte
+
+Cada linea puede anular sus unidades pendientes con motivo y fecha, sin alterar unidades pedidas ni cortadas. Cerrar pedido con pendientes aplica esta operacion a las lineas no resueltas. Si todas las lineas estan cortadas o anuladas, aparece en Completados como Cerrado con anulaciones. Se pueden reabrir una o todas las lineas anuladas.
+
+Las anuladas no cuentan en el badge ni en Pendientes. Solo las cantidades realmente cortadas siguen disponibles para enviar a Entregas. No se modifican entregas ni recogidas existentes. La anulacion se conserva en JSON y sincronizacion. Pruebas: node tests/corte-anulaciones.cjs.

@@ -371,6 +371,11 @@ body.font-xl{font-size:22px}
 .entrega-balance{font-size:14px;font-weight:600;line-height:1.5}
 #ent-tabs{flex-wrap:wrap}
 #lst-entregas{padding-bottom:130px}
+.estado-anulado{background:var(--bg3);color:var(--txt2)}
+#corte-cierre-panel{padding:0 16px 12px}
+#corte-cierre-panel:empty{display:none}
+#corte-cierre-panel p,.corte-anulacion-nota{font-size:13px;color:var(--txt2);line-height:1.5;overflow-wrap:anywhere}
+.corte-anular{font-size:12px;margin-top:6px;padding:8px;background:none}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1057,7 +1062,7 @@ onAuthStateChanged(auth, function(user) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
     </button>
   </div>
-  <div class="work-toolbar"><button id="corte-work-toggle" class="btn-secondary" onclick="toggleModoCorte()" aria-pressed="false">Modo trabajo: solo pendientes</button></div><div id="corte-detalle-body" style="padding-bottom:24px"></div>
+  <div class="work-toolbar"><button id="corte-work-toggle" class="btn-secondary" onclick="toggleModoCorte()" aria-pressed="false">Modo trabajo: solo pendientes</button></div><div id="corte-cierre-panel"></div><div id="corte-detalle-body" style="padding-bottom:24px"></div>
 </div>
 
 <!-- CHATBOT -->
@@ -1202,7 +1207,7 @@ function agregarCorteTipo(){
 }
 
 function corteLineaCompleta(item){
-  return (Number(item.unidades)||0) > 0 && item.cortadas >= (Number(item.unidades)||0);
+  return Boolean(item.anulacion) || ((Number(item.unidades)||0) > 0 && item.cortadas >= (Number(item.unidades)||0));
 }
 
 function corteTituloLinea(item){
@@ -1398,17 +1403,18 @@ function renderCorte(){
       const sub = document.createElement('div');
       sub.className='li-sub';
       sub.textContent = p.cliente+' · '+fechaLegible(p.fecha);
-      const unidadesPendientes=p.items.reduce((n,i)=>n+Math.max(0,Number(i.unidades)-(Number(i.cortadas)||0)),0);
-      const contador=document.createElement('div');contador.className='pedido-unidades';contador.textContent=pendientes?unidadesPendientes+' uds por cortar':'Corte terminado';
+      const anuladas=p.items.filter(i=>i.anulacion).length;
+      const unidadesPendientes=p.items.reduce((n,i)=>n+(i.anulacion?0:Math.max(0,Number(i.unidades)-(Number(i.cortadas)||0))),0);
+      const contador=document.createElement('div');contador.className='pedido-unidades';contador.textContent=pendientes?unidadesPendientes+' uds por cortar':anuladas?'Cerrado con anulaciones':'Corte terminado';
       info.appendChild(nombre);
       info.appendChild(sub);
       info.appendChild(contador);
       const estadoPedido=document.createElement('span');
       const enCurso=p.items.some(i=>(Number(i.cortadas)||0)>0);
-      estadoPedido.className='estado-chip '+(!pendientes?'estado-completado':enCurso?'estado-proceso':'estado-pendiente');
-      estadoPedido.textContent=!pendientes?'Completado':enCurso?'En corte':'Pendiente';
+      estadoPedido.className='estado-chip '+(!pendientes?(anuladas?'estado-anulado':'estado-completado'):enCurso?'estado-proceso':'estado-pendiente');
+      estadoPedido.textContent=!pendientes?(anuladas?'Cerrado':'Completado'):enCurso?'En corte':'Pendiente';
       const detallePedido=document.createElement('div');detallePedido.className='corte-pedido-meta';
-      const lineas=document.createElement('span');lineas.textContent=pendientes?pendientes+' líneas pendientes':p.items.length+' líneas terminadas';
+      const lineas=document.createElement('span');lineas.textContent=(pendientes?pendientes+' líneas pendientes':p.items.length+' líneas resueltas')+(anuladas?' · '+anuladas+' anuladas':'');
       detallePedido.appendChild(estadoPedido);detallePedido.appendChild(lineas);info.appendChild(detallePedido);
       const chevron = document.createElement('div');
       chevron.className='chevron';
@@ -1482,19 +1488,45 @@ function abrirPedidoCorte(id){
 let modoTrabajoCorte=false;
 function toggleModoCorte(){modoTrabajoCorte=!modoTrabajoCorte;renderCorteDetalle();}
 try{window.toggleModoCorte=toggleModoCorte;}catch(e){}
+function cambiarAnulacionCorte(pedidoId,lineaId,reabrir){
+  const anteriores=loadCorte();const pedido=anteriores.find(p=>p.id===pedidoId);if(!pedido)return;
+  const afectadas=pedido.items.filter(i=>(!lineaId||i.id===lineaId)&&(reabrir?Boolean(i.anulacion):!corteLineaCompleta(i)));
+  if(!afectadas.length)return;
+  let motivo='';
+  if(reabrir){if(!confirm('Reabrir '+afectadas.length+' línea(s) anulada(s) para continuar cortando?'))return;}
+  else{
+    const unidades=afectadas.reduce((n,i)=>n+Math.max(0,Number(i.unidades)-(Number(i.cortadas)||0)),0);
+    const respuesta=prompt('Se anularán '+unidades+' uds pendientes de '+afectadas.length+' línea(s), sin aumentar las cortadas. Motivo:', 'Anulado por el cliente');
+    if(respuesta===null)return;motivo=respuesta.trim();if(!motivo){toast('Indica un motivo para conservar el registro');return;}
+  }
+  const pedidos=loadCorte(),actual=pedidos.find(p=>p.id===pedidoId);
+  if(!iguales(actual,pedido)){toast('El pedido ha cambiado. Revísalo antes de continuar.');return;}
+  const ids=new Set(afectadas.map(i=>i.id));
+  actual.items.forEach(i=>{if(!ids.has(i.id))return;if(reabrir){delete i.anulacion;}else{i.anulacion={motivo,fecha:new Date().toISOString(),unidades:Math.max(0,Number(i.unidades)-(Number(i.cortadas)||0))};}});
+  saveCorte(pedidos);renderCorteDetalle();toast(reabrir?'Líneas reabiertas':'Pendiente anulado. Las cortadas no cambian.');
+}
+function renderCierreCorte(pedido){
+  const panel=document.getElementById('corte-cierre-panel');if(!panel)return;panel.innerHTML='';
+  const pendientes=pedido.items.filter(i=>!corteLineaCompleta(i));
+  const anuladas=pedido.items.filter(i=>i.anulacion);
+  if(anuladas.length){const aviso=document.createElement('p');aviso.textContent=anuladas.length+' línea(s) con pendiente anulado. Se conservan las cantidades realmente cortadas.';panel.appendChild(aviso);}
+  if(pendientes.length){const cerrar=document.createElement('button');cerrar.className='btn-secondary';cerrar.textContent='Cerrar pedido con pendientes';cerrar.onclick=()=>cambiarAnulacionCorte(pedido.id,null,false);panel.appendChild(cerrar);}
+  if(anuladas.length){const reabrir=document.createElement('button');reabrir.className='btn-secondary';reabrir.textContent='Reabrir líneas anuladas';reabrir.onclick=()=>cambiarAnulacionCorte(pedido.id,null,true);panel.appendChild(reabrir);}
+}
 function renderCorteDetalle(){
   const pedido = loadCorte().find(function(p){ return p.id===corteDetalleId; });
   const titulo = document.getElementById('corte-detalle-titulo');
   const body = document.getElementById('corte-detalle-body');
   if(!body)return;
-  if(!pedido){body.textContent='Este pedido ya no esta disponible.';return;}
+  if(!pedido){body.textContent='Este pedido ya no esta disponible.';const panel=document.getElementById('corte-cierre-panel');if(panel)panel.innerHTML='';return;}
+  renderCierreCorte(pedido);
   if(titulo) titulo.textContent = pedido.cliente+(pedido.numeroPedido?' · #'+pedido.numeroPedido:'')+' · '+pedido.fecha;
   body.innerHTML='';
   const toggle=document.getElementById('corte-work-toggle');
   if(toggle){toggle.textContent=modoTrabajoCorte?'Ver todo el pedido':'Modo trabajo: solo pendientes';toggle.setAttribute('aria-pressed',String(modoTrabajoCorte));}
   const completadas=document.createElement('details');
   const summary=document.createElement('summary');
-  summary.textContent='Lineas terminadas ('+pedido.items.filter(corteLineaCompleta).length+')';
+  summary.textContent=(pedido.items.some(i=>i.anulacion)?'Líneas resueltas (':'Lineas terminadas (')+pedido.items.filter(corteLineaCompleta).length+')';
   completadas.className='corte-terminadas';completadas.appendChild(summary);
 
   const grupos = {};
@@ -1648,9 +1680,10 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
 
 function renderCorteItemRow(item){
     const completo = corteLineaCompleta(item);
+    const anulada=Boolean(item.anulacion);
     const total = Number(item.unidades)||0;
     const cortadas = item.cortadas||0;
-    const restan = Math.max(total-cortadas, 0);
+    const restan = anulada?0:Math.max(total-cortadas, 0);
     const pct = total>0 ? Math.min(100, Math.round(cortadas/total*100)) : 0;
 
     const row = document.createElement('article');
@@ -1661,8 +1694,8 @@ function renderCorteItemRow(item){
     const subtitulo=document.createElement('p');subtitulo.className='corte-hoja-sub';
     subtitulo.textContent=[item.tipo,confeccionDeSerie(item.serie)].filter(Boolean).join(' · ');
     titleWrap.appendChild(txt);if(subtitulo.textContent)titleWrap.appendChild(subtitulo);
-    const estado=document.createElement('span');estado.className='estado-chip '+(completo?'estado-completado':item.motivo||!cortadas?'estado-pendiente':'estado-proceso');
-    estado.textContent=completo?'Terminado':item.motivo||(cortadas?'En corte':'Pendiente');
+    const estado=document.createElement('span');estado.className='estado-chip '+(anulada?'estado-anulado':completo?'estado-completado':item.motivo||!cortadas?'estado-pendiente':'estado-proceso');
+    estado.textContent=anulada?'Pendiente anulado':completo?'Terminado':item.motivo||(cortadas?'En corte':'Pendiente');
     top.appendChild(titleWrap);top.appendChild(estado);row.appendChild(top);
     const stats=document.createElement('div');stats.className='corte-hoja-cifras';
     [['Talla',item.tamano||'—','talla'],['Cortadas · uds',cortadas,'cortadas'],['Faltan · uds',restan,'faltan']].forEach(function(d){
@@ -1679,6 +1712,10 @@ function renderCorteItemRow(item){
     const meta=document.createElement('p');meta.className='corte-hoja-sub corte-hoja-pedido';
     meta.textContent=total+' uds pedidas'+(item.cajas?' · '+item.cajas+' cajas':'')+(cortadas>total?' · '+(cortadas-total)+' uds de más':'');
     row.appendChild(meta);
+    if(anulada){
+      const nota=document.createElement('p');nota.className='corte-anulacion-nota';
+      nota.textContent=item.anulacion.unidades+' uds anuladas · '+item.anulacion.motivo+' · '+fechaLegible(item.anulacion.fecha.slice(0,10));row.appendChild(nota);
+    }
 
     if(!completo){
       const accion = document.createElement('div');
@@ -1705,6 +1742,7 @@ function renderCorteItemRow(item){
       accion.appendChild(btnAdd);
       accion.appendChild(btnTodo);
       row.appendChild(accion);
+      const anular=document.createElement('button');anular.className='btn-secondary corte-anular';anular.textContent='Anular pendiente de esta talla';anular.onclick=()=>cambiarAnulacionCorte(corteDetalleId,item.id,false);row.appendChild(anular);
 
       const motivos = document.createElement('div');
       motivos.style.cssText='display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
@@ -1726,9 +1764,9 @@ function renderCorteItemRow(item){
     } else {
       const btnDeshacer = document.createElement('button');
       btnDeshacer.className='btn-secondary';
-      btnDeshacer.textContent='Reiniciar corte';
+      btnDeshacer.textContent=anulada?'Reabrir esta talla':'Reiniciar corte';
       btnDeshacer.style.cssText='margin-top:8px;padding:6px 12px;font-size:12px;width:auto';
-      btnDeshacer.onclick=(function(itemId){ return function(){ resetearCortadas(corteDetalleId, itemId); }; })(item.id);
+      btnDeshacer.onclick=()=>{if(anulada)cambiarAnulacionCorte(corteDetalleId,item.id,true);else resetearCortadas(corteDetalleId,item.id);};
       row.appendChild(btnDeshacer);
     }
     return row;
@@ -1760,13 +1798,14 @@ function agregarCortadas(pedidoId,lineaId,cantidad){
   if(!Number.isInteger(cantidad)||cantidad<=0){toast('Pon una cantidad valida');return;}
   const pedidos=loadCorte();const pedido=pedidos.find(p=>p.id===pedidoId);if(!pedido)return;
   const item=pedido.items.find(i=>i.id===lineaId);if(!item)return;
+  if(item.anulacion){toast('Reabre esta talla antes de registrar más cortadas');return;}
   const antes={cortadas:item.cortadas||0,motivo:item.motivo||''};
   item.cortadas=antes.cortadas+cantidad;if(item.cortadas>=Number(item.unidades))item.motivo='';
   const despues={cortadas:item.cortadas,motivo:item.motivo||''};
   saveCorte(pedidos);renderCorteDetalle();
   ofrecerDeshacer(cantidad+' uds registradas',()=>{
     const actuales=loadCorte();const p=actuales.find(x=>x.id===pedidoId);const i=p&&p.items.find(x=>x.id===lineaId);
-    if(!i||i.cortadas!==despues.cortadas||(i.motivo||'')!==despues.motivo){toast('La linea ha cambiado. Revisala antes de corregirla.');return;}
+    if(!i||i.anulacion||i.cortadas!==despues.cortadas||(i.motivo||'')!==despues.motivo){toast('La linea ha cambiado. Revisala antes de corregirla.');return;}
     Object.assign(i,antes);saveCorte(actuales);refrescarDatos();toast('Corte deshecho');
   });
 }
@@ -1786,6 +1825,7 @@ function resetearCortadas(pedidoId, lineaId){
   if(!pedido) return;
   const item = pedido.items.find(function(i){ return i.id===lineaId; });
   if(!item) return;
+  if(item.anulacion){toast('Reabre esta talla antes de cambiar las cortadas');return;}
   item.cortadas = 0;
   saveCorte(pedidos);
   renderCorteDetalle();
@@ -2371,6 +2411,7 @@ function validarCopia(data){
     const lineas=resumenRecepcion(e).lineas;
     if(e.recepcion.lineas.some(r=>r.recibidas+r.saldo>0&&!lineas.some(l=>l.id===r.id&&l.enviadas>=r.recibidas+r.saldo)))throw Error('Recogidas mayores que el género enviado');
   });
+  (data.corte||[]).forEach(p=>p.items.forEach(i=>{if(i.anulacion&&(typeof i.anulacion.motivo!=='string'||!i.anulacion.motivo.trim()||typeof i.anulacion.fecha!=='string'||!Number.isFinite(Date.parse(i.anulacion.fecha))||!Number.isSafeInteger(i.anulacion.unidades)||i.anulacion.unidades<0))throw Error('Anulación de corte no válida');}));
   return normalizarRemoto(data);
 }
 function importar(e){
