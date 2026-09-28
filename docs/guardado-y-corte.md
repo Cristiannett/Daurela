@@ -21,7 +21,7 @@ Inicio con fecha e iconos uniformes. Tarjetas de pedidos con unidades pendientes
 
 ## Recogidas parciales
 
-- Al enviar desde Corte se crea una entrega en proceso con recepcion version 1. El estado se calcula a partir de las cantidades recibidas y saldos: Activas sin recogidas, Pendientes parcialmente cubiertas, Completadas totalmente cubiertas.
+- Al enviar desde Corte se crea una entrega en proceso con recepcion version 1. El estado se calcula a partir de las cantidades recibidas y saldos: Activas mientras quede genero por recibir (incluidas recogidas parciales), Completadas totalmente cubiertas.
 - Registrar recogida agrupa por confeccion, tela, talla y categoria (espacios extremos y mayusculas se normalizan). Reparte por fecha de envio ascendente, despues creacion e identificador. No mezcla categorias vacias con categorias conocidas. Es una asignacion contable, no una identificacion fisica del pedido.
 - Cada entrega guarda sus cantidades recibidas en recepcion.lineas identificadas por talla/categoria. El JSON y la sincronizacion incluyen este campo. No se modifican las cantidades enviadas.
 - Corregir recibidas permite cambiar el total acumulado por entrega y cerrar diferencias como saldo con motivo obligatorio. Al reabrir un saldo o reducir recibidas vuelve a quedar pendiente. Una correccion no redistribuye recogidas antiguas de otras entregas.
@@ -47,6 +47,8 @@ Las anuladas no cuentan en el badge ni en Pendientes. Solo las cantidades realme
 
 ## Marcado dentro de cada entrega
 
-La ficha muestra Recogido de la confeccion con una casilla por talla/categoria y un campo para el total recibido. Marcar completa esa linea; desmarcar pone sus recibidas a cero, y se puede introducir una cantidad parcial. Los cambios se aplican al pulsar Guardar. El estado y la pestana de destino se actualizan automaticamente.
+La ficha tiene un boton Entregado junto a las categorias de cada talla y un resumen compacto de recibidas/enviadas. El boton abre un cuadro para introducir el total acumulado recogido de esa talla/categoria, no solo la ultima recogida. Permite corregirlo a cero o a otra cantidad valida. Se confirma con Guardar. Se ha eliminado el bloque grande de casillas.
 
-El marcado solo afecta a esa entrega: no utiliza el reparto FIFO global. Conserva los saldos de las lineas que no se modifican; cambiar la cantidad de una linea con saldo elimina ese cierre para reflejar la nueva cantidad real. Las entregas antiguas conservan su estado si no se tocan los controles de recogida. Pruebas: node tests/entrega-ficha.cjs.
+Las entregas permanecen en Activas con recogidas parciales y pasan a Completadas al cubrir todas sus lineas (recibidas o saldos). Ya no hay pestana Pendientes en Entregas; Historico se mantiene. La ficha solo modifica esa entrega, sin usar el reparto FIFO. Las recogidas globales siguen repartiendo entre las mas antiguas. Los saldos de las lineas no modificadas se conservan.
+
+Pruebas: node tests/entrega-ficha.cjs.

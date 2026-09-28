@@ -376,16 +376,9 @@ body.font-xl{font-size:22px}
 #corte-cierre-panel:empty{display:none}
 #corte-cierre-panel p,.corte-anulacion-nota{font-size:13px;color:var(--txt2);line-height:1.5;overflow-wrap:anywhere}
 .corte-anular{font-size:12px;margin-top:6px;padding:8px;background:none}
-#ent-recogida-ficha{margin-bottom:22px;padding:15px;background:var(--bg2);border:1px solid var(--border);border-radius:14px}
-#ent-recogida-ficha:empty{display:none}
-#ent-recogida-ficha h2{margin:0 0 8px;font-size:17px}
-#ent-recogida-ficha p{font-size:13px;line-height:1.5;color:var(--txt2)}
-#ent-recogida-ficha .ent-ficha-balance{font-weight:600;color:var(--txt)}
-.ent-ficha-recogida{border-top:1px solid var(--border2);padding:12px 0 4px}
-.ent-ficha-check{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-size:14px}
-.ent-ficha-check input{width:22px;height:22px;flex-shrink:0;accent-color:var(--estado-completado)}
-.ent-ficha-recogida>label:not(.ent-ficha-check){display:block;font-size:12px;color:var(--txt2);margin-top:8px}
-.ent-ficha-recogida input[type=number]{display:block;width:100%;padding:10px;margin-top:5px;min-height:44px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--txt);font-size:16px}
+.ent-recibido-btn{border:1px solid var(--border2);border-radius:20px;padding:6px 12px;min-height:44px;background:var(--bg3);color:var(--txt);font:inherit;font-size:12px;cursor:pointer}
+.ent-recibido-btn.completo{color:var(--estado-completado)}
+.ent-recibido-resumen{font-size:12px;color:var(--txt2);align-self:center}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -808,7 +801,6 @@ onAuthStateChanged(auth, function(user) {
     <h1 id="entrega-form-titulo">Nueva entrega</h1>
   </div>
   <div style="padding:16px">
-    <section id="ent-recogida-ficha" aria-label="Recogido de la confección"></section>
     <div class="fg"><label>Confeccion</label>
       <select id="ent-conf" onchange="entCambiaConf()" style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--rad);font-size:15px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none">
         <option value="">Seleccionar...</option>
@@ -3994,7 +3986,6 @@ function entDelLinea(idx) {
 
 function entUpdateLinea(idx, field, value) {
   if (entLineas[idx]) entLineas[idx][field] = value;
-  renderRecogidaFicha();
 }
 
 function iniciarRecogidaFicha(ent){
@@ -4011,37 +4002,21 @@ function aplicarRecogidaFicha(ent){
   if(resumenRecepcion(result).recibidas>resumenRecepcion(ent).recibidas&&!result.frecogida)result.frecogida=new Date().toISOString().slice(0,10);
   return result;
 }
-function renderRecogidaFicha(){
-  const panel=document.getElementById('ent-recogida-ficha');if(!panel)return;panel.innerHTML='';
-  if(!entEditando)return;
-  const title=document.createElement('h2');title.textContent='Recogido de la confección';panel.appendChild(title);
-  const ayuda=document.createElement('p');ayuda.textContent='Marca las tallas recibidas por completo o indica el total recogido hasta ahora. Pulsa Guardar al terminar.';panel.appendChild(ayuda);
-  if(resumenRecepcion(entEditando).historica){const aviso=document.createElement('p');aviso.textContent='Entrega antigua sin cantidades registradas. Marca solo lo que sepas que has recibido; el estado anterior no se ha convertido en unidades.';panel.appendChild(aviso);}
-  const lineas=resumenRecepcion({...entEditando,lineas:entLineas}).lineas;
-  const resumen=document.createElement('p');resumen.className='ent-ficha-balance';resumen.setAttribute('aria-live','polite');panel.appendChild(resumen);
-  const refrescarResumen=()=>{
-    let recibidas=0,pendientes=0,saldos=0,invalidas=false;
-    lineas.forEach(l=>{const r=entRecogidaBorrador[l.id]||{recibidas:0,saldo:0};if(!Number.isSafeInteger(r.recibidas)||r.recibidas<0||r.recibidas>l.enviadas)invalidas=true;recibidas+=Number.isFinite(r.recibidas)?r.recibidas:0;saldos+=r.saldo||0;pendientes+=Math.max(0,l.enviadas-(Number.isFinite(r.recibidas)?r.recibidas:0)-(r.saldo||0));});
-    resumen.textContent=invalidas?'Revisa las cantidades recibidas.':recibidas+' uds recibidas · '+pendientes+' pendientes'+(saldos?' · '+saldos+' de saldo':'')+(entRecogidaModificada?' · Sin guardar':'');
-    if(entRecogidaModificada&&!invalidas){const estado=document.getElementById('ent-estado');if(estado)estado.value=lineas.length&&pendientes===0?'completado':recibidas||saldos?'pendiente':'proceso';}
-  };
-  lineas.forEach(l=>{
-    if(!entRecogidaBorrador[l.id])entRecogidaBorrador[l.id]={recibidas:0,saldo:0,motivo:''};
-    const r=entRecogidaBorrador[l.id];
-    const row=document.createElement('div');row.className='ent-ficha-recogida';
-    const label=document.createElement('label');label.className='ent-ficha-check';
-    const check=document.createElement('input');check.type='checkbox';check.checked=r.recibidas===l.enviadas&&l.enviadas>0;
-    const nombre=document.createElement('span');nombre.textContent='Talla '+l.talla+(l.tipo?' · '+l.tipo:'')+' · Recogido todo ('+l.enviadas+' uds)';label.appendChild(check);label.appendChild(nombre);row.appendChild(label);
-    const inputLabel=document.createElement('label');inputLabel.textContent='Total recibido (uds)';const input=document.createElement('input');input.type='number';input.min='0';input.max=String(l.enviadas);input.step='1';input.setAttribute('inputmode','numeric');input.value=Number.isFinite(r.recibidas)?String(r.recibidas):'';inputLabel.appendChild(input);row.appendChild(inputLabel);
-    const estado=document.createElement('p');row.appendChild(estado);
-    const actualizarLinea=()=>{estado.textContent=r.saldo?'Cerrada con '+r.saldo+' uds de saldo · '+r.motivo:r.recibidas===l.enviadas?'Recogida completa':Number.isFinite(r.recibidas)?Math.max(0,l.enviadas-r.recibidas)+' uds por recibir':'Indica una cantidad';};
-    check.onchange=()=>{r.recibidas=check.checked?l.enviadas:0;r.saldo=0;r.motivo='';input.value=String(r.recibidas);entRecogidaModificada=true;actualizarLinea();refrescarResumen();};
-    input.oninput=()=>{r.recibidas=input.value.trim()===''?NaN:Number(input.value);r.saldo=0;r.motivo='';check.checked=r.recibidas===l.enviadas&&l.enviadas>0;entRecogidaModificada=true;actualizarLinea();refrescarResumen();};
-    actualizarLinea();panel.appendChild(row);
-  });refrescarResumen();
+function registrarRecogidaLineaFicha(idx){
+  if(!entEditando||!entLineas[idx])return;
+  const id=claveLineaRecogida(entLineas[idx]);
+  const linea=resumenRecepcion({...entEditando,lineas:entLineas}).lineas.find(l=>l.id===id);
+  if(!linea||!Number.isSafeInteger(linea.enviadas)||linea.enviadas<=0){toast('Revisa primero la talla y las unidades enviadas');return;}
+  const antes=entRecogidaBorrador[id]||{recibidas:0,saldo:0,motivo:''};
+  const respuesta=prompt('Talla '+linea.talla+(linea.tipo?' · '+linea.tipo:'')+' — '+linea.enviadas+' uds enviadas. Total recogido hasta ahora (no solo la última recogida):'+(antes.saldo?' Cambiar este total retirará el cierre por saldo de esta talla.':''),String(antes.recibidas));
+  if(respuesta===null)return;
+  const cantidad=respuesta.trim()===''?NaN:Number(respuesta);
+  if(!Number.isSafeInteger(cantidad)||cantidad<0||cantidad>linea.enviadas){toast('Introduce un total entre 0 y '+linea.enviadas+' unidades');return;}
+  if(cantidad!==antes.recibidas){entRecogidaBorrador[id]={recibidas:cantidad,saldo:0,motivo:''};entRecogidaModificada=true;toast('Recogidas actualizadas. Pulsa Guardar para confirmarlas.');}
+  renderEntLineas();
 }
+
 function renderEntLineas() {
-  renderRecogidaFicha();
   const wrap = document.getElementById('ent-lineas-wrap');
   if (!wrap) return;
   wrap.innerHTML = '';
@@ -4083,6 +4058,14 @@ function renderEntLineas() {
       b.onclick=(function(i,t){ return function(){ entUpdateLinea(i,'tipo', l.tipo===t?'':t); renderEntLineas(); }; })(idx, tipoOpt);
       tipoRow.appendChild(b);
     });
+    if(entEditando){
+      const id=claveLineaRecogida(l);
+      const dato=entRecogidaBorrador[id]||{recibidas:0,saldo:0};
+      const total=entLineas.filter(x=>claveLineaRecogida(x)===id).reduce((n,x)=>n+(Number(x.uds)||0),0);
+      const boton=document.createElement('button');boton.type='button';boton.className='ent-recibido-btn'+(total>0&&dato.recibidas+dato.saldo>=total?' completo':'');
+      boton.textContent='Entregado';boton.setAttribute('aria-label','Registrar recogidas de la talla '+l.talla+(l.tipo?' '+l.tipo:''));boton.onclick=()=>registrarRecogidaLineaFicha(idx);tipoRow.appendChild(boton);
+      const resumen=document.createElement('span');resumen.className='ent-recibido-resumen';resumen.textContent=dato.recibidas+'/'+total+' uds recogidas'+(dato.saldo?' · '+dato.saldo+' saldo':'');tipoRow.appendChild(resumen);
+    }
     outer.appendChild(row);
     outer.appendChild(tipoRow);
     wrap.appendChild(outer);
@@ -4105,11 +4088,11 @@ function resumenRecepcion(e){
   const archivada=Boolean(e.seguimiento&&e.seguimiento.archivada);
   const historica=archivada||(!e.recepcion&&e.estado==='completado');
   const recibidas=lineas.reduce((n,l)=>n+l.recibidas,0),saldo=lineas.reduce((n,l)=>n+l.saldo,0),pendientes=lineas.reduce((n,l)=>n+l.pendientes,0);
-  const estado=archivada?'historico':historica?'completadas':lineas.length&&pendientes===0?'completadas':recibidas||saldo?'pendientes':'activas';
+  const estado=archivada?'historico':historica?'completadas':lineas.length&&pendientes===0?'completadas':'activas';
   return {lineas,recibidas,saldo,pendientes,historica,archivada,estado};
 }
 function actualizarEstadoRecepcion(e){
-  const r=resumenRecepcion(e);e.estado=r.estado==='completadas'?'completado':r.estado==='pendientes'?'pendiente':'proceso';
+  const r=resumenRecepcion(e);e.estado=r.estado==='completadas'?'completado':'proceso';
 }
 function gruposRecogida(entregas){
   const grupos=new Map();
@@ -4144,7 +4127,7 @@ function registrarRecogida(key,cantidad){
   try{
     const antes=loadEntregas();const resultado=repartirRecogida(antes,key,cantidad,new Date().toISOString());
     saveEntregas(resultado.entregas);
-    filtroEntregas=resultado.asignaciones.some(a=>resumenRecepcion(resultado.entregas.find(e=>e.id===a.entregaId)).estado==='pendientes')?'pendientes':'completadas';renderEntregas();
+    filtroEntregas=resultado.asignaciones.some(a=>resumenRecepcion(resultado.entregas.find(e=>e.id===a.entregaId)).estado==='activas')?'activas':'completadas';renderEntregas();
     const resumen=resultado.asignaciones.map(a=>(a.numeroPedido?'#'+a.numeroPedido:'Entrega')+': '+a.cantidad+' uds').join(' · ');
     ofrecerDeshacer('Recogida registrada. '+resumen,()=>{
       const actuales=loadEntregas();const ids=new Set(resultado.asignaciones.map(a=>a.entregaId));
@@ -4276,7 +4259,7 @@ function formularioHistorico(ent){
 function renderPanelRecogidas(){
   const el=document.getElementById('ent-recogidas-panel'),tabs=document.getElementById('ent-tabs');if(!el||!tabs)return;
   el.innerHTML='';tabs.innerHTML='';const entregas=loadEntregas();
-  [['activas','Activas'],['completadas','Completadas'],['pendientes','Pendientes'],['historico','Histórico']].forEach(([key,label])=>{
+  [['activas','Activas'],['completadas','Completadas'],['historico','Histórico']].forEach(([key,label])=>{
     const b=document.createElement('button');b.className='filtro-btn'+(filtroEntregas===key?' activo':'');b.textContent=label+' ('+entregas.filter(e=>resumenRecepcion(e).estado===key).length+')';b.setAttribute('aria-pressed',String(filtroEntregas===key));b.onclick=()=>{filtroEntregas=key;renderEntregas();};tabs.appendChild(b);
   });
   const historicas=entregas.filter(e=>resumenRecepcion(e).historica&&!resumenRecepcion(e).archivada).length;
@@ -4394,7 +4377,7 @@ function openFormEntrega(ent) {
     }
   }
   const estadoRecepcion=ent?resumenRecepcion(ent).estado:'activas';
-  document.getElementById('ent-estado').value=estadoRecepcion==='completadas'?'completado':estadoRecepcion==='pendientes'?'pendiente':'proceso';
+  document.getElementById('ent-estado').value=estadoRecepcion==='completadas'?'completado':'proceso';
   document.getElementById('ent-estado').disabled=true;
   document.getElementById('ent-estado').setAttribute('aria-label','Estado automático según las recogidas');
   document.getElementById('ent-fentrega').value = ent ? (ent.fentrega||'') : '';
