@@ -25,7 +25,7 @@ function fixture(){
  return {ctx,store,els,timers,run:s=>vm.runInContext(s,ctx)};
 }
 const copy=x=>JSON.parse(JSON.stringify(x));
-const empty=()=>({clientes:[],fichajes:{},jornada:6,notas:[],pedidos:[],entregas:[],prep:{},corte:[],inventarios:[],tipos:['Protector','Funda'],fontSize:'md'});
+const empty=()=>({clientes:[],fichajes:{},jornada:6,notas:[],pedidos:[],entregas:[],prep:{},corte:[],inventarios:[],materiales:[],tipos:['Protector','Funda'],fontSize:'md'});
 const order=()=>({id:'p1',cliente:'Cliente de prueba',numeroPedido:'DEMO-1',fecha:'2026-09-27',items:[{id:'i1',serie:'Bamboo',tamano:'135',tipo:'Protector',unidades:50,cortadas:20,cajas:5,motivo:''},{id:'i2',serie:'Bamboo',tamano:'135',tipo:'Funda',unidades:10,cortadas:10,cajas:1,motivo:''}]});
 let count=0;
 function test(name,fn){fn();count++;console.log('OK '+name);}

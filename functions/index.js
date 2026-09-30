@@ -267,3 +267,5 @@ exports.extraerPedido = onCall({ secrets: [anthropicApiKey] }, async (request) =
 
   return { items: items, numeroPedido: numeroPedido };
 });
+
+Object.assign(exports, require('./materiales'));
