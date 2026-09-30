@@ -380,6 +380,37 @@ body.font-xl{font-size:22px}
 .ent-recibido-btn.completo{color:var(--estado-completado)}
 .ent-recibido-resumen{font-size:12px;color:var(--txt2);align-self:center}
 .mat-form .input,#s-materiales .input{padding:12px;border:1px solid var(--border2);border-radius:10px;background:var(--bg2);color:var(--txt);font:inherit;font-size:16px;min-width:0;min-height:44px;width:100%;box-sizing:border-box}.mat-card{border:1px solid var(--border);background:var(--bg2);border-radius:16px;padding:16px;margin-top:14px}.mat-card h2{font-size:17px;margin:0;flex:1;overflow-wrap:anywhere}.mat-stock{font-size:30px;font-weight:750;margin:8px 0;font-variant-numeric:tabular-nums}.mat-muted{font-size:13px;color:var(--txt2);line-height:1.5}.mat-warning{padding:10px 12px;border-radius:10px;background:rgba(255,159,10,.13);color:var(--txt);font-size:13px}.mat-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.mat-actions .btn-sm{margin-top:0}.mat-movement{flex:1;min-width:125px;border:1px solid var(--border);border-radius:10px;padding:10px}.mat-movement summary,.mat-history summary{cursor:pointer;font-weight:600;font-size:14px}.mat-movement .input{margin-top:10px;width:100%;box-sizing:border-box}.mat-history{margin-top:16px}.mat-log{font-size:12px;border-top:1px solid var(--border);padding-top:10px;overflow-wrap:anywhere}.mat-form label{display:block;margin-bottom:18px;font-size:14px}.mat-form .input{display:block;width:100%;margin-top:7px;box-sizing:border-box}.mat-form [hidden]{display:none}
+
+/* Materiales: filas compactas, controles solo al desplegar. */
+.mat-overview{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.mat-overview .mat-muted{margin:0}
+.mat-notifications{position:relative;font-size:13px;color:var(--txt2)}
+.mat-notifications>summary{cursor:pointer;padding:10px 0;min-height:44px;box-sizing:border-box}
+.mat-notifications>div{position:absolute;right:0;top:100%;width:min(280px,75vw);padding:14px;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.mat-filters{display:flex;gap:10px;align-items:center;margin:10px 0 4px}
+#s-materiales .mat-filters select{flex:1;width:0;font-size:13px;padding:10px;min-height:44px}
+.mat-low-filter{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;min-height:44px;cursor:pointer}
+.mat-low-filter input{width:18px;height:18px;accent-color:#ff9f0a}
+.mat-list-status{font-size:12px;color:#ff9f0a;margin:6px 0 10px}
+.mat-list-status:empty{display:none}
+.mat-card{padding:0 14px;border-radius:12px;margin-top:7px;overflow:hidden}
+.mat-row{display:flex;align-items:center;gap:12px;min-height:74px;padding:12px 0;box-sizing:border-box;cursor:pointer;list-style:none}
+.mat-row::-webkit-details-marker{display:none}
+.mat-row-title{flex:1;min-width:0}
+.mat-name{display:block;font-size:14px;font-weight:650;line-height:1.35;overflow-wrap:anywhere}
+.mat-row-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--txt2);margin-top:4px}
+.mat-status-pill{color:#ff9f0a;background:rgba(255,159,10,.12);border-radius:5px;padding:2px 5px;font-weight:600}
+.mat-row-quantity{text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+.mat-row-quantity strong{display:block;font-size:19px;letter-spacing:-.4px}
+.mat-row-quantity>span{display:block;font-size:11px;color:var(--txt2);margin-top:2px}
+.mat-low .mat-row-quantity strong{color:#ff9f0a}
+.mat-chevron{font-size:18px;color:var(--txt3);transition:transform .15s}
+.mat-card[open]>.mat-row{border-bottom:1px solid var(--border);margin-bottom:12px}
+.mat-card[open] .mat-chevron{transform:rotate(180deg)}
+.mat-card[open]{padding-bottom:14px;border-color:var(--border3)}
+.mat-card-tools{justify-content:flex-end}
+.mat-row:focus-visible{outline:2px solid #30bfa5;outline-offset:-2px;border-radius:8px}
+@media(max-width:360px){.mat-row{gap:8px}.mat-row-quantity strong{font-size:17px}.mat-low-filter{font-size:12px}}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -729,11 +760,10 @@ onAuthStateChanged(auth, function(user) {
 <div id="s-materiales" class="screen">
   <div class="topbar"><button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">←</button><h1>Materiales</h1><button class="btn-icon" onclick="editarMaterial()" aria-label="Nuevo material">＋</button></div>
   <div style="padding:16px">
-    <p class="mat-muted">Material para los pedidos de Paco · Cuenta lo que queda en tu almacén.</p>
-    <div id="mat-alerta" role="status"></div>
-    <div class="mat-actions"><button class="btn-sm" onclick="editarMaterial()">Nuevo material</button><button class="btn-sm" onclick="activarAvisosMateriales()">Activar avisos en el móvil</button></div>
-    <p id="mat-push-status" class="mat-muted">Activa los avisos una vez en cada móvil. Se enviarán al llegar al mínimo y al agotarse el material, cuando los cambios estén sincronizados.</p><details class="mat-history"><summary>Opciones de avisos</summary><button class="btn-sm" onclick="desactivarAvisosMateriales()">Desactivar en este dispositivo</button></details>
-    <label for="mat-buscar">Buscar material</label><input id="mat-buscar" class="input" placeholder="Bolsas Lisboa, cajas grandes…" oninput="renderMateriales()">
+    <div class="mat-overview"><span id="mat-contador" class="mat-muted"></span><details class="mat-notifications"><summary>Avisos</summary><div><p id="mat-push-status" class="mat-muted">Recibe avisos al llegar al mínimo, incluso con la app cerrada.</p><button class="btn-sm" onclick="activarAvisosMateriales()">Activar en este móvil</button><button class="btn-sm" onclick="desactivarAvisosMateriales()">Desactivar</button></div></details></div>
+    <input id="mat-buscar" class="input" aria-label="Buscar material" placeholder="Buscar material…" oninput="renderMateriales()">
+    <div class="mat-filters"><select id="mat-familia" class="input" aria-label="Filtrar por familia" onchange="renderMateriales()"><option value="">Todas las familias</option><option>Cajas</option><option>Cajas colectivas</option><option>Bolsas de plástico</option><option>Cartones de plegar</option><option>Fotolitos</option><option>Otros</option></select><label class="mat-low-filter"><input id="mat-solo-bajos" type="checkbox" onchange="renderMateriales()"> Por reponer</label></div>
+    <div id="mat-alerta" role="status" class="mat-list-status"></div>
     <div id="mat-lista"></div>
   </div>
 </div>
@@ -1228,17 +1258,26 @@ function moverMaterial(id,cantidad,nota){
 function matElemento(tag,texto,clase){const e=document.createElement(tag);if(texto!==undefined)e.textContent=texto;if(clase)e.className=clase;return e;}
 function matBoton(txt,fn){const b=matElemento('button',txt,'btn-sm');b.type='button';b.onclick=fn;return b;}
 function renderMateriales(){
-  const lista=document.getElementById('mat-lista');lista.replaceChildren();
+  const lista=document.getElementById('mat-lista');const abiertos=new Set(Array.from(lista.children).filter(x=>x.open).map(x=>x.dataset.material));lista.replaceChildren();
   const bajos=bajosMateriales(),aviso=document.getElementById('mat-alerta');
-  aviso.className=bajos.length?'mat-warning':'';aviso.textContent=bajos.length?bajos.length+' materiales necesitan reposición. El aviso se mantiene hasta superar el mínimo.':'';
+  aviso.className='mat-list-status';aviso.textContent=bajos.length?bajos.length+' por reponer · aparecen primero':'';
   const query=document.getElementById('mat-buscar').value.trim().toLocaleLowerCase('es');
-  const rows=loadMateriales().filter(m=>(m.nombre+' '+m.categoria+' '+m.notas).toLocaleLowerCase('es').includes(query));
+  const familia=document.getElementById('mat-familia').value,soloBajos=document.getElementById('mat-solo-bajos').checked;
+  const todos=loadMateriales();
+  const rows=todos.filter(m=>(m.nombre+' '+m.categoria+' '+m.notas).toLocaleLowerCase('es').includes(query)&&(!familia||m.categoria===familia)&&(!soloBajos||stockMaterial(m)<=m.minimo));
+  document.getElementById('mat-contador').textContent=rows.length+' de '+todos.length+' materiales';
   rows.sort((a,b)=>Number(stockMaterial(b)<=b.minimo)-Number(stockMaterial(a)<=a.minimo)||a.nombre.localeCompare(b.nombre,'es'));
-  if(!rows.length)lista.appendChild(matElemento('p',query?'No hay materiales que coincidan.':'Añade tu primer material con sus existencias actuales.','mat-muted'));
+  if(!rows.length)lista.appendChild(matElemento('p',todos.length?'No hay materiales con estos filtros.':'Pulsa + para añadir tu primer material.','mat-muted'));
   rows.forEach(m=>{
-    const stock=stockMaterial(m),card=matElemento('article',undefined,'mat-card');
-    const head=matElemento('div',undefined,'mat-actions');head.append(matElemento('h2',m.nombre),matBoton('Editar',()=>editarMaterial(m.id)));card.append(head,matElemento('p',m.categoria,'mat-muted'));
-    const amount=matElemento('div',stock.toLocaleString('es-ES')+' uds','mat-stock');card.appendChild(amount);
+    const stock=stockMaterial(m),card=matElemento('details',undefined,'mat-card'+(stock<=m.minimo?' mat-low':''));card.dataset.material=m.id;card.open=abiertos.has(m.id);
+    const summary=matElemento('summary',undefined,'mat-row');
+    const title=matElemento('span',undefined,'mat-row-title');title.appendChild(matElemento('span',m.nombre,'mat-name'));
+    const meta=matElemento('span',undefined,'mat-row-meta');meta.appendChild(matElemento('span',m.categoria));
+    if(stock<=m.minimo)meta.appendChild(matElemento('span',stock<0?'Revisar':stock===0?'Agotado':'Reponer','mat-status-pill'));
+    title.appendChild(meta);
+    const amount=matElemento('span',undefined,'mat-row-quantity');amount.append(matElemento('strong',stock.toLocaleString('es-ES')),matElemento('span','uds'));
+    const chevron=matElemento('span','⌄','mat-chevron');chevron.setAttribute('aria-hidden','true');summary.append(title,amount,chevron);card.appendChild(summary);
+    const head=matElemento('div',undefined,'mat-actions mat-card-tools');head.append(matBoton('Editar material',()=>editarMaterial(m.id)));card.appendChild(head);
     if(stock<0)card.appendChild(matElemento('p','Revisar recuento: se han registrado retiradas simultáneas superiores a las existencias.','mat-warning'));
     else if(stock<=m.minimo)card.appendChild(matElemento('p','Pedir material · mínimo '+m.minimo.toLocaleString('es-ES')+' uds','mat-warning'));
     else card.appendChild(matElemento('p','Mínimo: '+m.minimo.toLocaleString('es-ES')+' uds','mat-muted'));
