@@ -1249,6 +1249,17 @@ function aplicarMovimientoMaterial(material,cantidad,nota){
   if(!Number.isSafeInteger(total)||total<0)throw Error('No hay suficientes unidades. Revisa las existencias antes de retirar.');
   return {...material,movimientos:[...(material.movimientos||[]),{id:uid(),cantidad,nota:String(nota||'').trim().slice(0,300),fecha:new Date().toISOString()}]};
 }
+function eliminarMaterial(id){
+  const anterior=loadMateriales().find(m=>m.id===id);if(!anterior)return;
+  if(!confirm('¿Eliminar «'+anterior.nombre+'» y todo su historial de movimientos?'))return;
+  try{
+    const actuales=loadMateriales();if(!iguales(actuales.find(m=>m.id===id),anterior)){toast('El material cambió. Revísalo antes de eliminarlo.');return;}
+    saveMateriales(actuales.filter(m=>m.id!==id));renderMateriales();
+    ofrecerDeshacer('Material eliminado',()=>{
+      try{const rows=loadMateriales();if(rows.some(m=>m.id===id)){toast('El material ya existe');return;}rows.push(anterior);saveMateriales(rows);renderMateriales();toast('Material recuperado');}catch(e){toast('No se pudo recuperar el material');}
+    });
+  }catch(e){toast('No se pudo eliminar el material');}
+}
 function moverMaterial(id,cantidad,nota){
   try{const rows=loadMateriales(),idx=rows.findIndex(m=>m.id===id);if(idx<0)throw Error('Este material ya no existe');
     rows[idx]=aplicarMovimientoMaterial(rows[idx],cantidad,nota);saveMateriales(rows);renderMateriales();
@@ -1277,7 +1288,7 @@ function renderMateriales(){
     title.appendChild(meta);
     const amount=matElemento('span',undefined,'mat-row-quantity');amount.append(matElemento('strong',stock.toLocaleString('es-ES')),matElemento('span','uds'));
     const chevron=matElemento('span','⌄','mat-chevron');chevron.setAttribute('aria-hidden','true');summary.append(title,amount,chevron);card.appendChild(summary);
-    const head=matElemento('div',undefined,'mat-actions mat-card-tools');head.append(matBoton('Editar material',()=>editarMaterial(m.id)));card.appendChild(head);
+    const head=matElemento('div',undefined,'mat-actions mat-card-tools');head.append(matBoton('Editar material',()=>editarMaterial(m.id)));const eliminar=matBoton('Eliminar material',()=>eliminarMaterial(m.id));eliminar.style.color='var(--danger)';head.appendChild(eliminar);card.appendChild(head);
     if(stock<0)card.appendChild(matElemento('p','Revisar recuento: se han registrado retiradas simultáneas superiores a las existencias.','mat-warning'));
     else if(stock<=m.minimo)card.appendChild(matElemento('p','Pedir material · mínimo '+m.minimo.toLocaleString('es-ES')+' uds','mat-warning'));
     else card.appendChild(matElemento('p','Mínimo: '+m.minimo.toLocaleString('es-ES')+' uds','mat-muted'));
