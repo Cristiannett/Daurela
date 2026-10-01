@@ -411,6 +411,34 @@ body.font-xl{font-size:22px}
 .mat-card-tools{justify-content:flex-end}
 .mat-row:focus-visible{outline:2px solid #30bfa5;outline-offset:-2px;border-radius:8px}
 @media(max-width:360px){.mat-row{gap:8px}.mat-row-quantity strong{font-size:17px}.mat-low-filter{font-size:12px}}
+
+/* Recuento de almacén: consulta compacta y edición por fila. */
+.alm-save-status{margin:0 16px 8px;color:var(--txt2);font-size:12px;line-height:1.5}
+.alm-progress{margin:0 16px 14px;font-size:13px;font-weight:600;color:#30bfa5}
+.alm-summary-panel{margin:12px 16px;padding:14px;border:1px solid var(--border2);border-radius:12px;background:var(--bg2)}
+.alm-summary-panel>summary{font-size:14px;font-weight:600;cursor:pointer;min-height:24px}
+.alm-summary-row{display:flex;justify-content:space-between;gap:14px;border-top:1px solid var(--border);padding:10px 0;font-size:13px}
+.alm-summary-row>span{min-width:0;overflow-wrap:anywhere}.alm-summary-row>strong{text-align:right;flex-shrink:0}
+.alm-total{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.alm-zone-card{margin:10px 16px;border:1px solid var(--border2);border-radius:14px;background:var(--bg2);overflow:hidden}
+.alm-zone-summary{padding:18px 14px;font-size:14px;font-weight:650;cursor:pointer;min-height:54px;box-sizing:border-box}
+.alm-count-zone{padding:14px;border-top:1px solid var(--border)}
+.alm-location-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:10px}
+.alm-location-head .btn-sm{min-height:44px;margin:0;font-size:12px}
+.alm-location-head [aria-pressed=true]{color:#30bfa5;background:rgba(48,191,165,.1)}
+.alm-count-row{border-top:1px solid var(--border)}
+.alm-count-row>summary{display:flex;justify-content:space-between;gap:12px;padding:14px 0;min-height:48px;cursor:pointer;list-style:none;font-size:14px}
+.alm-count-row>summary::-webkit-details-marker{display:none}.alm-count-row>summary>span{min-width:0;overflow-wrap:anywhere}.alm-count-row>summary>strong{text-align:right;font-size:13px;max-width:50%;font-variant-numeric:tabular-nums}
+.alm-count-row[open]>summary{color:#30bfa5}
+.alm-count-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;padding:2px 0 16px}
+.alm-count-fields label{font-size:12px;color:var(--txt2)}
+.alm-count-fields label:first-child,.alm-count-fields label:nth-child(4),.alm-previous{grid-column:1/-1}
+.alm-count-fields input{display:block;width:100%;box-sizing:border-box;border:1px solid var(--border2);border-radius:9px;background:var(--bg3);color:var(--txt);padding:12px;font:inherit;font-size:16px;min-height:44px;margin-top:5px}
+.alm-count-fields input[aria-invalid=true]{border-color:var(--danger)}
+.alm-previous{font-size:12px;color:var(--txt2);background:var(--bg3);padding:10px;border-radius:8px;margin:0;overflow-wrap:anywhere}
+.alm-history-button{display:block;text-align:left;width:calc(100% - 32px);margin:10px 16px;padding:16px;border:1px solid var(--border2);border-radius:12px;background:var(--bg2);color:var(--txt);font:inherit;cursor:pointer}.alm-history-button>span{display:block;margin-top:6px}
+.alm-location-title{margin:12px 14px 6px;font-size:12px;color:var(--txt2)}.alm-detail-line{padding:10px 14px;margin:0;font-size:14px;overflow-wrap:anywhere}
+.alm-zone-card summary:focus-visible,.alm-count-row summary:focus-visible{outline:2px solid #30bfa5;outline-offset:-2px}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -629,7 +657,7 @@ onAuthStateChanged(auth, function(user) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
     <h1 id="ttl-det"></h1>
-    <button class="btn-icon" onclick="duplicarMed()" aria-label="Duplicar">
+    <button class="btn-icon" onclick="duplicarMed()" aria-label="Preparar siguiente recuento">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
     </button>
     <button class="btn-icon" onclick="openFormMed(window.curMed)" aria-label="Editar">
@@ -793,10 +821,10 @@ onAuthStateChanged(auth, function(user) {
     <div style="font-size:15px;font-weight:600" id="alm-mes-titulo"></div>
     <button class="btn-sm" onclick="nuevoInventario()" style="margin-top:0">Nuevo mes</button>
   </div>
-  <div id="alm-formulario"></div>
+  <div id="alm-estado" class="alm-save-status" role="status"></div><button id="alm-reabrir" class="btn-secondary" style="margin:0 16px 12px;width:calc(100% - 32px)" hidden onclick="almReabrir()">Reabrir versión guardada</button><div id="alm-progreso" class="alm-progress"></div><details class="alm-summary-panel"><summary>Resumen por tela</summary><div id="alm-resumen"></div></details><datalist id="alm-nombres"></datalist><div id="alm-formulario"></div>
   <div style="padding:0 16px 16px">
-    <button class="btn-primary" onclick="guardarInventario()" style="margin-top:0">Guardar inventario</button>
-    <button class="btn-secondary" onclick="compartirInventarioWhatsApp()">Enviar por WhatsApp</button>
+    <button class="btn-primary" onclick="guardarInventario()" style="margin-top:0">Finalizar recuento</button><button class="btn-secondary" onclick="duplicarInventario()">Preparar siguiente recuento</button>
+    <button class="btn-secondary" onclick="compartirInventarioWhatsApp('actual')">Enviar por WhatsApp</button>
   </div>
 </div>
 <div id="s-almacen-historial" class="screen">
@@ -826,7 +854,7 @@ onAuthStateChanged(auth, function(user) {
   </div>
   <div id="alm-detalle-body"></div>
   <div style="padding:0 16px 24px">
-    <button class="btn-secondary" onclick="compartirInventarioWhatsApp()">Enviar por WhatsApp</button>
+    <button class="btn-secondary" onclick="compartirInventarioWhatsApp('detalle')">Enviar por WhatsApp</button>
   </div>
 </div>
 
@@ -1207,6 +1235,7 @@ let _prevScreen=null;
 function go(id, addHistory){
   if(addHistory===undefined) addHistory=true;
   const prev=document.querySelector('.screen.active');
+  if(prev&&prev.id==='s-almacen'&&id!=='s-almacen'&&almSinGuardar&&!almPersistir())return;
   const isBack=_prevScreen===id;
   _prevScreen=prev?prev.id:null;
   document.querySelectorAll('.screen').forEach(s=>{
@@ -2614,6 +2643,19 @@ function validarCopia(data){
     if(e.recepcion.lineas.some(r=>r.recibidas+r.saldo>0&&!lineas.some(l=>l.id===r.id&&l.enviadas>=r.recibidas+r.saldo)))throw Error('Recogidas mayores que el género enviado');
   });
   (data.corte||[]).forEach(p=>p.items.forEach(i=>{if(i.anulacion&&(typeof i.anulacion.motivo!=='string'||!i.anulacion.motivo.trim()||typeof i.anulacion.fecha!=='string'||!Number.isFinite(Date.parse(i.anulacion.fecha))||!Number.isSafeInteger(i.anulacion.unidades)||i.anulacion.unidades<0))throw Error('Anulación de corte no válida');}));
+
+  (data.inventarios||[]).forEach(inv=>{
+    if(inv.version===2&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(inv.mesKey))throw Error('Mes de inventario no válido');
+    if(inv.borrador!==undefined&&typeof inv.borrador!=='boolean')throw Error('Estado de recuento no válido');
+    Object.values(inv.zonas).forEach(z=>{
+      if(z.revisada!==undefined&&typeof z.revisada!=='boolean')throw Error('Revisión de ubicación no válida');
+      const ids=new Set();z.telas.forEach(t=>{
+        if(t.id!==undefined&&(typeof t.id!=='string'||!t.id||ids.has(t.id)))throw Error('Identificador de tela no válido');if(t.id)ids.add(t.id);
+        for(const k of ['piezas','notas'])if(t[k]!==undefined&&typeof t[k]!=='string')throw Error('Campo de recuento no válido');
+        if(t.anterior&&(!objeto(t.anterior)||!['metros','piezas','notas'].every(k=>typeof t.anterior[k]==='string')))throw Error('Referencia de recuento no válida');
+      });
+    });
+  });
   if(data.materiales!==undefined){
     if(!Array.isArray(data.materiales))throw Error('Materiales no válidos');
     const mids=new Set();
@@ -3392,6 +3434,9 @@ window.addEventListener('popstate', function(e){
   else if(id === 's-corte') go('s-cli');
   else if(id === 's-entrega-form') go('s-entregas', false);
   else if(id === 's-entregas') go('s-cli', false);
+  else if(id === 's-almacen-detalle') go('s-almacen-historial',false);
+  else if(id === 's-almacen-historial') go('s-almacen',false);
+  else if(id === 's-almacen') go('s-cli',false);
   else if(id === 's-material-form') salirMaterial();
   else if(id === 's-materiales') go('s-cli',false);
   else if(id === 's-prep') go('s-entregas', false);
@@ -3471,7 +3516,7 @@ function normalizarRemoto(data){
   const result={};
   for(const k of Object.keys(datosTaller())) if(data[k]!==undefined)result[k]=data[k];
   if(result.inventarios) result.inventarios=JSON.parse(JSON.stringify(result.inventarios));
-  (result.inventarios||[]).forEach(inv=>Object.values(inv.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>t.metros=String(t.metros||'').replace(/^_/,''))));
+  (result.inventarios||[]).forEach(inv=>Object.values(inv.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>t.metros=String(t.metros??'').replace(/^_/,''))));
   return result;
 }
 function aplicarDatos(data){
@@ -3497,7 +3542,7 @@ function refrescarDatos(){
   if(curMed){curMed=curTela&&(curTela.medidas||[]).find(m=>m.id===curMed.id)||null;window.curMed=curMed;}
   const active=document.querySelector('.screen.active');
   if(!active)return;
-  const renders={'s-materiales':renderMateriales,'s-telas':()=>{if(curCli)renderTelas();else go('s-cli',false);},'s-meds':()=>{if(curTela)renderMeds();else go('s-cli',false);},'s-cli':()=>{renderCli();actualizarAcumExtraHome();},'s-corte':renderCorte,'s-corte-detalle':renderCorteDetalle,'s-entregas':renderEntregas,'s-notas':renderNotas,'s-fichaje':renderFichaje};
+  const renders={'s-almacen':almRefrescar,'s-almacen-historial':renderHistorialAlmacen,'s-materiales':renderMateriales,'s-telas':()=>{if(curCli)renderTelas();else go('s-cli',false);},'s-meds':()=>{if(curTela)renderMeds();else go('s-cli',false);},'s-cli':()=>{renderCli();actualizarAcumExtraHome();},'s-corte':renderCorte,'s-corte-detalle':renderCorteDetalle,'s-entregas':renderEntregas,'s-notas':renderNotas,'s-fichaje':renderFichaje};
   if(renders[active.id])renders[active.id]();
 }
 function guardarRecuperacion(local,remoto){
@@ -3584,7 +3629,7 @@ function mergeData(){return syncFirestore();}
 window.addEventListener('online',()=>syncFirestore());
 window.addEventListener('offline',()=>showSyncIndicator('Guardado local. Sin conexion'));
 window.addEventListener('focus',()=>syncFirestore());
-window.addEventListener('storage',event=>{if(event.key===KEY){load();refrescarDatos();}else if(['materiales_v1','corte_v1','entregas_v1','fichaje_v1','notas_v1'].includes(event.key))refrescarDatos();});
+window.addEventListener('storage',event=>{if(event.key===KEY){load();refrescarDatos();}else if(['almacen_v1','materiales_v1','corte_v1','entregas_v1','fichaje_v1','notas_v1'].includes(event.key))refrescarDatos();});
 
 
 function loadPedidos() { try { const d = localStorage.getItem('pedidos_v1'); return d ? JSON.parse(d) : []; } catch(e) { return []; } }
@@ -3836,325 +3881,215 @@ try{window.setTipoDia=setTipoDia;}catch(e){}
 try{window.compartirFichajeWhatsApp=compartirFichajeWhatsApp;}catch(e){}
 try{window.actualizarBadges=actualizarBadges;}catch(e){}
 
-// ALMACEN
-const ALM_KEY = 'almacen_v1';
-const ALM_ZONAS = [
-  { id:'p1iz', nombre:'Pasillo 1 - Izquierda', niveles:['Arriba','Medio','Abajo'] },
-  { id:'p2de', nombre:'Pasillo 2 - Derecha',   niveles:['Arriba','Medio','Abajo'] },
-  { id:'carros', nombre:'Zona carros', niveles:['Don Almohadon','Francisco Pastor','Valentia/Mommy','Viscofoam'] },
+// ALMACEN — recuentos mensuales con borrador automático.
+const ALM_KEY='almacen_v1';
+const ALM_ZONAS=[
+  {id:'p1iz',nombre:'Pasillo 1 · Izquierda',niveles:['Arriba','Medio','Abajo']},
+  {id:'p2de',nombre:'Pasillo 2 · Derecha',niveles:['Arriba','Medio','Abajo']},
+  {id:'carros',nombre:'Zona carros',niveles:['Don Almohadon','Francisco Pastor','Valentia/Mommy','Viscofoam']}
 ];
-let almInventarioActual = null;
-
-function loadInventarios() {
-  try { const d = localStorage.getItem(ALM_KEY); return d ? JSON.parse(d) : []; } catch(e) { return []; }
+let almInventarioActual=null,almBase=null,almDetalleKey=null,almSinGuardar=false;
+const almCopia=x=>JSON.parse(JSON.stringify(x));
+function loadInventarios(){try{return JSON.parse(localStorage.getItem(ALM_KEY)||'[]');}catch(e){return [];}}
+function saveInventarios(arr){localStorage.setItem(ALM_KEY,JSON.stringify(arr));programarSync();}
+function almNumero(v,piezas){
+  const s=String(v??'').replace(/^_/,'').trim();if(!s)return null;
+  const patron=piezas?/^\d+$/:/^\d+(?:[.,]\d+)?(?:\s*m)?$/i;
+  if(!patron.test(s))return null;
+  const n=Number(s.replace(/\s*m$/i,'').replace(',','.'));
+  return Number.isFinite(n)&&n>=0&&n<=Number.MAX_SAFE_INTEGER&&(!piezas||Number.isSafeInteger(n))?n:null;
 }
-function saveInventarios(arr) {
-  localStorage.setItem(ALM_KEY, JSON.stringify(arr));
-  programarSync();
+function almNormalizar(inv){
+  const copy=almCopia(inv);
+  Object.entries(copy.zonas||{}).forEach(([key,z])=>{
+    z.revisada=z.revisada===true;
+    z.telas=(z.telas||[]).map((t,i)=>{
+      const metros=String(t.metros??'').replace(/^_/,'');
+      const libre=copy.version!==2&&metros.trim()&&almNumero(metros)===null;
+      return {...t,id:t.id||'alm-'+key+'-'+i,nombre:t.nombre||'',metros:libre?'':metros,piezas:String(t.piezas??''),notas:[t.notas||'',libre?metros:''].filter(Boolean).join(' · ')};
+    });
+  });
+  copy.version=2;return copy;
 }
-function initAlmacen() {
-  const inventarios = loadInventarios();
-  const hoy = new Date();
-  const mesKey = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const titulo = meses[hoy.getMonth()]+' '+hoy.getFullYear();
-  // Si ya hay un inventario cargado (ej: desde duplicar), no sobreescribir
-  if (!almInventarioActual) {
-    const existente = inventarios.find(function(i){ return i.mesKey === mesKey; });
-    almInventarioActual = existente ? JSON.parse(JSON.stringify(existente)) : { mesKey:mesKey, titulo:titulo, zonas:{} };
-  }
-  const tituloEl = document.getElementById('alm-mes-titulo');
-  if(tituloEl) tituloEl.textContent = 'Inventario - '+almInventarioActual.titulo;
-  renderFormularioAlmacen();
+function almCantidad(t){
+  const partes=[],m=almNumero(t.metros),p=almNumero(t.piezas,true);
+  if(m!==null)partes.push(m.toLocaleString('es-ES',{maximumFractionDigits:6})+' m');
+  if(p!==null)partes.push(p.toLocaleString('es-ES')+' piezas');
+  return partes.join(' · ')||'Sin cantidad';
 }
-function renderFormularioAlmacen() {
-  const el = document.getElementById('alm-formulario');
-  if (!el || !almInventarioActual) return;
-  el.innerHTML = '';
-  ALM_ZONAS.forEach(function(zona) {
-    const zonaDiv = document.createElement('div');
-    zonaDiv.className = 'alm-zona';
-    const tituloDiv = document.createElement('div');
-    tituloDiv.className = 'alm-zona-titulo';
-    tituloDiv.textContent = zona.nombre;
-    zonaDiv.appendChild(tituloDiv);
-    const estanteria = document.createElement('div');
-    estanteria.className = 'alm-estanteria';
-    zona.niveles.forEach(function(nivel) {
-      const key = zona.id + '_' + nivel;
-      const telas = (almInventarioActual.zonas[key] && almInventarioActual.zonas[key].telas) || [];
-      const bloque = document.createElement('div');
-      bloque.className = 'alm-nivel-bloque';
-      const header = document.createElement('div');
-      header.className = 'alm-nivel-header';
-      const lbl = document.createElement('span');
-      lbl.className = 'alm-nivel-lbl';
-      lbl.textContent = nivel;
-      const btnAdd = document.createElement('button');
-      btnAdd.className = 'btn-sm';
-      btnAdd.textContent = '+ Aniadir';
-      btnAdd.style.cssText = 'margin:0;padding:4px 10px;font-size:12px';
-      btnAdd.onclick = (function(k){ return function(){ almAddTela(k); }; })(key);
-      header.appendChild(lbl);
-      header.appendChild(btnAdd);
-      bloque.appendChild(header);
-      if (telas.length) {
-        const lista = document.createElement('div');
-        lista.className = 'alm-telas-lista';
-        telas.forEach(function(t, idx) {
-          const row = document.createElement('div');
-          row.className = 'alm-tela-row';
-          const inNombre = document.createElement('input');
-          inNombre.type = 'text';
-          inNombre.placeholder = 'Nombre tela';
-          inNombre.value = t.nombre || '';
-          inNombre.style.cssText = 'flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none';
-          inNombre.oninput = (function(k,i){ return function(){ almUpdateTela(k,i,'nombre',this.value); }; })(key,idx);
-          const inMetros = document.createElement('input');
-          inMetros.type = 'text';
-          inMetros.placeholder = 'metros o texto';
-          inMetros.value = (t.metros||'').replace(/^_/,'');
-    
-          inMetros.style.cssText = 'width:70px;padding:8px 6px;border:1px solid var(--border2);border-radius:var(--rad-xs);font-size:14px;font-family:inherit;background:var(--bg3);color:var(--txt);outline:none;text-align:center';
-          inMetros.oninput = (function(k,i){ return function(){ almUpdateTela(k,i,'metros',this.value); }; })(key,idx);
-          const btnDel = document.createElement('button');
-          btnDel.style.cssText = 'background:none;border:none;color:var(--txt3);cursor:pointer;padding:4px;flex-shrink:0';
-          btnDel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-          btnDel.onclick = (function(k,i){ return function(){ almDelTela(k,i); }; })(key,idx);
-          row.appendChild(inNombre);
-          row.appendChild(inMetros);
-          row.appendChild(btnDel);
-          lista.appendChild(row);
+function almTotales(inv){
+  let metros=0,piezas=0,anotaciones=0;const telas=new Map();
+  Object.values(inv.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>{
+    const m=almNumero(t.metros),p=almNumero(t.piezas,true),nombre=(t.nombre||'').trim()||'Sin nombre';
+    if(!t.nombre&&!t.metros&&!t.piezas&&!t.notas)return;
+    const key=nombre.toLocaleLowerCase('es'),grupo=telas.get(key)||{nombre,metros:0,piezas:0,anotaciones:0};
+    metros+=m??0;piezas+=p??0;grupo.metros+=m??0;grupo.piezas+=p??0;
+    if((t.notas||'').trim()||(String(t.metros??'').trim()&&m===null)){anotaciones++;grupo.anotaciones++;}
+    telas.set(key,grupo);
+  }));
+  return {metros,piezas,anotaciones,telas:[...telas.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'))};
+}
+function almClaves(){return ALM_ZONAS.flatMap(z=>z.niveles.map(n=>z.id+'_'+n));}
+function almProgreso(inv){const keys=almClaves();return {total:keys.length,revisadas:keys.filter(k=>inv.zonas[k]?.revisada).length};}
+function almTitulo(mes){const [y,m]=mes.split('-').map(Number);return ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][m-1]+' '+y;}
+function almMesActual(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function almElegirMes(sugerido){if(almSinGuardar&&!almPersistir())return null;const value=prompt('Mes del recuento (AAAA-MM):',sugerido);if(value===null)return null;const mes=value.trim();if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)||Number(mes.slice(0,4))<2000){toast('Indica el mes como 2026-10');return null;}return mes;}
+function almAbrir(inv){almInventarioActual=almNormalizar(inv);const actual=loadInventarios().find(x=>x.mesKey===inv.mesKey);almBase=actual?almNormalizar(actual):null;almDetalleKey=null;window.almDetalleKey=null;almSinGuardar=false;document.getElementById('alm-estado').textContent=actual?'Recuento guardado · los cambios se guardan automáticamente':'Nuevo recuento · se guardará al empezar';}
+function almRefrescar(){
+  if(!almInventarioActual)return;
+  if(document.activeElement&&document.getElementById('alm-formulario').contains(document.activeElement))return;
+  const current=loadInventarios().find(i=>i.mesKey===almInventarioActual.mesKey);
+  if(current&&almBase&&iguales(almInventarioActual,almBase)){almAbrir(current);renderFormularioAlmacen();}
+}
+function initAlmacen(){
+  if(!almInventarioActual){const mes=almMesActual();almAbrir(loadInventarios().find(i=>i.mesKey===mes)||{mesKey:mes,titulo:almTitulo(mes),zonas:{},borrador:true,version:2});}
+  almDetalleKey=null;window.almDetalleKey=null;
+  almRefrescar();renderFormularioAlmacen();
+}
+function almPersistir(){
+  if(!almInventarioActual)return false;
+  almSinGuardar=true;
+  try{
+    const rows=loadInventarios(),idx=rows.findIndex(i=>i.mesKey===almInventarioActual.mesKey);
+    if(almBase&&idx<0)throw Error('Este recuento se eliminó en otro dispositivo. Reabre Almacén antes de continuar.');
+    if(!almBase&&idx>=0)throw Error('Ya existe un recuento para este mes. Ábrelo desde el historial.');
+    const remoto=idx>=0?almNormalizar(rows[idx]):null,conflictos=[];
+    const combinado=remoto?mezclarTres(almBase,almInventarioActual,remoto,conflictos,'almacen'):almCopia(almInventarioActual);
+    if(conflictos.length){guardarRecuperacion({...datosTaller(),inventarios:[...rows.filter(i=>i.mesKey!==almInventarioActual.mesKey),almCopia(almInventarioActual)]});throw Error('Hay cambios sobre los mismos datos. Reabre el mes desde el historial para revisarlos.');}
+    combinado.actualizado=new Date().toISOString();
+    if(idx<0)rows.unshift(combinado);else rows[idx]=combinado;
+    saveInventarios(rows);almInventarioActual=almCopia(combinado);almBase=almCopia(combinado);almSinGuardar=false;document.getElementById('alm-reabrir').hidden=true;
+    document.getElementById('alm-estado').textContent='Guardado en este dispositivo · '+(navigator.onLine?'sincronización automática':'sin conexión');
+    almActualizarResumen();return true;
+  }catch(e){document.getElementById('alm-reabrir').hidden=false;document.getElementById('alm-estado').textContent='Sin guardar: '+e.message;toast('No se ha guardado el cambio. Revisa el aviso.');return false;}
+}
+function almReabrir(){
+  if(!almInventarioActual||!confirm('Se guardará una copia de recuperación de tus cambios y se abrirá la versión guardada. ¿Continuar?'))return;
+  try{
+    const rows=loadInventarios(),actual=rows.find(i=>i.mesKey===almInventarioActual.mesKey);
+    guardarRecuperacion({...datosTaller(),inventarios:[...rows.filter(i=>i.mesKey!==almInventarioActual.mesKey),almCopia(almInventarioActual)]});
+    if(actual)almAbrir(actual);else{almInventarioActual=null;almBase=null;almSinGuardar=false;}
+    document.getElementById('alm-reabrir').hidden=true;initAlmacen();
+  }catch(e){toast('No se pudo guardar la copia de recuperación. Tus cambios siguen en pantalla.');}
+}
+window.almReabrir=almReabrir;
+function almActualizarResumen(){
+  if(!almInventarioActual)return;
+  document.getElementById('alm-mes-titulo').textContent=almInventarioActual.titulo;
+  const p=almProgreso(almInventarioActual);
+  document.getElementById('alm-progreso').textContent=p.revisadas+' de '+p.total+' ubicaciones revisadas · '+(almInventarioActual.borrador===false?'Finalizado':'En recuento');
+  almRenderResumen(almInventarioActual,document.getElementById('alm-resumen'));
+  ALM_ZONAS.forEach(z=>{const n=z.niveles.filter(v=>almInventarioActual.zonas[z.id+'_'+v]?.revisada).length;const title=document.getElementById('alm-zone-'+z.id);if(title)title.textContent=z.nombre+' · '+n+'/'+z.niveles.length;z.niveles.forEach(v=>{const k=z.id+'_'+v,b=document.getElementById('alm-review-'+k);if(b){const checked=Boolean(almInventarioActual.zonas[k]?.revisada);b.textContent=checked?'✓ Revisada':'Marcar revisada';b.setAttribute('aria-pressed',String(checked));}});});
+}
+function almRenderResumen(inv,el){
+  el.replaceChildren();const t=almTotales(inv);
+  el.appendChild(matElemento('p',almCantidad(t)+' registrados','alm-total'));
+  if(t.anotaciones)el.appendChild(matElemento('p',t.anotaciones+' anotaciones de texto: no se convierten a metros ni piezas.','mat-muted'));
+  t.telas.forEach(x=>{const row=matElemento('div',undefined,'alm-summary-row');row.append(matElemento('span',x.nombre),matElemento('strong',almCantidad(x)));el.appendChild(row);});
+}
+function almCamposValidos(t){return Boolean((t.nombre||'').trim())&&(!String(t.metros).trim()||almNumero(t.metros)!==null)&&(!String(t.piezas).trim()||almNumero(t.piezas,true)!==null)&&Boolean(String(t.metros).trim()||String(t.piezas).trim()||(t.notas||'').trim());}
+function almRevisarZona(key,revisada){
+  const z=almInventarioActual.zonas[key]||{telas:[]};
+  if(revisada&&z.telas.some(t=>!almCamposValidos(t))){toast('Revisa los nombres y cantidades. El texto libre va en Observaciones.');return;}
+  z.revisada=revisada;almInventarioActual.zonas[key]=z;almInventarioActual.borrador=true;almPersistir();renderFormularioAlmacen();
+}
+function renderFormularioAlmacen(){
+  const el=document.getElementById('alm-formulario');if(!el||!almInventarioActual)return;
+  const abiertos=new Set(Array.from(el.querySelectorAll('details[open]')).map(x=>x.dataset.alm));el.replaceChildren();
+  const nombres=new Set();loadInventarios().forEach(i=>Object.values(i.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>{if(t.nombre)nombres.add(t.nombre);})));(db.clientes||[]).forEach(c=>(c.telas||[]).forEach(t=>{if(t.nombre)nombres.add(t.nombre);}));
+  const sugerencias=document.getElementById('alm-nombres');sugerencias.replaceChildren();[...nombres].sort().forEach(n=>{const o=matElemento('option');o.value=n;sugerencias.appendChild(o);});
+  ALM_ZONAS.forEach(zona=>{
+    const panel=matElemento('details',undefined,'alm-zone-card');panel.dataset.alm=zona.id;panel.open=abiertos.has(zona.id);
+    const n=zona.niveles.filter(n=>almInventarioActual.zonas[zona.id+'_'+n]?.revisada).length;
+    const zoneTitle=matElemento('summary',zona.nombre+' · '+n+'/'+zona.niveles.length,'alm-zone-summary');zoneTitle.id='alm-zone-'+zona.id;panel.appendChild(zoneTitle);
+    zona.niveles.forEach(nivel=>{
+      const key=zona.id+'_'+nivel,z=almInventarioActual.zonas[key]||{telas:[]},bloque=matElemento('div',undefined,'alm-count-zone');
+      const head=matElemento('div',undefined,'alm-location-head');head.appendChild(matElemento('strong',nivel));
+      const review=matBoton(z.revisada?'✓ Revisada':'Marcar revisada',()=>almRevisarZona(key,!almInventarioActual.zonas[key]?.revisada));review.id='alm-review-'+key;review.setAttribute('aria-pressed',String(Boolean(z.revisada)));head.appendChild(review);bloque.appendChild(head);
+      if(!z.telas.length)bloque.appendChild(matElemento('p',z.revisada?'Vacío · revisado':'Sin contar. Si está vacío, márcalo como revisado.','mat-muted'));
+      z.telas.forEach(t=>{
+        const row=matElemento('details',undefined,'alm-count-row');row.dataset.alm=t.id;row.open=abiertos.has(t.id);
+        const summary=matElemento('summary');const name=matElemento('span',t.nombre||'Nueva tela');name.id='alm-nombre-'+t.id;const qty=matElemento('strong',almCantidad(t));qty.id='alm-cantidad-'+t.id;summary.append(name,qty);row.appendChild(summary);
+        const fields=matElemento('div',undefined,'alm-count-fields');
+        [['nombre','Tela','text'],['metros','Metros','text'],['piezas','Piezas','text'],['notas','Observaciones','text']].forEach(([field,label,type])=>{
+          const wrap=matElemento('label',label),input=matElemento('input');input.type=type;input.value=t[field]||'';
+          if(field==='nombre')input.setAttribute('list','alm-nombres');
+          if(field==='metros'){input.inputMode='decimal';input.placeholder='Ej. 12,5';}
+          if(field==='piezas'){input.inputMode='numeric';input.placeholder='Ej. 3';}
+          if(field==='notas')input.placeholder='Ej. 1 palet y medio';
+          input.oninput=()=>{almUpdateTela(key,t.id,field,input.value);if(field==='metros'||field==='piezas')input.setAttribute('aria-invalid',String(Boolean(input.value.trim())&&almNumero(input.value,field==='piezas')===null));};wrap.appendChild(input);fields.appendChild(wrap);
         });
-        bloque.appendChild(lista);
-      } else {
-        const empty = document.createElement('div');
-        empty.style.cssText = 'padding:8px 14px;font-size:13px;color:var(--txt3)';
-        empty.textContent = 'Sin telas';
-        bloque.appendChild(empty);
-      }
-      estanteria.appendChild(bloque);
-    });
-    zonaDiv.appendChild(estanteria);
-    el.appendChild(zonaDiv);
-  });
-}
-function almAddTela(key) {
-  if (!almInventarioActual.zonas[key]) almInventarioActual.zonas[key] = { telas:[] };
-  if (!almInventarioActual.zonas[key].telas) almInventarioActual.zonas[key].telas = [];
-  almInventarioActual.zonas[key].telas.push({ nombre:'', metros:'' });
-  renderFormularioAlmacen();
-}
-function almUpdateTela(key, idx, field, value) {
-  if (!almInventarioActual.zonas[key] || !almInventarioActual.zonas[key].telas) return;
-  almInventarioActual.zonas[key].telas[idx][field] = value;
-}
-function almDelTela(key, idx) {
-  if (!almInventarioActual.zonas[key] || !almInventarioActual.zonas[key].telas) return;
-  almInventarioActual.zonas[key].telas.splice(idx, 1);
-  renderFormularioAlmacen();
-}
-function nuevoInventario() {
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const hoy = new Date();
-  const mesInput = prompt('Mes y anio:', meses[hoy.getMonth()]+' '+hoy.getFullYear());
-  if (!mesInput || !mesInput.trim()) return;
-  const partes = mesInput.trim().split(' ');
-  const mesNom = partes[0];
-  const anio = partes[1] || hoy.getFullYear();
-  const mesIdx = meses.findIndex(function(m){ return m.toLowerCase() === mesNom.toLowerCase(); });
-  if (mesIdx === -1) { toast('Mes no valido'); return; }
-  const mesKey2 = anio+'-'+String(mesIdx+1).padStart(2,'0');
-  almInventarioActual = { mesKey:mesKey2, titulo:mesNom+' '+anio, zonas:{} };
-  const tituloEl = document.getElementById('alm-mes-titulo');
-  if(tituloEl) tituloEl.textContent = 'Inventario - '+mesNom+' '+anio;
-  renderFormularioAlmacen();
-}
-function guardarInventario() {
-  if (!almInventarioActual) return;
-  const inventarios = loadInventarios();
-  const idx2 = inventarios.findIndex(function(i){ return i.mesKey === almInventarioActual.mesKey; });
-  if (idx2 !== -1) inventarios[idx2] = almInventarioActual;
-  else inventarios.unshift(almInventarioActual);
-  saveInventarios(inventarios);
-  toast('Inventario guardado');
-}
-function renderHistorialAlmacen() {
-  const inventarios = loadInventarios();
-  const el = document.getElementById('alm-historial-lista');
-  if (!el) return;
-  if (!inventarios.length) {
-    el.innerHTML = '<div class="empty-state"><p>Sin inventarios.</p></div>';
-    return;
-  }
-  el.innerHTML = '';
-  inventarios.forEach(function(inv) {
-    let total = 0;
-    Object.values(inv.zonas||{}).forEach(function(z){
-      (z.telas||[]).forEach(function(t){ total += parseFloat(t.metros)||0; });
-    });
-    const row = document.createElement('div');
-    row.className = 'alm-mes-item';
-    row.onclick = (function(mk){ return function(){ verDetalleInventario(mk); }; })(inv.mesKey);
-    const info = document.createElement('div');
-    info.style.flex = '1';
-    const nombre = document.createElement('div');
-    nombre.style.cssText = 'font-size:15px;font-weight:500;color:var(--txt)';
-    nombre.textContent = inv.titulo;
-    const sub = document.createElement('div');
-    sub.style.cssText = 'font-size:13px;color:var(--txt2);margin-top:2px';
-    sub.textContent = total.toFixed(1) + ' m totales';
-    info.appendChild(nombre);
-    info.appendChild(sub);
-    const chev = document.createElement('div');
-    chev.className = 'chevron';
-    chev.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
-    row.appendChild(info);
-    row.appendChild(chev);
-    el.appendChild(row);
-  });
-}
-let almDetalleKey = null;
-function verDetalleInventario(mesKey) {
-  almDetalleKey = mesKey;
-  window.almDetalleKey = mesKey;
-  const inventarios = loadInventarios();
-  const inv = inventarios.find(function(i){ return i.mesKey === mesKey; });
-  if (!inv) return;
-  document.getElementById('alm-detalle-titulo').textContent = inv.titulo;
-  const body = document.getElementById('alm-detalle-body');
-  body.innerHTML = '';
-  let totalGeneral = 0;
-  ALM_ZONAS.forEach(function(zona) {
-    let tieneEntradas = false;
-    const zonaDiv = document.createElement('div');
-    zonaDiv.className = 'alm-zona';
-    const zonaTitle = document.createElement('div');
-    zonaTitle.className = 'alm-zona-titulo';
-    zonaTitle.textContent = zona.nombre;
-    zonaDiv.appendChild(zonaTitle);
-    const estanteria = document.createElement('div');
-    estanteria.className = 'alm-estanteria';
-    zona.niveles.forEach(function(nivel) {
-      const key = zona.id+'_'+nivel;
-      const telas = (inv.zonas[key] && inv.zonas[key].telas) || [];
-      const tf = telas.filter(function(t){ return t.nombre || (t.metros && t.metros !== '_'); });
-      if (!tf.length) return;
-      tieneEntradas = true;
-      const nivelLbl = document.createElement('div');
-      nivelLbl.style.cssText = 'padding:6px 14px 2px;font-size:12px;font-weight:600;color:var(--txt3);text-transform:uppercase';
-      nivelLbl.textContent = nivel;
-      estanteria.appendChild(nivelLbl);
-      tf.forEach(function(t) {
-        const metrosNum = parseFloat(t.metros)||0;
-        if (!isNaN(parseFloat(t.metros))) totalGeneral += metrosNum;
-        const row = document.createElement('div');
-        row.className = 'alm-nivel';
-        const nombre = document.createElement('div');
-        nombre.style.cssText = 'flex:1;font-size:14px;color:var(--txt)';
-        nombre.textContent = t.nombre || 'Sin nombre';
-        const metrosDiv = document.createElement('div');
-        metrosDiv.style.cssText = 'font-size:15px;font-weight:600;color:var(--txt)';
-        metrosDiv.textContent = (t.metros||'').replace(/^_/,'');
-        row.appendChild(nombre);
-        row.appendChild(metrosDiv);
-        estanteria.appendChild(row);
+        if(t.anterior)fields.appendChild(matElemento('p','Recuento anterior: '+almCantidad(t.anterior)+(t.anterior.notas?' · '+t.anterior.notas:''),'alm-previous'));
+        fields.appendChild(matBoton('Eliminar tela',()=>almDelTela(key,t.id)));row.appendChild(fields);bloque.appendChild(row);
       });
-    });
-    if (!tieneEntradas) return;
-    zonaDiv.appendChild(estanteria);
-    body.appendChild(zonaDiv);
-  });
-  const totalBox = document.createElement('div');
-  totalBox.style.cssText = 'margin:0 16px 24px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px 16px';
-  const totalRow = document.createElement('div');
-  totalRow.style.cssText = 'display:flex;justify-content:space-between;font-size:15px;font-weight:700';
-  totalRow.innerHTML = '<span>Total metros</span><span>' + totalGeneral.toFixed(1) + ' m</span>';
-  totalBox.appendChild(totalRow);
-  body.appendChild(totalBox);
-  go('s-almacen-detalle');
+      bloque.appendChild(matBoton('+ Añadir tela',()=>almAddTela(key)));panel.appendChild(bloque);
+    });el.appendChild(panel);
+  });almActualizarResumen();
 }
-function editarInventario() {
-  const inv = loadInventarios().find(function(i){ return i.mesKey === (almDetalleKey||window.almDetalleKey); });
-  if (!inv) return;
-  almInventarioActual = JSON.parse(JSON.stringify(inv));
-  go('s-almacen');
+function almEncontrar(key,id){const z=almInventarioActual?.zonas[key];if(!z)return null;const t=typeof id==='number'?z.telas[id]:z.telas.find(t=>t.id===id);return t?{z,t}:null;}
+function almAddTela(key){
+  if(!almInventarioActual.zonas[key])almInventarioActual.zonas[key]={telas:[]};
+  const t={id:uid(),nombre:'',metros:'',piezas:'',notas:''};const z=almInventarioActual.zonas[key];z.telas.push(t);z.revisada=false;almInventarioActual.borrador=true;almPersistir();renderFormularioAlmacen();
+  document.querySelectorAll('#alm-formulario details').forEach(el=>{if(el.dataset.alm===t.id||key.startsWith(el.dataset.alm+'_'))el.open=true;});
 }
-
-function duplicarInventario() {
-  const todosInv = loadInventarios();
-  const inv = todosInv.find(function(i){ return i.mesKey === (almDetalleKey||window.almDetalleKey); });
-  if (!inv) return;
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const hoy = new Date();
-  const sugerido = meses[hoy.getMonth()]+' '+hoy.getFullYear();
-  const mesInput = prompt('Nombre del nuevo mes:', sugerido);
-  if (!mesInput || !mesInput.trim()) return;
-  const partes = mesInput.trim().split(' ');
-  const mesNom = partes[0];
-  const anio = partes[1] || hoy.getFullYear();
-  const mesIdx = meses.findIndex(function(m){ return m.toLowerCase() === mesNom.toLowerCase(); });
-  if (mesIdx === -1) { toast('Mes no valido'); return; }
-  const mesKey2 = anio+'-'+String(mesIdx+1).padStart(2,'0');
-  if (todosInv.find(function(i){ return i.mesKey === mesKey2; })) {
-    toast('Ya existe un inventario para ese mes');
-    return;
-  }
-  almInventarioActual = {
-    mesKey: mesKey2,
-    titulo: mesNom+' '+anio,
-    zonas: JSON.parse(JSON.stringify(inv.zonas||{}))
-  };
-  toast('Duplicado como '+mesNom+' '+anio);
-  go('s-almacen');
+function almUpdateTela(key,id,field,value){
+  if(!['nombre','metros','piezas','notas'].includes(field))return;const found=almEncontrar(key,id);if(!found)return;
+  found.t[field]=value;found.z.revisada=false;almInventarioActual.borrador=true;
+  almPersistir();const name=document.getElementById('alm-nombre-'+found.t.id),qty=document.getElementById('alm-cantidad-'+found.t.id);if(name)name.textContent=found.t.nombre||'Nueva tela';if(qty)qty.textContent=almCantidad(found.t);
 }
-
-function eliminarInventario() {
-  if (!almDetalleKey || !confirm('Eliminar este inventario?')) return;
-  saveInventarios(loadInventarios().filter(function(i){ return i.mesKey !== almDetalleKey; }));
-  toast('Inventario eliminado');
-  go('s-almacen-historial');
-  renderHistorialAlmacen();
+function almDelTela(key,id){
+  const found=almEncontrar(key,id);if(!found)return;const saved=almCopia(found.t),mes=almInventarioActual.mesKey;
+  found.z.telas=found.z.telas.filter(t=>t.id!==saved.id);found.z.revisada=false;almInventarioActual.borrador=true;if(!almPersistir())return;renderFormularioAlmacen();
+  ofrecerDeshacer('Tela eliminada',()=>{if(almInventarioActual?.mesKey!==mes){toast('Vuelve al mes original para recuperar la tela');return;}const z=almInventarioActual.zonas[key]||(almInventarioActual.zonas[key]={telas:[]});if(z.telas.some(t=>t.id===saved.id))return;z.telas.push(saved);z.revisada=false;almInventarioActual.borrador=true;almPersistir();renderFormularioAlmacen();});
 }
-
-function compartirInventarioWhatsApp() {
-  const mesKey = almDetalleKey || (almInventarioActual && almInventarioActual.mesKey);
-  const inventarios = loadInventarios();
-  const inv = inventarios.find(function(i){ return i.mesKey === mesKey; }) || almInventarioActual;
-  if (!inv) { toast('Sin inventario'); return; }
-  const NL = String.fromCharCode(10);
-  const sep = '========================';
-  const lines = [];
-  lines.push('*Inventario Almacen - ' + inv.titulo + '*');
-  lines.push(sep);
-  let totalGeneral = 0;
-  ALM_ZONAS.forEach(function(zona) {
-    const zonaLines = [];
-    zona.niveles.forEach(function(nivel) {
-      const key = zona.id + '_' + nivel;
-      const telas = (inv.zonas[key] && inv.zonas[key].telas) || [];
-      const tf = telas.filter(function(t){ return t.nombre || (t.metros && t.metros !== '_'); });
-      if (!tf.length) return;
-      zonaLines.push(nivel + ':');
-      tf.forEach(function(t) {
-        const metros = parseFloat(t.metros)||0;
-        totalGeneral += metros;
-        zonaLines.push('  - ' + (t.nombre||'Sin nombre') + ': ' + (t.metros||'') + (isNaN(parseFloat(t.metros)) ? '' : 'm'));
-      });
-    });
-    if (!zonaLines.length) return;
-    lines.push('');
-    lines.push('*' + zona.nombre + '*');
-    zonaLines.forEach(function(l){ lines.push(l); });
-  });
-  lines.push('');
-  lines.push(sep);
-  lines.push('*Total: ' + totalGeneral.toFixed(1) + ' m*');
-  const txt = lines.join(NL);
-  const url = 'https://wa.me/?text=' + encodeURIComponent(txt);
-  window.open(url, '_blank');
+function nuevoInventario(){
+  const mes=almElegirMes(almMesActual());if(!mes)return;
+  if(loadInventarios().some(i=>i.mesKey===mes)){toast('Ese mes ya existe. Ábrelo desde Historial.');return;}
+  almAbrir({mesKey:mes,titulo:almTitulo(mes),zonas:{},borrador:true});almPersistir();renderFormularioAlmacen();
 }
-
+function guardarInventario(){
+  if(!almInventarioActual)return;const p=almProgreso(almInventarioActual);
+  if(p.revisadas!==p.total){almPersistir();toast('Borrador guardado. Revisa las ubicaciones pendientes para finalizar.');return;}
+  almInventarioActual.borrador=false;if(almPersistir())toast('Recuento finalizado');
+}
+function renderHistorialAlmacen(){
+  const el=document.getElementById('alm-historial-lista');el.replaceChildren();
+  const rows=loadInventarios().sort((a,b)=>b.mesKey.localeCompare(a.mesKey));
+  if(!rows.length)el.appendChild(matElemento('p','Todavía no hay recuentos.','mat-muted'));
+  rows.forEach(inv=>{const t=almTotales(inv),row=matElemento('button',undefined,'alm-history-button');row.onclick=()=>verDetalleInventario(inv.mesKey);row.append(matElemento('strong',inv.titulo),matElemento('span',almCantidad(t)+' · '+(inv.borrador===false?'Finalizado':inv.borrador?'En recuento':'Histórico'),'mat-muted'));el.appendChild(row);});
+}
+function verDetalleInventario(mesKey){
+  const inv=loadInventarios().find(i=>i.mesKey===mesKey);if(!inv)return;almDetalleKey=mesKey;window.almDetalleKey=mesKey;
+  document.getElementById('alm-detalle-titulo').textContent=inv.titulo;const body=document.getElementById('alm-detalle-body');body.replaceChildren();
+  const resumen=matElemento('div',undefined,'alm-summary-panel');almRenderResumen(inv,resumen);body.appendChild(resumen);
+  const normal=almNormalizar(inv);
+  ALM_ZONAS.forEach(z=>{const panel=matElemento('details',undefined,'alm-zone-card');panel.appendChild(matElemento('summary',z.nombre,'alm-zone-summary'));z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};panel.appendChild(matElemento('p',n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'),'alm-location-title'));v.telas.forEach(t=>panel.appendChild(matElemento('p',(t.nombre||'Sin nombre')+' · '+almCantidad(t)+(t.notas?' · '+t.notas:''),'alm-detail-line')));});body.appendChild(panel);});
+  const prepare=matBoton('Preparar siguiente recuento',duplicarInventario);prepare.className='btn-secondary';body.appendChild(prepare);go('s-almacen-detalle');
+}
+function editarInventario(){if(almSinGuardar&&!almPersistir())return;const inv=loadInventarios().find(i=>i.mesKey===almDetalleKey);if(!inv)return;almAbrir(inv);go('s-almacen');}
+function almPreparar(inv,mes){
+  const normal=almNormalizar(inv),zonas={};Object.entries(normal.zonas).forEach(([key,z])=>{zonas[key]={revisada:false,telas:z.telas.map(t=>({id:uid(),nombre:t.nombre,metros:'',piezas:'',notas:'',anterior:{metros:t.metros,piezas:t.piezas,notas:t.notas}}))};});
+  return {mesKey:mes,titulo:almTitulo(mes),zonas,borrador:true,version:2};
+}
+function duplicarInventario(){
+  const source=almDetalleKey?loadInventarios().find(i=>i.mesKey===almDetalleKey):almInventarioActual;if(!source)return;
+  const [y,m]=source.mesKey.split('-').map(Number),next=(m===12?y+1:y)+'-'+String(m===12?1:m+1).padStart(2,'0');const mes=almElegirMes(next);if(!mes)return;
+  if(loadInventarios().some(i=>i.mesKey===mes)){toast('Ya existe un recuento para ese mes');return;}
+  almAbrir(almPreparar(source,mes));almPersistir();go('s-almacen');
+}
+function eliminarInventario(){
+  const key=almDetalleKey;if(!key||!confirm('¿Eliminar este inventario?'))return;
+  saveInventarios(loadInventarios().filter(i=>i.mesKey!==key));if(almInventarioActual?.mesKey===key){almInventarioActual=null;almBase=null;}almDetalleKey=null;window.almDetalleKey=null;go('s-almacen-historial');
+}
+function almTextoCompartir(inv){
+  const lines=['Inventario · '+inv.titulo,inv.borrador===false?'Finalizado':inv.borrador?'BORRADOR · recuento en curso':'Histórico'],normal=almNormalizar(inv);
+  ALM_ZONAS.forEach(z=>{lines.push('',z.nombre);z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};lines.push(n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'));v.telas.forEach(t=>lines.push('  '+(t.nombre||'Sin nombre')+': '+almCantidad(t)+(t.notas?' · '+t.notas:'')));});});
+  const t=almTotales(inv);lines.push('','Total registrado: '+almCantidad(t));if(t.anotaciones)lines.push(t.anotaciones+' anotaciones sin conversión a metros ni piezas.');return lines.join(String.fromCharCode(10));
+}
+function compartirInventarioWhatsApp(origen){
+  const inv=origen==='detalle'?loadInventarios().find(i=>i.mesKey===almDetalleKey):almInventarioActual;
+  if(!inv){toast('Sin inventario');return;}window.open('https://wa.me/?text='+encodeURIComponent(almTextoCompartir(inv)),'_blank');
+}
 
 // ENTREGAS
 const ENT_KEY = 'entregas_v1';
