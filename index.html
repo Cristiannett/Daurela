@@ -816,7 +816,7 @@ onAuthStateChanged(auth, function(user) {
     <div style="font-size:15px;font-weight:600" id="alm-mes-titulo"></div>
     <button class="btn-sm" onclick="nuevoInventario()" style="margin-top:0">Nuevo mes</button>
   </div>
-  <div id="alm-estado" class="alm-save-status" role="status"></div><button id="alm-reabrir" class="btn-secondary" style="margin:0 16px 12px;width:calc(100% - 32px)" hidden onclick="almReabrir()">Reabrir versión guardada</button><div id="alm-progreso" class="alm-progress"></div><details class="alm-summary-panel"><summary>Resumen por tela</summary><div id="alm-resumen"></div></details><datalist id="alm-nombres"></datalist><datalist id="alm-clientes"></datalist><div id="alm-formulario"></div>
+  <div id="alm-estado" class="alm-save-status" role="status"></div><button id="alm-reabrir" class="btn-secondary" style="margin:0 16px 12px;width:calc(100% - 32px)" hidden onclick="almReabrir()">Reabrir versión guardada</button><div id="alm-progreso" class="alm-progress"></div><details class="alm-summary-panel"><summary>Resumen por tela</summary><div id="alm-resumen"></div></details><datalist id="alm-nombres"></datalist><div id="alm-formulario"></div>
   <div style="padding:0 16px 16px">
     <button class="btn-primary" onclick="guardarInventario()" style="margin-top:0">Finalizar recuento</button><button class="btn-secondary" onclick="duplicarInventario()">Preparar siguiente recuento</button>
     <button class="btn-secondary" onclick="compartirInventarioWhatsApp('actual')">Enviar por WhatsApp</button>
@@ -4009,7 +4009,6 @@ function almRevisarZona(key,revisada){
 function renderFormularioAlmacen(){
   const el=document.getElementById('alm-formulario');if(!el||!almInventarioActual)return;
   const abiertos=new Set(Array.from(el.querySelectorAll('details[open]')).map(x=>x.dataset.alm));el.replaceChildren();
-  const clientes=new Set((db.clientes||[]).map(c=>c.nombre).filter(Boolean));loadInventarios().forEach(i=>Object.values(i.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>{if(t.cliente)clientes.add(t.cliente);})));const cl=document.getElementById('alm-clientes');cl.replaceChildren();[...clientes].sort().forEach(n=>{const o=matElemento('option');o.value=n;cl.appendChild(o);});
   const nombres=new Set();loadInventarios().forEach(i=>Object.values(i.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>{if(t.nombre)nombres.add(t.nombre);})));(db.clientes||[]).forEach(c=>(c.telas||[]).forEach(t=>{if(t.nombre)nombres.add(t.nombre);}));
   const sugerencias=document.getElementById('alm-nombres');sugerencias.replaceChildren();[...nombres].sort().forEach(n=>{const o=matElemento('option');o.value=n;sugerencias.appendChild(o);});
   almZonas(almInventarioActual).forEach(zona=>{
@@ -4027,10 +4026,9 @@ function renderFormularioAlmacen(){
         const fields=matElemento('div',undefined,'alm-count-fields');
         const tipos=matElemento('div',undefined,'alm-format-selector');tipos.setAttribute('role','group');tipos.setAttribute('aria-label','Formato de la tela');
         ['piezas','tacos'].forEach(formato=>{const b=matBoton(formato==='tacos'?'Tacos':'Piezas enteras',()=>{almUpdateTela(key,t.id,'formato',formato);Array.from(tipos.children).forEach((button,i)=>button.setAttribute('aria-pressed',String(['piezas','tacos'][i]===formato)));});b.setAttribute('aria-pressed',String((t.formato||'piezas')===formato));tipos.appendChild(b);});fields.appendChild(tipos);
-        [['cliente','Cliente (opcional)','text'],['nombre','Tela','text'],['metros','Metros','text'],['piezas','Cantidad','text'],['notas','Observaciones','text']].forEach(([field,label,type])=>{
-          const wrap=matElemento('label',label),input=matElemento('input');if(['cliente','nombre','notas'].includes(field))wrap.className='alm-wide';input.type=type;input.value=t[field]||'';
+        [['nombre','Tela','text'],['metros','Metros','text'],['piezas','Cantidad','text'],['notas','Observaciones','text']].forEach(([field,label,type])=>{
+          const wrap=matElemento('label',label),input=matElemento('input');if(['nombre','notas'].includes(field))wrap.className='alm-wide';input.type=type;input.value=t[field]||'';
           if(field==='nombre')input.setAttribute('list','alm-nombres');
-          if(field==='cliente'){input.setAttribute('list','alm-clientes');input.placeholder='Elegir o escribir cliente';}
           if(field==='metros'){input.inputMode='decimal';input.placeholder='Ej. 12,5';}
           if(field==='piezas'){input.inputMode='numeric';input.placeholder='Ej. 3';}
           if(field==='notas')input.placeholder='Ej. 1 palet y medio';
