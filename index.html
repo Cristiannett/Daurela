@@ -3928,8 +3928,22 @@ function almTotales(inv){
   }));
   return {metros,piezas,tacos,anotaciones,telas:[...telas.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'))};
 }
-function almClaves(){return ALM_ZONAS.flatMap(z=>z.niveles.map(n=>z.id+'_'+n));}
-function almProgreso(inv){const keys=almClaves();return {total:keys.length,revisadas:keys.filter(k=>inv.zonas[k]?.revisada).length};}
+function almZonas(inv){
+  return ALM_ZONAS.map(z=>({...z,niveles:[...z.niveles,...Object.keys(inv?.zonas||{}).filter(k=>k.startsWith(z.id+'_')).map(k=>k.slice(z.id.length+1)).filter(n=>!z.niveles.includes(n))]}));
+}
+function almAddCarro(){
+  if(!almInventarioActual)return;
+  const entrada=prompt('Nombre del cliente o carro:');if(entrada===null)return;
+  const nombre=entrada.trim().replace(/\s+/g,' ');if(!nombre||nombre.length>80){toast('Escribe un nombre de entre 1 y 80 caracteres');return;}
+  const existentes=almZonas(almInventarioActual).find(z=>z.id==='carros').niveles;
+  if(existentes.some(n=>n.toLocaleLowerCase('es')===nombre.toLocaleLowerCase('es'))){toast('Ese cliente o carro ya existe');return;}
+  almInventarioActual.zonas['carros_'+nombre]={telas:[],revisada:false};almInventarioActual.borrador=true;
+  if(!almPersistir())return;renderFormularioAlmacen();
+  document.querySelectorAll('#alm-formulario details').forEach(el=>{if(el.dataset.alm==='carros')el.open=true;});
+  toast('Carro añadido. Ya puedes añadir sus telas.');
+}
+function almClaves(inv=almInventarioActual){return almZonas(inv).flatMap(z=>z.niveles.map(n=>z.id+'_'+n));}
+function almProgreso(inv){const keys=almClaves(inv);return {total:keys.length,revisadas:keys.filter(k=>inv.zonas[k]?.revisada).length};}
 function almTitulo(mes){const [y,m]=mes.split('-').map(Number);return ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][m-1]+' '+y;}
 function almMesActual(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function almElegirMes(sugerido){if(almSinGuardar&&!almPersistir())return null;const value=prompt('Mes del recuento (AAAA-MM):',sugerido);if(value===null)return null;const mes=value.trim();if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)||Number(mes.slice(0,4))<2000){toast('Indica el mes como 2026-10');return null;}return mes;}
@@ -3978,7 +3992,7 @@ function almActualizarResumen(){
   const p=almProgreso(almInventarioActual);
   document.getElementById('alm-progreso').textContent=p.revisadas+' de '+p.total+' ubicaciones revisadas · '+(almInventarioActual.borrador===false?'Finalizado':'En recuento');
   almRenderResumen(almInventarioActual,document.getElementById('alm-resumen'));
-  ALM_ZONAS.forEach(z=>{const n=z.niveles.filter(v=>almInventarioActual.zonas[z.id+'_'+v]?.revisada).length;const title=document.getElementById('alm-zone-'+z.id);if(title)title.textContent=z.nombre+' · '+n+'/'+z.niveles.length;z.niveles.forEach(v=>{const k=z.id+'_'+v,b=document.getElementById('alm-review-'+k);if(b){const checked=Boolean(almInventarioActual.zonas[k]?.revisada);b.textContent=checked?'✓ Revisada':'Marcar revisada';b.setAttribute('aria-pressed',String(checked));}});});
+  almZonas(almInventarioActual).forEach(z=>{const n=z.niveles.filter(v=>almInventarioActual.zonas[z.id+'_'+v]?.revisada).length;const title=document.getElementById('alm-zone-'+z.id);if(title)title.textContent=z.nombre+' · '+n+'/'+z.niveles.length;z.niveles.forEach(v=>{const k=z.id+'_'+v,b=document.getElementById('alm-review-'+k);if(b){const checked=Boolean(almInventarioActual.zonas[k]?.revisada);b.textContent=checked?'✓ Revisada':'Marcar revisada';b.setAttribute('aria-pressed',String(checked));}});});
 }
 function almRenderResumen(inv,el){
   el.replaceChildren();const t=almTotales(inv);
@@ -3998,7 +4012,7 @@ function renderFormularioAlmacen(){
   const clientes=new Set((db.clientes||[]).map(c=>c.nombre).filter(Boolean));loadInventarios().forEach(i=>Object.values(i.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>{if(t.cliente)clientes.add(t.cliente);})));const cl=document.getElementById('alm-clientes');cl.replaceChildren();[...clientes].sort().forEach(n=>{const o=matElemento('option');o.value=n;cl.appendChild(o);});
   const nombres=new Set();loadInventarios().forEach(i=>Object.values(i.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>{if(t.nombre)nombres.add(t.nombre);})));(db.clientes||[]).forEach(c=>(c.telas||[]).forEach(t=>{if(t.nombre)nombres.add(t.nombre);}));
   const sugerencias=document.getElementById('alm-nombres');sugerencias.replaceChildren();[...nombres].sort().forEach(n=>{const o=matElemento('option');o.value=n;sugerencias.appendChild(o);});
-  ALM_ZONAS.forEach(zona=>{
+  almZonas(almInventarioActual).forEach(zona=>{
     const panel=matElemento('details',undefined,'alm-zone-card');panel.dataset.alm=zona.id;panel.open=abiertos.has(zona.id);
     const n=zona.niveles.filter(n=>almInventarioActual.zonas[zona.id+'_'+n]?.revisada).length;
     const zoneTitle=matElemento('summary',zona.nombre+' · '+n+'/'+zona.niveles.length,'alm-zone-summary');zoneTitle.id='alm-zone-'+zona.id;panel.appendChild(zoneTitle);
@@ -4026,7 +4040,7 @@ function renderFormularioAlmacen(){
         fields.appendChild(matBoton('Eliminar tela',()=>almDelTela(key,t.id)));row.appendChild(fields);bloque.appendChild(row);
       });
       bloque.appendChild(matBoton('+ Añadir tela',()=>almAddTela(key)));panel.appendChild(bloque);
-    });el.appendChild(panel);
+    });if(zona.id==='carros')panel.appendChild(matBoton('+ Añadir cliente / carro',()=>almAddCarro()));el.appendChild(panel);
   });almActualizarResumen();
 }
 function almEncontrar(key,id){const z=almInventarioActual?.zonas[key];if(!z)return null;const t=typeof id==='number'?z.telas[id]:z.telas.find(t=>t.id===id);return t?{z,t}:null;}
@@ -4066,7 +4080,7 @@ function verDetalleInventario(mesKey){
   document.getElementById('alm-detalle-titulo').textContent=inv.titulo;const body=document.getElementById('alm-detalle-body');body.replaceChildren();
   const resumen=matElemento('div',undefined,'alm-summary-panel');almRenderResumen(inv,resumen);body.appendChild(resumen);
   const normal=almNormalizar(inv);
-  ALM_ZONAS.forEach(z=>{const panel=matElemento('details',undefined,'alm-zone-card');panel.appendChild(matElemento('summary',z.nombre,'alm-zone-summary'));z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};panel.appendChild(matElemento('p',n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'),'alm-location-title'));v.telas.forEach(t=>panel.appendChild(matElemento('p',almNombre(t)+' · '+almCantidad(t)+(t.notas?' · '+t.notas:''),'alm-detail-line')));});body.appendChild(panel);});
+  almZonas(normal).forEach(z=>{const panel=matElemento('details',undefined,'alm-zone-card');panel.appendChild(matElemento('summary',z.nombre,'alm-zone-summary'));z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};panel.appendChild(matElemento('p',n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'),'alm-location-title'));v.telas.forEach(t=>panel.appendChild(matElemento('p',almNombre(t)+' · '+almCantidad(t)+(t.notas?' · '+t.notas:''),'alm-detail-line')));});body.appendChild(panel);});
   const prepare=matBoton('Preparar siguiente recuento',duplicarInventario);prepare.className='btn-secondary';body.appendChild(prepare);go('s-almacen-detalle');
 }
 function editarInventario(){if(almSinGuardar&&!almPersistir())return;const inv=loadInventarios().find(i=>i.mesKey===almDetalleKey);if(!inv)return;almAbrir(inv);go('s-almacen');}
@@ -4086,7 +4100,7 @@ function eliminarInventario(){
 }
 function almTextoCompartir(inv){
   const lines=['Inventario · '+inv.titulo,inv.borrador===false?'Finalizado':inv.borrador?'BORRADOR · recuento en curso':'Histórico'],normal=almNormalizar(inv);
-  ALM_ZONAS.forEach(z=>{lines.push('',z.nombre);z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};lines.push(n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'));v.telas.forEach(t=>lines.push('  '+almNombre(t)+': '+almCantidad(t)+(t.notas?' · '+t.notas:'')));});});
+  almZonas(normal).forEach(z=>{lines.push('',z.nombre);z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};lines.push(n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'));v.telas.forEach(t=>lines.push('  '+almNombre(t)+': '+almCantidad(t)+(t.notas?' · '+t.notas:'')));});});
   const t=almTotales(inv);lines.push('','Total registrado: '+almCantidad(t));if(t.anotaciones)lines.push(t.anotaciones+' anotaciones sin conversión a metros ni piezas.');return lines.join(String.fromCharCode(10));
 }
 function compartirInventarioWhatsApp(origen){

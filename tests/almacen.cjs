@@ -36,4 +36,13 @@ test('clients and formats survive autosave, copy, summary and next month',()=>{
   d.almUpdateTela('p1iz_Arriba',1,'formato','piezas');assert.equal(d.almTotales(d.loadInventarios()[0]).piezas,6);assert.equal(d.almTotales(d.loadInventarios()[0]).tacos,0);
   const bad={version:3,...copy(d.datosTaller())};bad.inventarios[0].zonas.p1iz_Arriba.telas[1].formato='palets';assert.throws(()=>d.validarCopia(bad));
 });
+
+test('custom customer cart participates in count, history, share and next month',()=>{
+  const g=fixture(),d=g.ctx;d.aplicarDatos({inventarios:[legacy]});d.almAbrir(legacy);d.prompt=()=> 'Cliente nuevo';d.almAddCarro();let inv=d.loadInventarios()[0];assert(inv.zonas['carros_Cliente nuevo']);assert.equal(d.almProgreso(inv).total,11);
+  d.almAddTela('carros_Cliente nuevo');d.almUpdateTela('carros_Cliente nuevo',0,'nombre','Lisboa');d.almUpdateTela('carros_Cliente nuevo',0,'metros','60');d.almRevisarZona('carros_Cliente nuevo',true);inv=d.loadInventarios()[0];assert(inv.zonas['carros_Cliente nuevo'].revisada);assert.match(d.almTextoCompartir(inv),/Cliente nuevo/);assert.match(d.almTextoCompartir(inv),/60 m/);
+  d.verDetalleInventario(inv.mesKey);assert.match(g.els.get('alm-detalle-body').textContent,/Cliente nuevo/);
+  const next=d.almPreparar(inv,'2026-10');assert.equal(next.zonas['carros_Cliente nuevo'].telas[0].anterior.metros,'60');assert.equal(next.zonas['carros_Cliente nuevo'].revisada,false);assert.equal(d.almProgreso(next).total,11);
+  d.almAbrir(inv);d.prompt=()=> ' cliente NUEVO ';d.almAddCarro();assert.equal(d.almProgreso(d.loadInventarios()[0]).total,11);d.prompt=()=>null;d.almAddCarro();assert.equal(d.almProgreso(d.loadInventarios()[0]).total,11);
+  const restored=d.validarCopia({version:3,...d.datosTaller()});assert(restored.inventarios[0].zonas['carros_Cliente nuevo']);
+});
 console.log(count+' warehouse checks passed.');
