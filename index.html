@@ -432,7 +432,8 @@ body.font-xl{font-size:22px}
 .alm-count-row[open]>summary{color:#30bfa5}
 .alm-count-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;padding:2px 0 16px}
 .alm-count-fields label{font-size:12px;color:var(--txt2)}
-.alm-count-fields label:first-child,.alm-count-fields label:nth-child(4),.alm-previous{grid-column:1/-1}
+.alm-count-fields .alm-wide,.alm-format-selector,.alm-previous{grid-column:1/-1}
+.alm-format-selector{display:flex;gap:8px;flex-wrap:wrap}.alm-format-selector .btn-sm{min-height:44px;margin:0}.alm-format-selector [aria-pressed=true]{color:#30bfa5;border-color:#30bfa5;background:rgba(48,191,165,.12)}
 .alm-count-fields input{display:block;width:100%;box-sizing:border-box;border:1px solid var(--border2);border-radius:9px;background:var(--bg3);color:var(--txt);padding:12px;font:inherit;font-size:16px;min-height:44px;margin-top:5px}
 .alm-count-fields input[aria-invalid=true]{border-color:var(--danger)}
 .alm-previous{font-size:12px;color:var(--txt2);background:var(--bg3);padding:10px;border-radius:8px;margin:0;overflow-wrap:anywhere}
@@ -815,7 +816,7 @@ onAuthStateChanged(auth, function(user) {
     <div style="font-size:15px;font-weight:600" id="alm-mes-titulo"></div>
     <button class="btn-sm" onclick="nuevoInventario()" style="margin-top:0">Nuevo mes</button>
   </div>
-  <div id="alm-estado" class="alm-save-status" role="status"></div><button id="alm-reabrir" class="btn-secondary" style="margin:0 16px 12px;width:calc(100% - 32px)" hidden onclick="almReabrir()">Reabrir versión guardada</button><div id="alm-progreso" class="alm-progress"></div><details class="alm-summary-panel"><summary>Resumen por tela</summary><div id="alm-resumen"></div></details><datalist id="alm-nombres"></datalist><div id="alm-formulario"></div>
+  <div id="alm-estado" class="alm-save-status" role="status"></div><button id="alm-reabrir" class="btn-secondary" style="margin:0 16px 12px;width:calc(100% - 32px)" hidden onclick="almReabrir()">Reabrir versión guardada</button><div id="alm-progreso" class="alm-progress"></div><details class="alm-summary-panel"><summary>Resumen por tela</summary><div id="alm-resumen"></div></details><datalist id="alm-nombres"></datalist><datalist id="alm-clientes"></datalist><div id="alm-formulario"></div>
   <div style="padding:0 16px 16px">
     <button class="btn-primary" onclick="guardarInventario()" style="margin-top:0">Finalizar recuento</button><button class="btn-secondary" onclick="duplicarInventario()">Preparar siguiente recuento</button>
     <button class="btn-secondary" onclick="compartirInventarioWhatsApp('actual')">Enviar por WhatsApp</button>
@@ -2645,7 +2646,9 @@ function validarCopia(data){
       if(z.revisada!==undefined&&typeof z.revisada!=='boolean')throw Error('Revisión de ubicación no válida');
       const ids=new Set();z.telas.forEach(t=>{
         if(t.id!==undefined&&(typeof t.id!=='string'||!t.id||ids.has(t.id)))throw Error('Identificador de tela no válido');if(t.id)ids.add(t.id);
-        for(const k of ['piezas','notas'])if(t[k]!==undefined&&typeof t[k]!=='string')throw Error('Campo de recuento no válido');
+        if(t.formato!==undefined&&!['piezas','tacos'].includes(t.formato))throw Error('Formato de tela no válido');
+        if(t.anterior&&t.anterior.formato!==undefined&&!['piezas','tacos'].includes(t.anterior.formato))throw Error('Formato anterior no válido');
+        for(const k of ['cliente','piezas','notas'])if(t[k]!==undefined&&typeof t[k]!=='string')throw Error('Campo de recuento no válido');
         if(t.anterior&&(!objeto(t.anterior)||!['metros','piezas','notas'].every(k=>typeof t.anterior[k]==='string')))throw Error('Referencia de recuento no válida');
       });
     });
@@ -3900,7 +3903,7 @@ function almNormalizar(inv){
     z.telas=(z.telas||[]).map((t,i)=>{
       const metros=String(t.metros??'').replace(/^_/,'');
       const libre=copy.version!==2&&metros.trim()&&almNumero(metros)===null;
-      return {...t,id:t.id||'alm-'+key+'-'+i,nombre:t.nombre||'',metros:libre?'':metros,piezas:String(t.piezas??''),notas:[t.notas||'',libre?metros:''].filter(Boolean).join(' · ')};
+      return {...t,id:t.id||'alm-'+key+'-'+i,nombre:t.nombre||'',cliente:t.cliente||'',formato:t.formato||'piezas',metros:libre?'':metros,piezas:String(t.piezas??''),notas:[t.notas||'',libre?metros:''].filter(Boolean).join(' · ')};
     });
   });
   copy.version=2;return copy;
@@ -3908,20 +3911,22 @@ function almNormalizar(inv){
 function almCantidad(t){
   const partes=[],m=almNumero(t.metros),p=almNumero(t.piezas,true);
   if(m!==null)partes.push(m.toLocaleString('es-ES',{maximumFractionDigits:6})+' m');
-  if(p!==null)partes.push(p.toLocaleString('es-ES')+' piezas');
+  if(p!==null)partes.push(p.toLocaleString('es-ES')+(t.formato==='tacos'?' tacos':' piezas'));
+  if(t.tacos>0)partes.push(t.tacos.toLocaleString('es-ES')+' tacos');
   return partes.join(' · ')||'Sin cantidad';
 }
+function almNombre(t){return (t.nombre||'Sin nombre')+(t.cliente?' · '+t.cliente:'');}
 function almTotales(inv){
-  let metros=0,piezas=0,anotaciones=0;const telas=new Map();
+  let metros=0,piezas=0,tacos=0,anotaciones=0;const telas=new Map();
   Object.values(inv.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>{
     const m=almNumero(t.metros),p=almNumero(t.piezas,true),nombre=(t.nombre||'').trim()||'Sin nombre';
     if(!t.nombre&&!t.metros&&!t.piezas&&!t.notas)return;
-    const key=nombre.toLocaleLowerCase('es'),grupo=telas.get(key)||{nombre,metros:0,piezas:0,anotaciones:0};
-    metros+=m??0;piezas+=p??0;grupo.metros+=m??0;grupo.piezas+=p??0;
+    const cliente=(t.cliente||'').trim(),key=JSON.stringify([cliente.toLocaleLowerCase('es'),nombre.toLocaleLowerCase('es')]),grupo=telas.get(key)||{nombre,cliente,metros:0,piezas:0,tacos:0,anotaciones:0};
+    metros+=m??0;grupo.metros+=m??0;if(t.formato==='tacos'){tacos+=p??0;grupo.tacos+=p??0;}else{piezas+=p??0;grupo.piezas+=p??0;}
     if((t.notas||'').trim()||(String(t.metros??'').trim()&&m===null)){anotaciones++;grupo.anotaciones++;}
     telas.set(key,grupo);
   }));
-  return {metros,piezas,anotaciones,telas:[...telas.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'))};
+  return {metros,piezas,tacos,anotaciones,telas:[...telas.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'))};
 }
 function almClaves(){return ALM_ZONAS.flatMap(z=>z.niveles.map(n=>z.id+'_'+n));}
 function almProgreso(inv){const keys=almClaves();return {total:keys.length,revisadas:keys.filter(k=>inv.zonas[k]?.revisada).length};}
@@ -3979,7 +3984,7 @@ function almRenderResumen(inv,el){
   el.replaceChildren();const t=almTotales(inv);
   el.appendChild(matElemento('p',almCantidad(t)+' registrados','alm-total'));
   if(t.anotaciones)el.appendChild(matElemento('p',t.anotaciones+' anotaciones de texto: no se convierten a metros ni piezas.','mat-muted'));
-  t.telas.forEach(x=>{const row=matElemento('div',undefined,'alm-summary-row');row.append(matElemento('span',x.nombre),matElemento('strong',almCantidad(x)));el.appendChild(row);});
+  t.telas.forEach(x=>{const row=matElemento('div',undefined,'alm-summary-row');row.append(matElemento('span',almNombre(x)),matElemento('strong',almCantidad(x)));el.appendChild(row);});
 }
 function almCamposValidos(t){return Boolean((t.nombre||'').trim())&&(!String(t.metros).trim()||almNumero(t.metros)!==null)&&(!String(t.piezas).trim()||almNumero(t.piezas,true)!==null)&&Boolean(String(t.metros).trim()||String(t.piezas).trim()||(t.notas||'').trim());}
 function almRevisarZona(key,revisada){
@@ -3990,6 +3995,7 @@ function almRevisarZona(key,revisada){
 function renderFormularioAlmacen(){
   const el=document.getElementById('alm-formulario');if(!el||!almInventarioActual)return;
   const abiertos=new Set(Array.from(el.querySelectorAll('details[open]')).map(x=>x.dataset.alm));el.replaceChildren();
+  const clientes=new Set((db.clientes||[]).map(c=>c.nombre).filter(Boolean));loadInventarios().forEach(i=>Object.values(i.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>{if(t.cliente)clientes.add(t.cliente);})));const cl=document.getElementById('alm-clientes');cl.replaceChildren();[...clientes].sort().forEach(n=>{const o=matElemento('option');o.value=n;cl.appendChild(o);});
   const nombres=new Set();loadInventarios().forEach(i=>Object.values(i.zonas||{}).forEach(z=>(z.telas||[]).forEach(t=>{if(t.nombre)nombres.add(t.nombre);})));(db.clientes||[]).forEach(c=>(c.telas||[]).forEach(t=>{if(t.nombre)nombres.add(t.nombre);}));
   const sugerencias=document.getElementById('alm-nombres');sugerencias.replaceChildren();[...nombres].sort().forEach(n=>{const o=matElemento('option');o.value=n;sugerencias.appendChild(o);});
   ALM_ZONAS.forEach(zona=>{
@@ -4003,11 +4009,14 @@ function renderFormularioAlmacen(){
       if(!z.telas.length)bloque.appendChild(matElemento('p',z.revisada?'Vacío · revisado':'Sin contar. Si está vacío, márcalo como revisado.','mat-muted'));
       z.telas.forEach(t=>{
         const row=matElemento('details',undefined,'alm-count-row');row.dataset.alm=t.id;row.open=abiertos.has(t.id);
-        const summary=matElemento('summary');const name=matElemento('span',t.nombre||'Nueva tela');name.id='alm-nombre-'+t.id;const qty=matElemento('strong',almCantidad(t));qty.id='alm-cantidad-'+t.id;summary.append(name,qty);row.appendChild(summary);
+        const summary=matElemento('summary');const name=matElemento('span',almNombre({...t,nombre:t.nombre||'Nueva tela'}));name.id='alm-nombre-'+t.id;const qty=matElemento('strong',almCantidad(t));qty.id='alm-cantidad-'+t.id;summary.append(name,qty);row.appendChild(summary);
         const fields=matElemento('div',undefined,'alm-count-fields');
-        [['nombre','Tela','text'],['metros','Metros','text'],['piezas','Piezas','text'],['notas','Observaciones','text']].forEach(([field,label,type])=>{
-          const wrap=matElemento('label',label),input=matElemento('input');input.type=type;input.value=t[field]||'';
+        const tipos=matElemento('div',undefined,'alm-format-selector');tipos.setAttribute('role','group');tipos.setAttribute('aria-label','Formato de la tela');
+        ['piezas','tacos'].forEach(formato=>{const b=matBoton(formato==='tacos'?'Tacos':'Piezas enteras',()=>{almUpdateTela(key,t.id,'formato',formato);Array.from(tipos.children).forEach((button,i)=>button.setAttribute('aria-pressed',String(['piezas','tacos'][i]===formato)));});b.setAttribute('aria-pressed',String((t.formato||'piezas')===formato));tipos.appendChild(b);});fields.appendChild(tipos);
+        [['cliente','Cliente (opcional)','text'],['nombre','Tela','text'],['metros','Metros','text'],['piezas','Cantidad','text'],['notas','Observaciones','text']].forEach(([field,label,type])=>{
+          const wrap=matElemento('label',label),input=matElemento('input');if(['cliente','nombre','notas'].includes(field))wrap.className='alm-wide';input.type=type;input.value=t[field]||'';
           if(field==='nombre')input.setAttribute('list','alm-nombres');
+          if(field==='cliente'){input.setAttribute('list','alm-clientes');input.placeholder='Elegir o escribir cliente';}
           if(field==='metros'){input.inputMode='decimal';input.placeholder='Ej. 12,5';}
           if(field==='piezas'){input.inputMode='numeric';input.placeholder='Ej. 3';}
           if(field==='notas')input.placeholder='Ej. 1 palet y medio';
@@ -4023,13 +4032,13 @@ function renderFormularioAlmacen(){
 function almEncontrar(key,id){const z=almInventarioActual?.zonas[key];if(!z)return null;const t=typeof id==='number'?z.telas[id]:z.telas.find(t=>t.id===id);return t?{z,t}:null;}
 function almAddTela(key){
   if(!almInventarioActual.zonas[key])almInventarioActual.zonas[key]={telas:[]};
-  const t={id:uid(),nombre:'',metros:'',piezas:'',notas:''};const z=almInventarioActual.zonas[key];z.telas.push(t);z.revisada=false;almInventarioActual.borrador=true;almPersistir();renderFormularioAlmacen();
+  const t={id:uid(),nombre:'',cliente:'',formato:'piezas',metros:'',piezas:'',notas:''};const z=almInventarioActual.zonas[key];z.telas.push(t);z.revisada=false;almInventarioActual.borrador=true;almPersistir();renderFormularioAlmacen();
   document.querySelectorAll('#alm-formulario details').forEach(el=>{if(el.dataset.alm===t.id||key.startsWith(el.dataset.alm+'_'))el.open=true;});
 }
 function almUpdateTela(key,id,field,value){
-  if(!['nombre','metros','piezas','notas'].includes(field))return;const found=almEncontrar(key,id);if(!found)return;
+  if(!['cliente','formato','nombre','metros','piezas','notas'].includes(field))return;if(field==='formato'&&!['piezas','tacos'].includes(value))return;const found=almEncontrar(key,id);if(!found)return;
   found.t[field]=value;found.z.revisada=false;almInventarioActual.borrador=true;
-  almPersistir();const name=document.getElementById('alm-nombre-'+found.t.id),qty=document.getElementById('alm-cantidad-'+found.t.id);if(name)name.textContent=found.t.nombre||'Nueva tela';if(qty)qty.textContent=almCantidad(found.t);
+  almPersistir();const name=document.getElementById('alm-nombre-'+found.t.id),qty=document.getElementById('alm-cantidad-'+found.t.id);if(name)name.textContent=almNombre({...found.t,nombre:found.t.nombre||'Nueva tela'});if(qty)qty.textContent=almCantidad(found.t);
 }
 function almDelTela(key,id){
   const found=almEncontrar(key,id);if(!found)return;const saved=almCopia(found.t),mes=almInventarioActual.mesKey;
@@ -4057,12 +4066,12 @@ function verDetalleInventario(mesKey){
   document.getElementById('alm-detalle-titulo').textContent=inv.titulo;const body=document.getElementById('alm-detalle-body');body.replaceChildren();
   const resumen=matElemento('div',undefined,'alm-summary-panel');almRenderResumen(inv,resumen);body.appendChild(resumen);
   const normal=almNormalizar(inv);
-  ALM_ZONAS.forEach(z=>{const panel=matElemento('details',undefined,'alm-zone-card');panel.appendChild(matElemento('summary',z.nombre,'alm-zone-summary'));z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};panel.appendChild(matElemento('p',n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'),'alm-location-title'));v.telas.forEach(t=>panel.appendChild(matElemento('p',(t.nombre||'Sin nombre')+' · '+almCantidad(t)+(t.notas?' · '+t.notas:''),'alm-detail-line')));});body.appendChild(panel);});
+  ALM_ZONAS.forEach(z=>{const panel=matElemento('details',undefined,'alm-zone-card');panel.appendChild(matElemento('summary',z.nombre,'alm-zone-summary'));z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};panel.appendChild(matElemento('p',n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'),'alm-location-title'));v.telas.forEach(t=>panel.appendChild(matElemento('p',almNombre(t)+' · '+almCantidad(t)+(t.notas?' · '+t.notas:''),'alm-detail-line')));});body.appendChild(panel);});
   const prepare=matBoton('Preparar siguiente recuento',duplicarInventario);prepare.className='btn-secondary';body.appendChild(prepare);go('s-almacen-detalle');
 }
 function editarInventario(){if(almSinGuardar&&!almPersistir())return;const inv=loadInventarios().find(i=>i.mesKey===almDetalleKey);if(!inv)return;almAbrir(inv);go('s-almacen');}
 function almPreparar(inv,mes){
-  const normal=almNormalizar(inv),zonas={};Object.entries(normal.zonas).forEach(([key,z])=>{zonas[key]={revisada:false,telas:z.telas.map(t=>({id:uid(),nombre:t.nombre,metros:'',piezas:'',notas:'',anterior:{metros:t.metros,piezas:t.piezas,notas:t.notas}}))};});
+  const normal=almNormalizar(inv),zonas={};Object.entries(normal.zonas).forEach(([key,z])=>{zonas[key]={revisada:false,telas:z.telas.map(t=>({id:uid(),nombre:t.nombre,cliente:t.cliente,formato:t.formato,metros:'',piezas:'',notas:'',anterior:{metros:t.metros,piezas:t.piezas,notas:t.notas,formato:t.formato}}))};});
   return {mesKey:mes,titulo:almTitulo(mes),zonas,borrador:true,version:2};
 }
 function duplicarInventario(){
@@ -4077,7 +4086,7 @@ function eliminarInventario(){
 }
 function almTextoCompartir(inv){
   const lines=['Inventario · '+inv.titulo,inv.borrador===false?'Finalizado':inv.borrador?'BORRADOR · recuento en curso':'Histórico'],normal=almNormalizar(inv);
-  ALM_ZONAS.forEach(z=>{lines.push('',z.nombre);z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};lines.push(n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'));v.telas.forEach(t=>lines.push('  '+(t.nombre||'Sin nombre')+': '+almCantidad(t)+(t.notas?' · '+t.notas:'')));});});
+  ALM_ZONAS.forEach(z=>{lines.push('',z.nombre);z.niveles.forEach(n=>{const v=normal.zonas[z.id+'_'+n]||{telas:[]};lines.push(n+' · '+(v.revisada?'Revisada':'Sin revisión registrada'));v.telas.forEach(t=>lines.push('  '+almNombre(t)+': '+almCantidad(t)+(t.notas?' · '+t.notas:'')));});});
   const t=almTotales(inv);lines.push('','Total registrado: '+almCantidad(t));if(t.anotaciones)lines.push(t.anotaciones+' anotaciones sin conversión a metros ni piezas.');return lines.join(String.fromCharCode(10));
 }
 function compartirInventarioWhatsApp(origen){

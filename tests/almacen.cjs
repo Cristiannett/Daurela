@@ -24,4 +24,16 @@ test('independent local and remote edits both survive',()=>{const rows=c.loadInv
 test('conflict does not silently overwrite another count',()=>{const rows=copy(c.loadInventarios());rows.find(i=>i.mesKey==='2026-09').zonas.p1iz_Arriba.telas[1].metros='90';c.aplicarDatos({inventarios:rows});c.almUpdateTela('p1iz_Arriba',1,'metros','30');assert.equal(c.loadInventarios().find(i=>i.mesKey==='2026-09').zonas.p1iz_Arriba.telas[1].metros,'90');assert.match(f.els.get('alm-estado').textContent,/Sin guardar/);assert(f.store.has('daurela_recuperacion_v3'));});
 test('failed storage write shows unsaved and preserves previous saved inventory',()=>{const g=fixture(),d=g.ctx;d.aplicarDatos({inventarios:[legacy]});d.almAbrir(legacy);const saved=copy(d.loadInventarios()),set=d.localStorage.setItem;d.localStorage.setItem=(key,v)=>{if(key==='almacen_v1')throw Error('Sin espacio');set(key,v);};d.almUpdateTela('p1iz_Arriba',1,'metros','60');assert.deepEqual(copy(d.loadInventarios()),saved);assert.match(g.els.get('alm-estado').textContent,/Sin guardar/);});
 test('render works with compact zones and datalist',()=>{const g=fixture();g.ctx.aplicarDatos({inventarios:[legacy]});g.ctx.almAbrir(legacy);g.ctx.renderFormularioAlmacen();assert.equal(g.els.get('alm-formulario').children.length,3);assert.equal(g.els.get('alm-formulario').children[0].tagName,'details');assert(g.els.get('alm-nombres').children.length>=2);});
+
+test('clients and formats survive autosave, copy, summary and next month',()=>{
+  const g=fixture(),d=g.ctx;d.aplicarDatos({inventarios:[legacy]});d.almAbrir(legacy);
+  d.almUpdateTela('p1iz_Arriba',1,'cliente','Paco');d.almUpdateTela('p1iz_Arriba',1,'formato','tacos');d.almUpdateTela('p1iz_Arriba',1,'piezas','4');
+  d.almUpdateTela('carros_Viscofoam',0,'cliente','Otro cliente');d.almUpdateTela('carros_Viscofoam',0,'piezas','2');
+  const inv=d.loadInventarios()[0],tot=d.almTotales(inv);assert.equal(tot.tacos,4);assert.equal(tot.piezas,2);assert.equal(tot.telas.filter(x=>x.nombre.toLowerCase()==='bamboo').length,2);
+  assert.match(d.almTextoCompartir(inv),/Bamboo · Paco: 12,5 m · 4 tacos/);assert.match(d.almTextoCompartir(inv),/bamboo · Otro cliente: 2,5 m · 2 piezas/);
+  const next=d.almPreparar(inv,'2026-10').zonas.p1iz_Arriba.telas[1];assert.equal(next.cliente,'Paco');assert.equal(next.formato,'tacos');assert.equal(next.piezas,'');assert.equal(next.anterior.formato,'tacos');assert.match(d.almCantidad(next.anterior),/4 tacos/);
+  const restored=d.validarCopia({version:3,...d.datosTaller()});assert.equal(restored.inventarios[0].zonas.p1iz_Arriba.telas[1].formato,'tacos');
+  d.almUpdateTela('p1iz_Arriba',1,'formato','piezas');assert.equal(d.almTotales(d.loadInventarios()[0]).piezas,6);assert.equal(d.almTotales(d.loadInventarios()[0]).tacos,0);
+  const bad={version:3,...copy(d.datosTaller())};bad.inventarios[0].zonas.p1iz_Arriba.telas[1].formato='palets';assert.throws(()=>d.validarCopia(bad));
+});
 console.log(count+' warehouse checks passed.');

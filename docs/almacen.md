@@ -25,3 +25,6 @@ Las copias JSON incluyen cantidades, notas, revisiones y referencias; siguen ace
 ## Verificación
 
 `node tests/almacen.cjs`: datos ficticios para decimales, texto libre, autosave, reapertura, piezas, revisiones, borradores, eliminación y recuperación, preparación de meses, WhatsApp, JSON, concurrencia y errores de almacenamiento. El montaje de pantallas se comprueba con DOM simulado; no sustituye una revisión visual en el teléfono.
+
+## Cliente y formato
+Cada fila admite un cliente opcional (sugerido o escrito libremente) en cualquier ubicación y el selector Piezas enteras / Tacos. La cantidad se conserva al cambiar el selector; los totales separan piezas de tacos y agrupan las telas por cliente y nombre. Para mezclar ambos formatos de una tela, se añaden dos filas. Cliente y formato se conservan en el siguiente recuento, las copias y WhatsApp. Las filas anteriores siguen siendo piezas y no reciben un cliente supuesto a partir del carro.
