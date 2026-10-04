@@ -493,6 +493,10 @@ body.font-xl{font-size:22px}
 #fab-asistente{background:#292430!important;color:#d3bddf!important;border:1px solid #494252;box-shadow:0 4px 14px #0003}
 @media(max-width:360px){#s-cli .home-grid{padding:0 14px;gap:8px}#s-cli .home-btn{padding:12px}.home-section-title,.home-directory{margin-left:14px;margin-right:14px}#s-cli .home-tools .home-btn{padding:12px 3px}#s-cli .home-btn small{font-size:11px}.topbar{padding-left:12px;padding-right:12px}#auth-status{display:none!important}.corte-hoja{margin-left:12px;margin-right:12px}}
 @media(prefers-reduced-motion:reduce){.screen,.home-btn{animation:none!important;transition:none!important}}
+.list-new{font:inherit;font-size:13px;font-weight:600;padding:10px 12px;min-height:44px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-txt);white-space:nowrap;cursor:pointer;flex-shrink:0}
+.list-search{padding:12px 16px 4px}.list-search input{width:100%;min-height:44px;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--border2);border-radius:10px;background:var(--bg2);color:var(--txt)}
+#s-corte>.topbar,#s-entregas>.topbar,#s-materiales>.topbar{gap:8px}#s-entregas>.topbar .list-new{order:2}
+@media(max-width:360px){.list-new{padding:10px;font-size:12px}#s-entregas>.topbar h1{font-size:17px}}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -818,7 +822,7 @@ onAuthStateChanged(auth, function(user) {
   <div id="lst-pedidos"></div>
 </div>
 <div id="s-materiales" class="screen">
-  <div class="topbar"><button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">←</button><h1>Materiales</h1><button class="btn-icon" onclick="editarMaterial()" aria-label="Nuevo material">＋</button></div>
+  <div class="topbar"><button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">←</button><h1>Materiales</h1><button class="list-new" onclick="editarMaterial()" aria-label="Nuevo material">+ Material</button></div>
   <div style="padding:16px">
     <div class="mat-overview"><span id="mat-contador" class="mat-muted"></span><details class="mat-notifications"><summary>Avisos</summary><div><p id="mat-push-status" class="mat-muted">Recibe avisos al llegar al mínimo, incluso con la app cerrada.</p><button class="btn-sm" onclick="activarAvisosMateriales()">Activar en este móvil</button><button class="btn-sm" onclick="desactivarAvisosMateriales()">Desactivar</button></div></details></div>
     <input id="mat-buscar" class="input" aria-label="Buscar material" placeholder="Buscar material…" oninput="renderMateriales()">
@@ -895,12 +899,12 @@ onAuthStateChanged(auth, function(user) {
     <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
-    <h1>Entregas</h1>
+    <h1>Entregas</h1><button class="list-new" onclick="openFormEntrega(null)">+ Entrega</button>
     <button class="btn-icon" onclick="go('s-prep')" aria-label="Preparacion">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
     </button>
   </div>
-  <div id="ent-recogidas-panel" class="recogidas-panel"></div><div id="ent-tabs" class="filtro-bar"></div><div id="lst-entregas"></div>
+  <div class="list-search"><input id="ent-buscar" type="search" aria-label="Buscar entregas" placeholder="Tela, confección o pedido…" oninput="renderEntregas()"></div><div id="ent-recogidas-panel" class="recogidas-panel"></div><div id="ent-tabs" class="filtro-bar"></div><div id="lst-entregas"></div>
 </div>
 
 <div id="s-prep" class="screen">
@@ -1140,8 +1144,9 @@ onAuthStateChanged(auth, function(user) {
     <button class="btn-icon" onclick="go('s-cli')" aria-label="Volver">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
-    <h1>Corte</h1>
+    <h1>Corte</h1><button class="list-new" onclick="go('s-corte-nuevo')">+ Pedido</button>
   </div>
+  <div class="list-search"><input id="corte-buscar" type="search" aria-label="Buscar pedidos de corte" placeholder="Cliente, tela o pedido…" oninput="renderCorte()"></div>
   <div class="filtro-bar">
     <button class="filtro-btn activo" id="filtro-corte-pedidos" onclick="setFiltroCorte('pedidos')">Pedidos</button>
     <button class="filtro-btn" id="filtro-corte-pendientes" onclick="setFiltroCorte('pendientes')">Pendientes</button>
@@ -1263,11 +1268,22 @@ function toast(msg){
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);
 }
 
+const posicionesListas=new Map();
+function claveVistaLista(id){
+  if(id==='s-corte')return id+':'+filtroCorteActual+':'+document.getElementById('corte-buscar').value;
+  if(id==='s-entregas')return id+':'+filtroEntregas+':'+document.getElementById('ent-buscar').value;
+  if(id==='s-materiales')return id+':'+document.getElementById('mat-buscar').value+':'+document.getElementById('mat-familia').value+':'+document.getElementById('mat-solo-bajos').checked;
+  if(['s-cli','s-clientes-list','s-almacen','s-almacen-historial','s-notas','s-search'].includes(id))return id;
+  return null;
+}
+function recordarPosicionLista(el){const key=el&&claveVistaLista(el.id);if(key)posicionesListas.set(key,el.scrollTop||0);}
+function restaurarPosicionLista(el){const key=claveVistaLista(el.id);if(key)el.scrollTop=posicionesListas.get(key)||0;}
 let _prevScreen=null;
 function go(id, addHistory){
   if(addHistory===undefined) addHistory=true;
   const prev=document.querySelector('.screen.active');
   if(prev&&prev.id==='s-almacen'&&id!=='s-almacen'&&almSinGuardar&&!almPersistir())return;
+  recordarPosicionLista(prev);
   const isBack=_prevScreen===id;
   _prevScreen=prev?prev.id:null;
   document.querySelectorAll('.screen').forEach(s=>{
@@ -1296,6 +1312,8 @@ function go(id, addHistory){
   if(id==='s-prep') initPrep();
   if(id==='s-corte') initCorte();
   if(id==='s-corte-nuevo') initCorteNuevo();
+  restaurarPosicionLista(el);
+  if(window.requestAnimationFrame)window.requestAnimationFrame(()=>{if(document.querySelector('.screen.active')===el)restaurarPosicionLista(el);});
 }
 
 const MAT_KEY='materiales_v1';
@@ -1493,9 +1511,8 @@ function confeccionDeSerie(serie){
 }
 
 function initCorte(){
-  filtroCorteActual = 'pedidos';
   document.querySelectorAll('#s-corte .filtro-btn').forEach(function(b){ b.classList.remove('activo'); });
-  const btn = document.getElementById('filtro-corte-pedidos');
+  const btn = document.getElementById('filtro-corte-'+filtroCorteActual);
   if(btn) btn.classList.add('activo');
   renderCorte();
 }
@@ -1637,7 +1654,8 @@ function fechaLegible(valor){
 function renderCorte(){
   const el = document.getElementById('lst-corte');
   if(!el) return;
-  const pedidos = loadCorte();
+  const query=document.getElementById('corte-buscar').value.trim().toLocaleLowerCase('es');
+  const pedidos=loadCorte().filter(p=>[p.cliente,p.numeroPedido,...p.items.map(i=>i.serie+' '+i.tamano)].join(' ').toLocaleLowerCase('es').includes(query));
   el.innerHTML='';
   if(filtroCorteActual==='pedidos' || filtroCorteActual==='completados'){
     const esCompletados = filtroCorteActual==='completados';
@@ -1646,7 +1664,7 @@ function renderCorte(){
       return esCompletados ? completo : !completo;
     });
     if(!listaFiltrada.length){
-      el.innerHTML = esCompletados
+      el.innerHTML = query ? '<div class="empty-state"><p>No hay pedidos que coincidan con la búsqueda en esta pestaña.</p></div>' : esCompletados
         ? '<div class="empty-state"><p>Todavia no hay pedidos completados.</p></div>'
         : '<div class="empty-state"><p>No hay pedidos pendientes.<br>Los terminados estan en Completados.</p></div>';
       return;
@@ -1695,7 +1713,7 @@ function renderCorte(){
     });
   });
   if(!pendientesTotal.length){
-    el.innerHTML = '<div class="empty-state"><p>Nada pendiente por cortar.</p></div>';
+    el.innerHTML = query?'<div class="empty-state"><p>No hay coincidencias en pendientes.</p></div>':'<div class="empty-state"><p>Nada pendiente por cortar.</p></div>';
     return;
   }
   let clienteActual = null;
@@ -3215,7 +3233,7 @@ function actualizarFab(){
   const active=document.querySelector('.screen.active');
   const fab=document.getElementById('fab-global');
   if(fab){
-    if(active&&FAB_SCREENS[active.id]){
+    if(active&&FAB_SCREENS[active.id]&&!['s-corte','s-entregas','s-materiales'].includes(active.id)){
       fab.style.display='flex';
     } else {
       fab.style.display='none';
@@ -4481,9 +4499,10 @@ function renderEntregas() {
   renderPanelRecogidas();
   const el = document.getElementById('lst-entregas');
   if (!el) return;
-  const entregas = loadEntregas().filter(e=>resumenRecepcion(e).estado===filtroEntregas);
+  const query=document.getElementById('ent-buscar').value.trim().toLocaleLowerCase('es');
+  const entregas = loadEntregas().filter(e=>resumenRecepcion(e).estado===filtroEntregas&&[e.conf,e.tela,e.origenCorte?.cliente,e.origenCorte?.numeroPedido,e.referenciaHistorica?.origenCorte?.numeroPedido,...(e.lineas||[]).map(l=>l.talla)].join(' ').toLocaleLowerCase('es').includes(query));
   if (!entregas.length) {
-    el.innerHTML = '<div class="empty-state"><p>No hay entregas en esta pestaña.</p></div>';
+    el.innerHTML = query?'<div class="empty-state"><p>No hay entregas que coincidan con la búsqueda en esta pestaña.</p></div>':'<div class="empty-state"><p>No hay entregas en esta pestaña.</p></div>';
     return;
   }
   el.innerHTML = '';

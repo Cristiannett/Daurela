@@ -1,0 +1,10 @@
+const fs=require('fs'),Module=require('module'),path=require('path'),assert=require('node:assert/strict');
+const file=path.join(__dirname,'workflow.cjs');let source=fs.readFileSync(file,'utf8');source=source.slice(0,source.lastIndexOf('main().catch'))+';module.exports=fixture;';const m=new Module(file);m._compile(source,file);const f=m.exports(),c=f.ctx;
+const list=c.document.getElementById('s-corte');list.id='s-corte';list.scrollTop=640;
+f.run("filtroCorteActual='pendientes'");c.recordarPosicionLista(list);list.scrollTop=0;c.initCorte();c.restaurarPosicionLista(list);assert.equal(list.scrollTop,640);assert.equal(f.run('filtroCorteActual'),'pendientes');
+f.run("filtroCorteActual='completados'");c.restaurarPosicionLista(list);assert.equal(list.scrollTop,0);
+f.run("filtroCorteActual='pendientes'");c.restaurarPosicionLista(list);assert.equal(list.scrollTop,640);
+c.document.getElementById('corte-buscar').value='Lisboa';c.restaurarPosicionLista(list);assert.equal(list.scrollTop,0);list.scrollTop=220;c.recordarPosicionLista(list);list.scrollTop=0;c.restaurarPosicionLista(list);assert.equal(list.scrollTop,220);
+c.aplicarDatos({corte:[{id:'p1',numeroPedido:'45',cliente:'Paco',fecha:'2026-10-04',items:[{id:'i',serie:'Bamboo',tamano:'135',unidades:20,cortadas:0}]}]});f.run("filtroCorteActual='pedidos'");c.renderCorte();assert.match(f.els.get('lst-corte').textContent,/búsqueda/);c.document.getElementById('corte-buscar').value='45';c.renderCorte();assert.match(f.els.get('lst-corte').textContent,/Pedido #45/);
+const mat=c.document.getElementById('s-materiales');mat.id='s-materiales';mat.scrollTop=900;c.recordarPosicionLista(mat);mat.scrollTop=0;c.restaurarPosicionLista(mat);assert.equal(mat.scrollTop,900);c.document.getElementById('mat-solo-bajos').checked=true;c.restaurarPosicionLista(mat);assert.equal(mat.scrollTop,0);
+console.log('OK tab preservation, per-filter scroll, search and material-filter isolation.');
