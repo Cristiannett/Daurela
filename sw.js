@@ -1,4 +1,4 @@
-const CACHE = 'daurela-20261004-listas-cabeceras';
+const CACHE = 'daurela-20261025-version-inicio';
 const ASSETS = ['/Daurela/'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
