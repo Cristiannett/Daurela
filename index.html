@@ -300,6 +300,15 @@ body.font-xl{font-size:22px}
 .corte-articulo-resumen{display:block;padding-left:16px;font-size:12px;color:var(--txt2)}
 .corte-articulo-terminado>.corte-hoja{margin:0;border:0;border-top:1px solid var(--border);border-radius:0}
 @media(max-width:360px){.corte-articulo-terminado{margin-left:12px;margin-right:12px}}
+.corte-envios{margin:0 16px 14px}
+.corte-envios-panel{border-top:1px solid var(--border)}
+.corte-envios-panel>summary{padding:12px 0;cursor:pointer;font-size:12px;color:var(--txt2);line-height:1.5;overflow-wrap:anywhere}
+.corte-envios-panel>summary:focus-visible{outline:2px solid var(--txt);outline-offset:3px;border-radius:4px}
+.corte-envios-estado{display:block;padding-left:16px;font-size:11px;color:var(--txt3)}
+.corte-envios-revisar{color:var(--estado-pendiente)}
+.corte-envios-contenido{padding:4px 0 12px}
+.corte-envios-form{padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad-sm)}
+.corte-envios-linea{display:grid;grid-template-columns:minmax(0,1fr) minmax(65px,90px);align-items:center;gap:4px 8px;margin-bottom:12px}
 .entrega-grupo{padding:14px 16px 6px;margin:0;font-size:17px;color:var(--txt)}
 .entrega-aviso{padding:12px;border:1px solid #ff9f0a;border-radius:10px;color:var(--txt);font-size:14px}
 #corte-detalle-body{padding-bottom:130px!important}
@@ -1881,7 +1890,20 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
   const info = corteRestantePorTamano(pedido, conf, serie, items);
   const entregasVinculadas = info.entregasVinculadas;
   const wrap = document.createElement('div');
-  wrap.style.cssText='margin:0 16px 14px';
+  wrap.className='corte-envios';
+  const disponibles=Object.values(info.restante).reduce((total,n)=>total+n,0);
+  if(!disponibles&&!entregasVinculadas.length&&!info.ambiguo)return wrap;
+  const panel=document.createElement('details');panel.className='corte-envios-panel';
+  const resumen=document.createElement('summary');
+  const etiqueta=document.createElement('span');
+  etiqueta.textContent=(disponibles?'Enviar a Entregas':'Entregas realizadas')+' · '+serie;
+  const estado=document.createElement('span');estado.className='corte-envios-estado';
+  estado.textContent=info.ambiguo?'Revisar entregas anteriores':disponibles+' uds por enviar';
+  if(info.ambiguo)estado.className+=' corte-envios-revisar';
+  resumen.appendChild(etiqueta);
+  if(disponibles||info.ambiguo)resumen.appendChild(estado);
+  const contenido=document.createElement('div');contenido.className='corte-envios-contenido';
+  panel.appendChild(resumen);panel.appendChild(contenido);wrap.appendChild(panel);
 
   entregasVinculadas.forEach(function(ent){
     const card = document.createElement('div');
@@ -1913,18 +1935,18 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
     card.appendChild(tallas);
     card.appendChild(detalle);
     card.appendChild(btnVer);
-    wrap.appendChild(card);
+    contenido.appendChild(card);
   });
 
   if(info.ambiguo){
     const aviso=document.createElement('p');aviso.className='entrega-aviso';
     aviso.textContent='Revisa la talla y categoria de las entregas anteriores antes de enviar mas unidades.';
-    wrap.appendChild(aviso);return wrap;
+    contenido.appendChild(aviso);return wrap;
   }
   const tamanos = Object.keys(info.restante);
   if(tamanos.length){
     const form = document.createElement('div');
-    form.style.cssText='padding:12px;border:1px dashed var(--border3);border-radius:var(--rad-sm)';
+    form.className='corte-envios-form';
     const titulo = document.createElement('div');
     titulo.style.cssText='font-size:12px;font-weight:700;color:#0a84ff;margin-bottom:8px';
     titulo.textContent = 'Enviar '+serie+' a Entregas';
@@ -1932,7 +1954,7 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
     const inputs = {};
     tamanos.forEach(function(t){
       const row = document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px';
+      row.className='corte-envios-linea';
       const lbl = document.createElement('span');
       lbl.style.cssText='font-size:13px;color:var(--txt2);min-width:90px;flex:1;overflow-wrap:anywhere';
       lbl.textContent = info.etiquetas[t];
@@ -1942,9 +1964,10 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
       inp.value = info.restante[t];
       inp.max = info.restante[t];
       inp.min = 0;
-      inp.style.cssText='flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg2);color:var(--txt);outline:none';
+      inp.setAttribute('aria-label','Unidades a enviar de '+serie+' '+info.etiquetas[t]);
+      inp.style.cssText='width:100%;min-width:0;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg2);color:var(--txt)';
       const maxTxt = document.createElement('span');
-      maxTxt.style.cssText='font-size:11px;color:var(--txt3);flex-shrink:0';
+      maxTxt.style.cssText='grid-column:1/-1;font-size:11px;color:var(--txt3)';
       maxTxt.textContent = 'de '+info.restante[t]+' cortadas sin enviar';
       row.appendChild(lbl);
       row.appendChild(inp);
@@ -1968,7 +1991,7 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
       enviarCorteAEntregas(corteDetalleId, c, s, cantidades);
     }; })(conf, serie, inputs, info.restante);
     form.appendChild(btnEnviar);
-    wrap.appendChild(form);
+    contenido.appendChild(form);
   }
   return wrap;
 }

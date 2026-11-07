@@ -57,3 +57,8 @@ Pruebas: node tests/entrega-ficha.cjs.
 ## Artículos terminados plegables
 
 Al abrir un pedido de Corte, las líneas pendientes aparecen abiertas y cada línea terminada queda plegada individualmente en su posición, junto a su confección y tela. Su cabecera muestra tela, categoría, talla y unidades pedidas. Se despliega pulsando la cabecera o con el teclado, para consultar el detalle y reiniciar el corte. Las líneas anuladas también se pliegan, identificadas como Pendiente anulado. El botón Desplegar terminados permite abrirlas todas; Plegar terminados vuelve a cerrarlas. Al volver a entrar en el pedido se recupera la vista compacta.
+
+
+## Envíos discretos desde Corte
+
+Cada tela tiene una fila plegada para Enviar a Entregas, con las unidades cortadas por enviar. El formulario y las entregas vinculadas se muestran al desplegarla. Si hay entregas antiguas ambiguas, el aviso Revisar entregas anteriores permanece visible en la cabecera. Sin cantidades ni entregas previas no aparece ningún panel. Desplegar no crea entregas: se conserva el botón de envío explícito.
