@@ -300,6 +300,10 @@ body.font-xl{font-size:22px}
 .corte-articulo-resumen{display:block;padding-left:16px;font-size:12px;color:var(--txt2)}
 .corte-articulo-terminado>.corte-hoja{margin:0;border:0;border-top:1px solid var(--border);border-radius:0}
 @media(max-width:360px){.corte-articulo-terminado{margin-left:12px;margin-right:12px}}
+.corte-funda-destino{display:flex;flex-direction:column;gap:8px;margin:12px 16px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--bg2);font-size:13px;color:var(--txt2)}
+.corte-funda-destino select{width:100%;min-width:0;min-height:44px;margin:0;padding:10px 12px;border:1px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--txt);font:inherit;font-size:15px}
+.corte-funda-destino select:disabled{opacity:.7}
+.corte-funda-destino small{font-size:11px;line-height:1.5}
 .corte-envios{margin:0 16px 14px}
 .corte-envios-panel{border-top:1px solid var(--border)}
 .corte-envios-panel>summary{padding:12px 0;cursor:pointer;font-size:12px;color:var(--txt2);line-height:1.5;overflow-wrap:anywhere}
@@ -1525,6 +1529,45 @@ function confeccionDeSerie(serie){
   return null;
 }
 
+function telaFundaAlmohada(item){
+  const nombre=String(item.serie||'').toUpperCase().replace(/[.\s_-]/g,'');
+  const match=/^FALM(BAMBOO|PARIS)$/.exec(nombre);
+  return match?match[1]:null;
+}
+function confeccionDeCorte(item,pedido){
+  const tela=telaFundaAlmohada(item);
+  return tela?(pedido.confeccionFundas&&pedido.confeccionFundas[tela]||'Taller propio'):confeccionDeSerie(item.serie);
+}
+function entregasDeFunda(pedido,tela){
+  const series=new Set(pedido.items.filter(i=>telaFundaAlmohada(i)===tela).map(i=>i.serie));
+  return loadEntregas().filter(e=>e.origenCorte&&e.origenCorte.pedidoId===pedido.id&&series.has(e.origenCorte.serie));
+}
+function cambiarConfeccionFunda(pedidoBase,tela,destino){
+  if(!['BAMBOO','PARIS'].includes(tela)||!['Taller propio','Mamoud'].includes(destino))return;
+  const pedidos=loadCorte(),pedido=pedidos.find(p=>p.id===pedidoBase.id);
+  if(!pedido||!iguales(pedido,pedidoBase)){toast('El pedido ha cambiado. Revisa su confección.');renderCorteDetalle();return;}
+  if(entregasDeFunda(pedido,tela).length){toast('Esta funda ya tiene envíos. Conserva su confeccionador para mantener el seguimiento.');renderCorteDetalle();return;}
+  pedido.confeccionFundas={...(pedido.confeccionFundas||{}),[tela]:destino};
+  try{saveCorte(pedidos);renderCorteDetalle();toast('Confección guardada');}
+  catch(e){toast('No se pudo guardar la confección. Inténtalo de nuevo.');renderCorteDetalle();}
+}
+function renderConfeccionFundas(pedido,body){
+  const telas=[...new Set(pedido.items.map(telaFundaAlmohada).filter(Boolean))];
+  telas.forEach(tela=>{
+    const label=document.createElement('label');label.className='corte-funda-destino';
+    const titulo=document.createElement('span');titulo.textContent='Funda de almohada '+(tela==='BAMBOO'?'Bamboo':'Paris')+' · Confección';
+    const select=document.createElement('select');select.className='input';
+    select.setAttribute('aria-label',titulo.textContent);
+    ['Taller propio','Mamoud'].forEach(destino=>{const option=document.createElement('option');option.value=destino;option.textContent=destino;select.appendChild(option);});
+    select.value=pedido.confeccionFundas&&pedido.confeccionFundas[tela]||'Taller propio';
+    select.disabled=entregasDeFunda(pedido,tela).length>0;
+    select.onchange=()=>cambiarConfeccionFunda(pedido,tela,select.value);
+    label.appendChild(titulo);label.appendChild(select);
+    if(select.disabled){const nota=document.createElement('small');nota.textContent='Con envíos registrados. El destino se conserva para mantener el seguimiento.';label.appendChild(nota);}
+    body.appendChild(label);
+  });
+}
+
 function initCorte(){
   document.querySelectorAll('#s-corte .filtro-btn').forEach(function(b){ b.classList.remove('activo'); });
   const btn = document.getElementById('filtro-corte-'+filtroCorteActual);
@@ -1821,10 +1864,11 @@ function renderCorteDetalle(){
   body.innerHTML='';
   const toggle=document.getElementById('corte-work-toggle');
   if(toggle){toggle.textContent=modoTrabajoCorte?'Desplegar terminados':'Plegar terminados';toggle.setAttribute('aria-pressed',String(modoTrabajoCorte));}
+  renderConfeccionFundas(pedido,body);
   const grupos = {};
   const ordenGrupos = [];
   pedido.items.forEach(function(item){
-    const conf = confeccionDeSerie(item.serie) || 'Sin confeccion asociada';
+    const conf = confeccionDeCorte(item,pedido) || 'Sin confeccion asociada';
     if(!grupos[conf]){ grupos[conf]=[]; ordenGrupos.push(conf); }
     grupos[conf].push(item);
   });
@@ -1845,7 +1889,7 @@ function renderCorteDetalle(){
 
     ordenSeries.forEach(function(serie){
       porSerie[serie].forEach(function(item){
-        const row=renderCorteItemRow(item);
+        const row=renderCorteItemRow(item,pedido);
         if(corteLineaCompleta(item)){
           const detalle=document.createElement('details');
           detalle.className='corte-articulo-terminado';
@@ -1861,7 +1905,7 @@ function renderCorteDetalle(){
           body.appendChild(row);
         }
       });
-      if(conf!=='Sin confeccion asociada'){
+      if(conf!=='Sin confeccion asociada'&&conf!=='Taller propio'){
         body.appendChild(renderCorteEntregaCard(pedido, conf, serie, porSerie[serie]));
       }
     });
@@ -1996,7 +2040,7 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
   return wrap;
 }
 
-function renderCorteItemRow(item){
+function renderCorteItemRow(item,pedido){
     const completo = corteLineaCompleta(item);
     const anulada=Boolean(item.anulacion);
     const total = Number(item.unidades)||0;
@@ -2010,7 +2054,7 @@ function renderCorteItemRow(item){
     const titleWrap=document.createElement('div');
     const txt=document.createElement('h3');txt.className='corte-hoja-tela';txt.textContent=item.serie||'Sin tela';
     const subtitulo=document.createElement('p');subtitulo.className='corte-hoja-sub';
-    subtitulo.textContent=[item.tipo,confeccionDeSerie(item.serie)].filter(Boolean).join(' · ');
+    subtitulo.textContent=[item.tipo,confeccionDeCorte(item,pedido||{})].filter(Boolean).join(' · ');
     titleWrap.appendChild(txt);if(subtitulo.textContent)titleWrap.appendChild(subtitulo);
     const estado=document.createElement('span');estado.className='estado-chip '+(anulada?'estado-anulado':completo?'estado-completado':item.motivo||!cortadas?'estado-pendiente':'estado-proceso');
     estado.textContent=anulada?'Pendiente anulado':completo?'Terminado':item.motivo||(cortadas?'En corte':'Pendiente');
@@ -2092,7 +2136,10 @@ function renderCorteItemRow(item){
 
 function enviarCorteAEntregas(pedidoId,confeccion,serie,cantidadesPorTamano){
   const pedido=loadCorte().find(p=>p.id===pedidoId);if(!pedido)return;
-  const info=corteRestantePorTamano(pedido,confeccion,serie,pedido.items.filter(i=>i.serie===serie));
+  if(confeccion==='Taller propio'){toast('Las fundas del taller no se envían a confección externa.');return;}
+  const items=pedido.items.filter(i=>i.serie===serie&&confeccionDeCorte(i,pedido)===confeccion);
+  if(!items.length){toast('Revisa el confeccionador asignado antes de enviar.');renderCorteDetalle();return;}
+  const info=corteRestantePorTamano(pedido,confeccion,serie,items);
   const keys=Object.keys(cantidadesPorTamano||{});
   if(info.ambiguo||!keys.length||keys.some(k=>!Number.isInteger(cantidadesPorTamano[k])||cantidadesPorTamano[k]<=0||cantidadesPorTamano[k]>(info.restante[k]||0))){toast('Las cantidades han cambiado. Revisa el pedido.');renderCorteDetalle();return;}
   const entrega={id:uid(),conf:confeccion,tela:serie,estado:'proceso',recepcion:{version:1,lineas:[]},fentrega:new Date().toISOString().slice(0,10),frecogida:'',
@@ -2728,6 +2775,11 @@ function validarCopia(data){
     e.recepcion.lineas.forEach(r=>{if(!r||typeof r.id!=='string'||ids.has(r.id)||!Number.isSafeInteger(r.recibidas)||r.recibidas<0||!Number.isSafeInteger(r.saldo)||r.saldo<0||typeof r.motivo!=='string')throw Error('Cantidad recibida o saldo no válido');ids.add(r.id);});
     const lineas=resumenRecepcion(e).lineas;
     if(e.recepcion.lineas.some(r=>r.recibidas+r.saldo>0&&!lineas.some(l=>l.id===r.id&&l.enviadas>=r.recibidas+r.saldo)))throw Error('Recogidas mayores que el género enviado');
+  });
+  (data.corte||[]).forEach(p=>{
+    if(p.confeccionFundas===undefined)return;
+    const destinos=p.confeccionFundas;
+    if(!destinos||typeof destinos!=='object'||Array.isArray(destinos)||Object.entries(destinos).some(([tela,destino])=>!['BAMBOO','PARIS'].includes(tela)||!['Taller propio','Mamoud'].includes(destino)))throw Error('Confección de fundas no válida');
   });
   (data.corte||[]).forEach(p=>p.items.forEach(i=>{if(i.anulacion&&(typeof i.anulacion.motivo!=='string'||!i.anulacion.motivo.trim()||typeof i.anulacion.fecha!=='string'||!Number.isFinite(Date.parse(i.anulacion.fecha))||!Number.isSafeInteger(i.anulacion.unidades)||i.anulacion.unidades<0))throw Error('Anulación de corte no válida');}));
 
@@ -4209,7 +4261,7 @@ let entLineas = [];
 
 const ENT_TELAS = {
   'Mercedes': ['Oporto','Berlin','Bamboo'],
-  'Mamoud': ['Paris','Lisboa','Viena','Roma','Oslo','Bamboo'],
+  'Mamoud': ['Paris','Lisboa','Viena','Roma','Oslo','F.ALM.BAMBOO','F.ALM.PARIS'],
   'Bordador': ['Bari','Dreamline']
 };
 

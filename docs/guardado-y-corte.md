@@ -62,3 +62,10 @@ Al abrir un pedido de Corte, las líneas pendientes aparecen abiertas y cada lí
 ## Envíos discretos desde Corte
 
 Cada tela tiene una fila plegada para Enviar a Entregas, con las unidades cortadas por enviar. El formulario y las entregas vinculadas se muestran al desplegarla. Si hay entregas antiguas ambiguas, el aviso Revisar entregas anteriores permanece visible en la cabecera. Sin cantidades ni entregas previas no aparece ningún panel. Desplegar no crea entregas: se conserva el botón de envío explícito.
+
+
+## Confección de fundas de almohada
+
+Las series F.ALM.BAMBOO y F.ALM.PARIS (también con espacios, guiones o distinta capitalización) se reconocen como fundas. En el detalle del pedido tienen selector Taller propio / Mamoud, por modelo y para todas sus tallas. El valor inicial es Taller propio y no genera envíos externos. Seleccionar Mamoud habilita el formulario de envío para las unidades cortadas. Los protectores Bamboo y Oporto siguen con Mercedes; Lisboa con Mamoud.
+
+La selección se guarda en confeccionFundas dentro del pedido y viaja en JSON y sincronización. Se comprueba que el pedido no haya cambiado mientras se elige. Una funda con entregas vinculadas conserva su destino y bloquea el selector para evitar reasignar unidades ya enviadas. Las entregas manuales incluyen F.ALM.BAMBOO y F.ALM.PARIS entre las opciones de Mamoud. No se cambia el destino de entregas existentes.
