@@ -292,8 +292,14 @@ body.font-xl{font-size:22px}
 .work-toolbar button{margin:0;min-height:44px}
 .work-toolbar button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
 .pedido-unidades{font-size:18px;font-weight:700;margin:8px 0;color:var(--txt)}
-.corte-terminadas{margin:16px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.corte-terminadas summary{padding:14px;cursor:pointer;color:var(--txt2);font-weight:600}
+.corte-articulo-terminado{margin:12px 16px;border:1px solid var(--border);border-radius:14px;background:var(--bg2);overflow:hidden}
+.corte-articulo-terminado>summary{padding:14px 16px;cursor:pointer;color:var(--txt);font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.corte-articulo-terminado>summary::marker{color:var(--txt2)}
+.corte-articulo-terminado>summary:focus-visible{outline:2px solid var(--txt);outline-offset:-4px;border-radius:12px}
+.corte-articulo-nombre{font-weight:600}
+.corte-articulo-resumen{display:block;padding-left:16px;font-size:12px;color:var(--txt2)}
+.corte-articulo-terminado>.corte-hoja{margin:0;border:0;border-top:1px solid var(--border);border-radius:0}
+@media(max-width:360px){.corte-articulo-terminado{margin-left:12px;margin-right:12px}}
 .entrega-grupo{padding:14px 16px 6px;margin:0;font-size:17px;color:var(--txt)}
 .entrega-aviso{padding:12px;border:1px solid #ff9f0a;border-radius:10px;color:var(--txt);font-size:14px}
 #corte-detalle-body{padding-bottom:130px!important}
@@ -1190,7 +1196,7 @@ onAuthStateChanged(auth, function(user) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
     </button>
   </div>
-  <div class="work-toolbar"><button id="corte-work-toggle" class="btn-secondary" onclick="toggleModoCorte()" aria-pressed="false">Modo trabajo: solo pendientes</button></div><div id="corte-cierre-panel"></div><div id="corte-detalle-body" style="padding-bottom:24px"></div>
+  <div class="work-toolbar"><button id="corte-work-toggle" class="btn-secondary" onclick="toggleModoCorte()" aria-pressed="true">Desplegar terminados</button></div><div id="corte-cierre-panel"></div><div id="corte-detalle-body" style="padding-bottom:24px"></div>
 </div>
 
 <!-- CHATBOT -->
@@ -1762,11 +1768,12 @@ function renderCorte(){
 
 function abrirPedidoCorte(id){
   corteDetalleId = id;
+  modoTrabajoCorte = true;
   go('s-corte-detalle');
   renderCorteDetalle();
 }
 
-let modoTrabajoCorte=false;
+let modoTrabajoCorte=true;
 function toggleModoCorte(){modoTrabajoCorte=!modoTrabajoCorte;renderCorteDetalle();}
 try{window.toggleModoCorte=toggleModoCorte;}catch(e){}
 function cambiarAnulacionCorte(pedidoId,lineaId,reabrir){
@@ -1804,12 +1811,7 @@ function renderCorteDetalle(){
   if(titulo) titulo.textContent = pedido.cliente+(pedido.numeroPedido?' · #'+pedido.numeroPedido:'')+' · '+pedido.fecha;
   body.innerHTML='';
   const toggle=document.getElementById('corte-work-toggle');
-  if(toggle){toggle.textContent=modoTrabajoCorte?'Ver todo el pedido':'Modo trabajo: solo pendientes';toggle.setAttribute('aria-pressed',String(modoTrabajoCorte));}
-  const completadas=document.createElement('details');
-  const summary=document.createElement('summary');
-  summary.textContent=(pedido.items.some(i=>i.anulacion)?'Líneas resueltas (':'Lineas terminadas (')+pedido.items.filter(corteLineaCompleta).length+')';
-  completadas.className='corte-terminadas';completadas.appendChild(summary);
-
+  if(toggle){toggle.textContent=modoTrabajoCorte?'Desplegar terminados':'Plegar terminados';toggle.setAttribute('aria-pressed',String(modoTrabajoCorte));}
   const grupos = {};
   const ordenGrupos = [];
   pedido.items.forEach(function(item){
@@ -1834,15 +1836,27 @@ function renderCorteDetalle(){
 
     ordenSeries.forEach(function(serie){
       porSerie[serie].forEach(function(item){
-        const target=modoTrabajoCorte&&corteLineaCompleta(item)?completadas:body;
-        target.appendChild(renderCorteItemRow(item));
+        const row=renderCorteItemRow(item);
+        if(corteLineaCompleta(item)){
+          const detalle=document.createElement('details');
+          detalle.className='corte-articulo-terminado';
+          detalle.open=!modoTrabajoCorte;
+          const resumen=document.createElement('summary');
+          const nombre=document.createElement('span');nombre.className='corte-articulo-nombre';
+          nombre.textContent=[item.serie||'Sin tela',item.tipo].filter(Boolean).join(' · ');
+          const datos=document.createElement('span');datos.className='corte-articulo-resumen';
+          datos.textContent='Talla '+(item.tamano||'—')+' · '+(Number(item.unidades)||0)+' uds pedidas · '+(item.anulacion?'Pendiente anulado':'Terminado');
+          resumen.appendChild(nombre);resumen.appendChild(datos);
+          detalle.appendChild(resumen);detalle.appendChild(row);body.appendChild(detalle);
+        }else{
+          body.appendChild(row);
+        }
       });
       if(conf!=='Sin confeccion asociada'){
         body.appendChild(renderCorteEntregaCard(pedido, conf, serie, porSerie[serie]));
       }
     });
   });
-  if(modoTrabajoCorte&&completadas.children.length>1)body.appendChild(completadas);
 }
 
 function claveCorteEntrega(tamano,tipo){return JSON.stringify([String(tamano||''),String(tipo||'')]);}

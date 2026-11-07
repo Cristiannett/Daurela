@@ -52,3 +52,8 @@ La ficha tiene un boton Entregado junto a las categorias de cada talla y un resu
 Las entregas permanecen en Activas con recogidas parciales y pasan a Completadas al cubrir todas sus lineas (recibidas o saldos). Ya no hay pestana Pendientes en Entregas; Historico se mantiene. La ficha solo modifica esa entrega, sin usar el reparto FIFO. Las recogidas globales siguen repartiendo entre las mas antiguas. Los saldos de las lineas no modificadas se conservan.
 
 Pruebas: node tests/entrega-ficha.cjs.
+
+
+## Artículos terminados plegables
+
+Al abrir un pedido de Corte, las líneas pendientes aparecen abiertas y cada línea terminada queda plegada individualmente en su posición, junto a su confección y tela. Su cabecera muestra tela, categoría, talla y unidades pedidas. Se despliega pulsando la cabecera o con el teclado, para consultar el detalle y reiniciar el corte. Las líneas anuladas también se pliegan, identificadas como Pendiente anulado. El botón Desplegar terminados permite abrirlas todas; Plegar terminados vuelve a cerrarlas. Al volver a entrar en el pedido se recupera la vista compacta.
