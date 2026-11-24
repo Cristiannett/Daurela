@@ -78,3 +78,8 @@ El selector Confecciona aparece dentro de cada artículo de funda, debajo del no
 El detalle de Corte muestra un resumen por tela debajo de Mercedes, exclusivamente para categorías Protector, Protector de colchon o Protector colchon (sin distinguir acentos o mayúsculas). Bamboo y Oporto: talla + 67 cm por unidad. Berlin: talla × 2 + 50 cm por unidad. Suma las unidades pedidas de todas las tallas; es el total del pedido, no un saldo que disminuya al cortar, enviar o anular pendientes. No incluye fundas, otras categorías ni otras telas.
 
 El cálculo por talla empieza plegado. Admite tallas numéricas en centímetros, con decimal o sufijo cm; una talla ambigua o cantidad inválida muestra Revisar medidas para esa tela, evitando presentar un total parcial como completo. El resumen se deriva del pedido sin guardar datos nuevos ni generar entregas.
+
+
+## Corregir el tipo de género de un artículo
+
+Cada artículo de un pedido creado tiene un selector Tipo de género, con las categorías configuradas y Sin asignar. Cambia únicamente esa línea y actualiza inmediatamente el resumen de tela; conserva cantidades, progreso y confección. Los terminados se pueden editar desplegando su ficha. Se rechazan cambios sobre una versión antigua del pedido. Si la misma tela y talla ya tienen envíos vinculados (incluido histórico recuperado), se bloquea el selector para no alterar el seguimiento por categoría.

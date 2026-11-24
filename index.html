@@ -2111,6 +2111,45 @@ function renderCorteEntregaCard(pedido, conf, serie, items){
   return wrap;
 }
 
+
+function corteTipoConEnvios(pedido,item){
+  return loadEntregas().some(e=>{
+    const origen=e.origenCorte||(e.referenciaHistorica&&e.referenciaHistorica.origenCorte);
+    return origen&&origen.pedidoId===pedido.id&&origen.serie===item.serie&&
+      (e.lineas||[]).some(l=>String(l.talla)===String(item.tamano));
+  });
+}
+function cambiarTipoArticuloCorte(pedidoBase,itemId,tipo){
+  if(tipo!==''&&!loadCorteTipos().includes(tipo))return;
+  const pedidos=loadCorte(),pedido=pedidos.find(p=>p.id===pedidoBase.id);
+  if(!pedido||!iguales(pedido,pedidoBase)){toast('El pedido ha cambiado. Revisa el artículo.');renderCorteDetalle();return;}
+  const item=pedido.items.find(i=>i.id===itemId);
+  if(!item||item.tipo===tipo)return;
+  if(corteTipoConEnvios(pedido,item)){toast('Esta tela y talla ya tienen envíos. Se conserva el tipo para mantener el seguimiento.');renderCorteDetalle();return;}
+  item.tipo=tipo;
+  try{saveCorte(pedidos);renderCorteDetalle();toast('Tipo de género guardado');}
+  catch(e){toast('No se pudo guardar el tipo. Inténtalo de nuevo.');renderCorteDetalle();}
+}
+function renderTipoArticuloCorte(pedido,item,row){
+  if(!pedido)return;
+  const label=document.createElement('label');label.className='corte-funda-destino corte-tipo-genero';
+  const titulo=document.createElement('span');titulo.textContent='Tipo de género';
+  const select=document.createElement('select');
+  select.setAttribute('aria-label','Tipo de género de '+item.serie+' talla '+item.tamano);
+  const tipos=Array.from(new Set(['',...loadCorteTipos(),item.tipo||'']));
+  tipos.forEach(tipo=>{
+    const option=document.createElement('option');option.value=tipo;option.textContent=tipo||'Sin asignar';select.appendChild(option);
+  });
+  select.value=item.tipo||'';
+  select.disabled=corteTipoConEnvios(pedido,item);
+  select.onchange=()=>cambiarTipoArticuloCorte(pedido,item.id,select.value);
+  label.append(titulo,select);
+  if(select.disabled){
+    const nota=document.createElement('small');nota.textContent='Esta tela y talla tienen envíos registrados. El tipo se conserva para mantener el seguimiento.';label.appendChild(nota);
+  }
+  row.appendChild(label);
+}
+
 function renderCorteItemRow(item,pedido){
     const completo = corteLineaCompleta(item);
     const anulada=Boolean(item.anulacion);
@@ -2130,6 +2169,7 @@ function renderCorteItemRow(item,pedido){
     const estado=document.createElement('span');estado.className='estado-chip '+(anulada?'estado-anulado':completo?'estado-completado':item.motivo||!cortadas?'estado-pendiente':'estado-proceso');
     estado.textContent=anulada?'Pendiente anulado':completo?'Terminado':item.motivo||(cortadas?'En corte':'Pendiente');
     top.appendChild(titleWrap);top.appendChild(estado);row.appendChild(top);
+    renderTipoArticuloCorte(pedido,item,row);
     renderConfeccionFunda(pedido,item,row);
     const stats=document.createElement('div');stats.className='corte-hoja-cifras';
     [['Talla',item.tamano||'—','talla'],['Cortadas · uds',cortadas,'cortadas'],['Faltan · uds',restan,'faltan']].forEach(function(d){
