@@ -1,4 +1,4 @@
-const CACHE = 'daurela-20261107-fundas-selector-articulo';
+const CACHE = 'daurela-20261124-tela-mercedes';
 const ASSETS = ['/Daurela/'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

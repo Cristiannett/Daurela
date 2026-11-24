@@ -516,6 +516,18 @@ body.font-xl{font-size:22px}
 .list-search{padding:12px 16px 4px}.list-search input{width:100%;min-height:44px;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--border2);border-radius:10px;background:var(--bg2);color:var(--txt)}
 #s-corte>.topbar,#s-entregas>.topbar,#s-materiales>.topbar{gap:8px}#s-entregas>.topbar .list-new{order:2}
 @media(max-width:360px){.list-new{padding:10px;font-size:12px}#s-entregas>.topbar h1{font-size:17px}}
+
+.corte-tela-resumen{margin:12px 16px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--bg2)}
+.corte-tela-resumen h3{margin:0 0 4px;font-size:12px;letter-spacing:.5px;color:var(--txt2)}
+.corte-tela-total{padding:12px 0;border-bottom:1px solid var(--border)}
+.corte-tela-cabecera{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:16px;font-weight:600}
+.corte-tela-cabecera strong{color:var(--accent);font-size:20px;text-align:right}
+.corte-tela-total p{margin:4px 0 0;font-size:12px;color:var(--txt2)}
+.corte-tela-resumen details{margin-top:14px;font-size:12px;color:var(--txt2)}
+.corte-tela-resumen summary{cursor:pointer;padding:4px 0}
+.corte-tela-resumen summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.corte-tela-calculo{margin:12px 0 0;line-height:1.8;overflow-wrap:anywhere}
+@media(max-width:360px){.corte-tela-resumen{margin-left:12px;margin-right:12px}}
 </style>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1856,6 +1868,59 @@ function renderCierreCorte(pedido){
   if(pendientes.length){const cerrar=document.createElement('button');cerrar.className='btn-secondary';cerrar.textContent='Cerrar pedido con pendientes';cerrar.onclick=()=>cambiarAnulacionCorte(pedido.id,null,false);panel.appendChild(cerrar);}
   if(anuladas.length){const reabrir=document.createElement('button');reabrir.className='btn-secondary';reabrir.textContent='Reabrir líneas anuladas';reabrir.onclick=()=>cambiarAnulacionCorte(pedido.id,null,true);panel.appendChild(reabrir);}
 }
+
+function resumenTelaMercedes(items){
+  const normalizar=v=>String(v||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const reglas={bamboo:{nombre:'Bamboo',factor:1,extra:67},oporto:{nombre:'Oporto',factor:1,extra:67},berlin:{nombre:'Berlin',factor:2,extra:50}};
+  const grupos=new Map();
+  items.forEach(item=>{
+    const regla=reglas[normalizar(item.serie)];
+    if(!regla||!['protector','protector de colchon','protector colchon'].includes(normalizar(item.tipo)))return;
+    const tallaTexto=String(item.tamano||'').trim().replace(/\s*cm$/i,'').replace(',','.');
+    const talla=/^\d+(\.\d+)?$/.test(tallaTexto)?Number(tallaTexto):NaN;
+    const unidades=Number(item.unidades);
+    if(!grupos.has(regla.nombre))grupos.set(regla.nombre,{nombre:regla.nombre,unidades:0,cm:0,lineas:[],incompleto:false});
+    const grupo=grupos.get(regla.nombre);
+    if(!Number.isFinite(talla)||talla<=0||!Number.isSafeInteger(unidades)||unidades<=0){grupo.incompleto=true;return;}
+    const cmUnidad=talla*regla.factor+regla.extra;
+    grupo.unidades+=unidades;
+    grupo.cm+=cmUnidad*unidades;
+    const anterior=grupo.lineas.find(l=>l.talla===talla);
+    if(anterior)anterior.unidades+=unidades;
+    else grupo.lineas.push({talla,unidades,cmUnidad});
+  });
+  return Array.from(grupos.values());
+}
+function renderResumenTelaMercedes(items){
+  const grupos=resumenTelaMercedes(items);
+  if(!grupos.length)return null;
+  const numero=n=>n.toLocaleString('es-ES',{maximumFractionDigits:2});
+  const metros=cm=>(cm/100).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' m';
+  const card=document.createElement('section');card.className='corte-tela-resumen';
+  card.setAttribute('aria-label','Tela para Mercedes');
+  const titulo=document.createElement('h3');titulo.textContent='TELA PARA MERCEDES';card.appendChild(titulo);
+  const detalle=document.createElement('details');
+  const summary=document.createElement('summary');summary.textContent='Ver cálculo por talla';detalle.appendChild(summary);
+  grupos.forEach(g=>{
+    const fila=document.createElement('div');fila.className='corte-tela-total';
+    const cabecera=document.createElement('div');cabecera.className='corte-tela-cabecera';
+    const nombre=document.createElement('span');nombre.textContent=g.nombre;
+    const total=document.createElement('strong');total.textContent=g.incompleto?'Revisar medidas':metros(g.cm);
+    cabecera.append(nombre,total);fila.appendChild(cabecera);
+    const uds=document.createElement('p');uds.textContent=g.incompleto?'Hay tallas o cantidades sin un valor válido.':numero(g.unidades)+' protectores';fila.appendChild(uds);card.appendChild(fila);
+    const calculo=document.createElement('div');calculo.className='corte-tela-calculo';
+    const tela=document.createElement('strong');tela.textContent=g.nombre;calculo.appendChild(tela);
+    g.lineas.sort((a,b)=>a.talla-b.talla).forEach(l=>{
+      const linea=document.createElement('div');
+      linea.textContent=numero(l.talla)+' · '+numero(l.unidades)+' uds × '+numero(l.cmUnidad)+' cm = '+metros(l.unidades*l.cmUnidad);
+      calculo.appendChild(linea);
+    });
+    detalle.appendChild(calculo);
+  });
+  card.appendChild(detalle);
+  return card;
+}
+
 function renderCorteDetalle(){
   const pedido = loadCorte().find(function(p){ return p.id===corteDetalleId; });
   const titulo = document.getElementById('corte-detalle-titulo');
@@ -1880,6 +1945,10 @@ function renderCorteDetalle(){
     hdr.style.cssText='padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt3)';
     hdr.textContent = conf;
     body.appendChild(hdr);
+    if(conf==='Mercedes'){
+      const resumen=renderResumenTelaMercedes(grupos[conf]);
+      if(resumen)body.appendChild(resumen);
+    }
 
     const porSerie = {};
     const ordenSeries = [];

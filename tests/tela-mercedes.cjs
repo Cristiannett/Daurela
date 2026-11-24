@@ -1,0 +1,27 @@
+
+const fs=require('node:fs'),Module=require('node:module'),assert=require('node:assert/strict'),path=require('node:path');
+const file=path.join(__dirname,'workflow.cjs');let source=fs.readFileSync(file,'utf8');source=source.slice(0,source.lastIndexOf('main().catch'))+';module.exports=fixture;';const mod=new Module(file);mod._compile(source,file);const fixture=mod.exports;
+const f=fixture(),c=f.ctx;
+const item=(serie,tamano,unidades,tipo='Protector de colchón')=>({id:serie+tamano,serie,tamano,unidades,tipo,cortadas:0});
+const rows=[item('Bamboo','150',32),item('Oporto','150',32),item('Berlin','150',32)];
+assert.deepEqual(Array.from(c.resumenTelaMercedes(rows),g=>g.cm),[6944,6944,11200]);
+const mixed=[item('Bamboo','135',20),item('Bamboo','150',32),item('Bamboo','180',10)];
+assert.equal(c.resumenTelaMercedes(mixed)[0].cm,13454);
+const excluded=[item('F.ALM.BAMBOO','150',32),item('Bamboo','150',32,'Funda'),item('Oporto','150',32,'Funda de almohada'),item('Lisboa','150',32),item('Berlin','150',32,'')];
+assert.equal(c.resumenTelaMercedes(excluded).length,0);
+assert.equal(c.renderResumenTelaMercedes(excluded),null);
+assert.equal(c.resumenTelaMercedes([item(' bamboo ','150,5 cm',2)])[0].cm,435);
+assert.equal(c.resumenTelaMercedes([item('Berlin','150x200',10)])[0].incompleto,true);
+assert.equal(c.resumenTelaMercedes([item('Bamboo','150',-2)])[0].incompleto,true);
+const duplicates=c.resumenTelaMercedes([item('Bamboo','150',10),item('Bamboo','150',22)])[0];
+assert.equal(duplicates.lineas.length,1);assert.equal(duplicates.lineas[0].unidades,32);
+const p={id:'meters',cliente:'Prueba',fecha:'2026-11-24',items:rows};
+c.aplicarDatos({corte:[p],entregas:[]});f.run("corteDetalleId='meters';");
+const before=JSON.stringify(c.datosTaller());c.renderCorteDetalle();
+const body=f.els.get('corte-detalle-body'),card=body.children.find(e=>e.className==='corte-tela-resumen');
+assert.ok(card);assert.equal(body.children[1],card);
+assert.match(card.textContent,/69,44 m/);assert.match(card.textContent,/112,00 m/);
+assert.ok(!card.children.at(-1).open);
+assert.equal(JSON.stringify(c.datosTaller()),before);
+rows[0].cortadas=32;assert.equal(c.resumenTelaMercedes(rows)[0].cm,6944);
+console.log('Mercedes: fórmulas, tallas mixtas, exclusiones, medidas inválidas, agrupación y render sin cambios en datos OK');

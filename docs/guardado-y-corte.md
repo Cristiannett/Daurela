@@ -71,3 +71,10 @@ Las series F.ALM.BAMBOO y F.ALM.PARIS (también con espacios, guiones o distinta
 La selección se guarda en confeccionFundas dentro del pedido y viaja en JSON y sincronización. Se comprueba que el pedido no haya cambiado mientras se elige. Una funda con entregas vinculadas conserva su destino y bloquea el selector para evitar reasignar unidades ya enviadas. Las entregas manuales incluyen F.ALM.BAMBOO y F.ALM.PARIS entre las opciones de Mamoud. No se cambia el destino de entregas existentes.
 
 El selector Confecciona aparece dentro de cada artículo de funda, debajo del nombre. En artículos terminados se accede desplegando su ficha. La elección sigue aplicándose a todas las tallas del mismo modelo dentro del pedido; cuando hay varias, la ficha lo indica.
+
+
+## Tela para Mercedes
+
+El detalle de Corte muestra un resumen por tela debajo de Mercedes, exclusivamente para categorías Protector, Protector de colchon o Protector colchon (sin distinguir acentos o mayúsculas). Bamboo y Oporto: talla + 67 cm por unidad. Berlin: talla × 2 + 50 cm por unidad. Suma las unidades pedidas de todas las tallas; es el total del pedido, no un saldo que disminuya al cortar, enviar o anular pendientes. No incluye fundas, otras categorías ni otras telas.
+
+El cálculo por talla empieza plegado. Admite tallas numéricas en centímetros, con decimal o sufijo cm; una talla ambigua o cantidad inválida muestra Revisar medidas para esa tela, evitando presentar un total parcial como completo. El resumen se deriva del pedido sin guardar datos nuevos ni generar entregas.
